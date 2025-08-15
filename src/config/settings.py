@@ -1,0 +1,408 @@
+import os
+import logging
+from typing import List, Optional
+from dataclasses import dataclass
+from pathlib import Path
+
+@dataclass
+class LoggingConfig:
+    level: str
+    max_files: int
+    max_size_mb: int
+
+@dataclass
+class PlexConfig:
+    url: str
+    token: str
+    username: str
+    password: str
+
+@dataclass
+class CacheConfig:
+    source_paths: List[str]
+    destination_path: str
+    max_cache_size_gb: int
+    test_mode: bool
+
+@dataclass
+class RealTimeWatchConfig:
+    enabled: bool
+    check_interval: int
+    # Backwards-compatible/expanded flags
+    cache_when_watching: bool
+    auto_cache_on_watch: bool = False
+    cache_on_complete: bool = True
+    respect_existing_rules: bool = True
+    remove_from_cache_after_hours: int = 24
+    respect_other_users_watchlists: bool = True
+    exclude_inactive_users_days: int = 30
+
+@dataclass
+class TraktConfig:
+    enabled: bool
+    client_id: str
+    client_secret: str
+    trending_movies_count: int
+    check_interval: int
+
+@dataclass
+class WebConfig:
+    host: str
+    port: int
+    debug: bool
+    enable_scheduler: bool = False
+
+@dataclass
+class MediaConfig:
+    exit_if_active_session: bool
+    watched_move: bool
+    users_toggle: bool
+    watchlist_toggle: bool
+    days_to_monitor: int
+    number_episodes: int
+    watchlist_episodes: int
+    # New: Copy vs Move behavior
+    copy_to_cache: bool
+    delete_from_cache_when_done: bool
+    # New: Cache access method
+    use_symlinks_for_cache: bool
+    # New: Hybrid mode - Move + Symlink
+    move_with_symlinks: bool
+
+@dataclass
+class PathsConfig:
+    plex_source: str
+    real_source: str
+    cache_dir: str
+    cache_destination: str
+    additional_sources: List[str]
+    additional_plex_sources: List[str]  # New: corresponding plex sources for additional real sources
+
+@dataclass
+class TestModeConfig:
+    enabled: bool
+    show_file_sizes: bool
+    show_total_size: bool
+    dry_run: bool
+
+@dataclass
+class PerformanceConfig:
+    max_concurrent_moves_cache: int
+    max_concurrent_moves_array: int
+    # Per-source concurrency control
+    max_concurrent_local_transfers: int
+    max_concurrent_network_transfers: int
+
+@dataclass
+class NotificationConfig:
+    webhook_url: Optional[str]
+    webhook_headers: dict
+
+class Config:
+    def __init__(self):
+        # Setup logger first
+        self.logger = logging.getLogger(__name__)
+        
+        self.logging = self._load_logging_config()
+        self.plex = self._load_plex_config()
+        self.cache = self._load_cache_config()
+        self.real_time_watch = self._load_real_time_watch_config()
+        self.trakt = self._load_trakt_config()
+        self.web = self._load_web_config()
+        self.media = self._load_media_config()
+        self.paths = self._load_paths_config()
+        self.test_mode = self._load_test_mode_config()
+        self.notifications = self._load_notification_config()
+        self.performance = self._load_performance_config()
+
+    def _load_logging_config(self) -> LoggingConfig:
+        def _to_int(value: str, default: int) -> int:
+            try:
+                return int(value)
+            except Exception:
+                return default
+        return LoggingConfig(
+            level=os.getenv('LOGGING_LEVEL', 'INFO'),
+            max_files=_to_int(os.getenv('LOGGING_MAX_FILES', '5'), 5),
+            max_size_mb=_to_int(os.getenv('LOGGING_MAX_SIZE_MB', '10'), 10)
+        )
+
+    def _load_plex_config(self) -> PlexConfig:
+        plex_url = os.getenv('PLEX_URL')
+        if not plex_url:
+            raise ValueError("Required environment variable PLEX_URL is not set")
+        
+        return PlexConfig(
+            url=plex_url,
+            token=os.getenv('PLEX_TOKEN', ''),
+            username=os.getenv('PLEX_USERNAME', ''),
+            password=os.getenv('PLEX_PASSWORD', '')
+        )
+
+    def _load_cache_config(self) -> CacheConfig:
+        # Backwards compatibility for legacy env names used by tests and older setups
+        legacy_sources = os.getenv('CACHE_SOURCE_PATHS')
+        legacy_dest = os.getenv('CACHE_DESTINATION_PATH')
+        legacy_test_mode = os.getenv('CACHE_TEST_MODE')
+
+        # Get source paths from multiple possible env vars
+        source_paths: List[str] = []
+        if legacy_sources:
+            source_paths = [s.strip() for s in legacy_sources.split(',') if s.strip()]
+        else:
+            if os.getenv('REAL_SOURCE'):
+                source_paths.append(os.getenv('REAL_SOURCE'))
+            if os.getenv('ADDITIONAL_SOURCES'):
+                source_paths.extend([s.strip() for s in os.getenv('ADDITIONAL_SOURCES').split(',') if s.strip()])
+
+        # If no sources defined, use default
+        if not source_paths:
+            source_paths = ['/mnt/user']
+
+        destination_path = legacy_dest if legacy_dest else os.getenv('CACHE_DESTINATION', os.getenv('CACHE_DIR', '/mnt/cache'))
+        test_mode = (legacy_test_mode.lower() == 'true') if legacy_test_mode else (os.getenv('TEST_MODE', 'false').lower() == 'true')
+
+        return CacheConfig(
+            source_paths=source_paths,
+            destination_path=destination_path,
+            max_cache_size_gb=int(os.getenv('CACHE_MAX_SIZE_GB', '100')),
+            test_mode=test_mode
+        )
+
+    def _load_real_time_watch_config(self) -> RealTimeWatchConfig:
+        # Support both old and new env var names
+        cache_when_watching = os.getenv('REAL_TIME_WATCH_CACHE_WHEN_WATCHING', 'false').lower() == 'true'
+        auto_cache_on_watch = os.getenv('REAL_TIME_WATCH_AUTO_CACHE_ON_WATCH', str(cache_when_watching)).lower() == 'true'
+        cache_on_complete = os.getenv('REAL_TIME_WATCH_CACHE_ON_COMPLETE', 'true').lower() == 'true'
+        respect_existing_rules = os.getenv('REAL_TIME_WATCH_RESPECT_EXISTING_RULES', 'true').lower() == 'true'
+
+        # safe int parsing
+        def _to_int(value: str, default: int) -> int:
+            try:
+                return int(value)
+            except Exception:
+                return default
+        return RealTimeWatchConfig(
+            enabled=os.getenv('REAL_TIME_WATCH_ENABLED', 'false').lower() == 'true',
+            check_interval=_to_int(os.getenv('REAL_TIME_WATCH_CHECK_INTERVAL', '30'), 30),
+            cache_when_watching=auto_cache_on_watch,
+            auto_cache_on_watch=auto_cache_on_watch,
+            cache_on_complete=cache_on_complete,
+            respect_existing_rules=respect_existing_rules,
+            remove_from_cache_after_hours=_to_int(os.getenv('REAL_TIME_WATCH_REMOVE_FROM_CACHE_AFTER_HOURS', '24'), 24),
+            respect_other_users_watchlists=os.getenv('REAL_TIME_WATCH_RESPECT_OTHER_USERS_WATCHLISTS', 'true').lower() == 'true',
+            exclude_inactive_users_days=_to_int(os.getenv('REAL_TIME_WATCH_EXCLUDE_INACTIVE_USERS_DAYS', '30'), 30)
+        )
+
+    def _load_trakt_config(self) -> TraktConfig:
+        def _to_int(value: str, default: int) -> int:
+            try:
+                return int(value)
+            except Exception:
+                return default
+        return TraktConfig(
+            enabled=os.getenv('TRAKT_ENABLED', 'false').lower() == 'true',
+            client_id=os.getenv('TRAKT_CLIENT_ID', ''),
+            client_secret=os.getenv('TRAKT_CLIENT_SECRET', ''),
+            trending_movies_count=_to_int(os.getenv('TRAKT_TRENDING_MOVIES_COUNT', '10'), 10),
+            check_interval=_to_int(os.getenv('TRAKT_CHECK_INTERVAL', '3600'), 3600)  # Default: 1 hour
+        )
+
+    def _load_web_config(self) -> WebConfig:
+        def _to_int(value: str, default: int) -> int:
+            try:
+                return int(value)
+            except Exception:
+                return default
+        return WebConfig(
+            host=os.getenv('WEB_HOST', '0.0.0.0'),
+            port=_to_int(os.getenv('WEB_PORT', os.getenv('PORT', '5443')), 5443),
+            debug=os.getenv('WEB_DEBUG', os.getenv('DEBUG', 'false')).lower() == 'true',
+            enable_scheduler=os.getenv('ENABLE_SCHEDULER', 'false').lower() == 'true'
+        )
+
+    def _load_media_config(self) -> MediaConfig:
+        return MediaConfig(
+            exit_if_active_session=os.getenv('EXIT_IF_ACTIVE_SESSION', 'false').lower() == 'true',
+            watched_move=os.getenv('WATCHED_MOVE', 'true').lower() == 'true',
+            users_toggle=os.getenv('USERS_TOGGLE', 'true').lower() == 'true',
+            watchlist_toggle=os.getenv('WATCHLIST_TOGGLE', 'true').lower() == 'true',
+            days_to_monitor=int(os.getenv('DAYS_TO_MONITOR', '99')),
+            number_episodes=int(os.getenv('NUMBER_EPISODES', '5')),
+            watchlist_episodes=int(os.getenv('WATCHLIST_EPISODES', '1')),
+            # New: Copy vs Move behavior
+            copy_to_cache=os.getenv('COPY_TO_CACHE', 'false').lower() == 'true',
+            delete_from_cache_when_done=os.getenv('DELETE_FROM_CACHE_WHEN_DONE', 'true').lower() == 'true',
+            # New: Cache access method
+            use_symlinks_for_cache=os.getenv('USE_SYMLINKS_FOR_CACHE', 'true').lower() == 'true',
+            # New: Hybrid mode - Move + Symlink
+            move_with_symlinks=os.getenv('MOVE_WITH_SYMLINKS', 'false').lower() == 'true'
+        )
+
+    def _load_paths_config(self) -> PathsConfig:
+        # Clean up additional sources - remove empty strings
+        additional_sources = []
+        if os.getenv('ADDITIONAL_SOURCES'):
+            additional_sources = [s.strip() for s in os.getenv('ADDITIONAL_SOURCES').split(',') if s.strip()]
+        
+        # Clean up additional plex sources - remove empty strings
+        additional_plex_sources = []
+        if os.getenv('ADDITIONAL_PLEX_SOURCES'):
+            additional_plex_sources = [s.strip() for s in os.getenv('ADDITIONAL_PLEX_SOURCES').split(',') if s.strip()]
+        
+        return PathsConfig(
+            plex_source=os.getenv('PLEX_SOURCE', '/media'),
+            real_source=os.getenv('REAL_SOURCE', '/mnt/user'),
+            cache_dir=os.getenv('CACHE_DIR', '/mnt/cache'),
+            cache_destination=os.getenv('CACHE_DESTINATION', ''),
+            additional_sources=additional_sources,
+            additional_plex_sources=additional_plex_sources
+        )
+
+    def _load_test_mode_config(self) -> TestModeConfig:
+        enabled = os.getenv('TEST_MODE', 'false').lower() == 'true'
+        return TestModeConfig(
+            enabled=enabled,
+            show_file_sizes=os.getenv('TEST_SHOW_FILE_SIZES', 'true').lower() == 'true',
+            show_total_size=os.getenv('TEST_SHOW_TOTAL_SIZE', 'true').lower() == 'true',
+            dry_run=os.getenv('TEST_DRY_RUN', 'true').lower() == 'true' if enabled else False
+        )
+
+    def _load_performance_config(self) -> PerformanceConfig:
+        def _to_int(value: str, default: int) -> int:
+            try:
+                return int(value)
+            except Exception:
+                return default
+        return PerformanceConfig(
+            max_concurrent_moves_cache=_to_int(os.getenv('MAX_CONCURRENT_MOVES_CACHE', '5'), 5),
+            max_concurrent_moves_array=_to_int(os.getenv('MAX_CONCURRENT_MOVES_ARRAY', '2'), 2),
+            # Per-source concurrency control
+            max_concurrent_local_transfers=_to_int(os.getenv('MAX_CONCURRENT_LOCAL_TRANSFERS', '5'), 5),
+            max_concurrent_network_transfers=_to_int(os.getenv('MAX_CONCURRENT_NETWORK_TRANSFERS', '2'), 2)
+        )
+
+    def _load_notification_config(self) -> NotificationConfig:
+        webhook_url = os.getenv('WEBHOOK_URL')
+        webhook_headers = {}
+        
+        # Parse webhook headers if provided
+        webhook_headers_str = os.getenv('WEBHOOK_HEADERS', '')
+        if webhook_headers_str:
+            try:
+                # Expected format: "key1:value1,key2:value2"
+                for header in webhook_headers_str.split(','):
+                    if ':' in header:
+                        key, value = header.split(':', 1)
+                        webhook_headers[key.strip()] = value.strip()
+            except Exception:
+                pass
+        
+        return NotificationConfig(
+            webhook_url=webhook_url,
+            webhook_headers=webhook_headers
+        )
+
+    def validate(self) -> bool:
+        """Validate the configuration"""
+        try:
+            # Basic validation - check required fields
+            if not self.plex.url:
+                self.logger.error("PLEX_URL is required")
+                return False
+            if not self.plex.token:
+                self.logger.error("PLEX_TOKEN is required")
+                return False
+            if not self.paths.real_source:
+                self.logger.error("REAL_SOURCE is required")
+                return False
+            if not self.paths.cache_dir:
+                self.logger.error("CACHE_DIR is required")
+                return False
+            
+            # Check if paths exist (for Docker, these should be mounted volumes)
+            # We'll skip this check in Docker environment as paths are mounted
+            
+            return True
+        except Exception as e:
+            self.logger.error(f"Configuration validation failed: {e}")
+            return False
+
+    def to_dict(self):
+        """Convert configuration to dictionary for API responses"""
+        return {
+            'logging': {
+                'level': self.logging.level,
+                'max_files': self.logging.max_files,
+                'max_size_mb': self.logging.max_size_mb
+            },
+            'plex': {
+                'url': self.plex.url,
+                'token': '***' if self.plex.token else '',
+                'username': self.plex.username,
+                'password': '***' if self.plex.password else ''
+            },
+            'cache': {
+                'source_paths': self.cache.source_paths,
+                'destination_path': self.cache.destination_path,
+                'max_cache_size_gb': self.cache.max_cache_size_gb,
+                'test_mode': self.cache.test_mode
+            },
+            'real_time_watch': {
+                'enabled': self.real_time_watch.enabled,
+                'check_interval': self.real_time_watch.check_interval,
+                'cache_when_watching': self.real_time_watch.cache_when_watching,
+                'remove_from_cache_after_hours': self.real_time_watch.remove_from_cache_after_hours,
+                'respect_other_users_watchlists': self.real_time_watch.respect_other_users_watchlists,
+                'exclude_inactive_users_days': self.real_time_watch.exclude_inactive_users_days
+            },
+            'trakt': {
+                'enabled': self.trakt.enabled,
+                'client_id': '***' if self.trakt.client_id else '',
+                'client_secret': '***' if self.trakt.client_secret else '',
+                'trending_movies_count': self.trakt.trending_movies_count,
+                'check_interval': self.trakt.check_interval
+            },
+            'web': {
+                'host': self.web.host,
+                'port': self.web.port,
+                'debug': self.web.debug,
+                'enable_scheduler': self.web.enable_scheduler
+            },
+            'media': {
+                'exit_if_active_session': self.media.exit_if_active_session,
+                'watched_move': self.media.watched_move,
+                'users_toggle': self.media.users_toggle,
+                'watchlist_toggle': self.media.watchlist_toggle,
+                'days_to_monitor': self.media.days_to_monitor,
+                'number_episodes': self.media.number_episodes,
+                'watchlist_episodes': self.media.watchlist_episodes,
+                'copy_to_cache': self.media.copy_to_cache,
+                'delete_from_cache_when_done': self.media.delete_from_cache_when_done,
+                'use_symlinks_for_cache': self.media.use_symlinks_for_cache,
+                'move_with_symlinks': self.media.move_with_symlinks
+            },
+            'paths': {
+                'plex_source': self.paths.plex_source,
+                'real_source': self.paths.real_source,
+                'cache_dir': self.paths.cache_dir,
+                'cache_destination': self.paths.cache_destination,
+                'additional_sources': self.paths.additional_sources
+            },
+            'test_mode': {
+                'enabled': self.test_mode.enabled,
+                'show_file_sizes': self.test_mode.show_file_sizes,
+                'show_total_size': self.test_mode.show_total_size,
+                'dry_run': self.test_mode.dry_run
+            },
+            'performance': {
+                'max_concurrent_moves_cache': self.performance.max_concurrent_moves_cache,
+                'max_concurrent_moves_array': self.performance.max_concurrent_moves_array,
+                'max_concurrent_local_transfers': self.performance.max_concurrent_local_transfers,
+                'max_concurrent_network_transfers': self.performance.max_concurrent_network_transfers
+            },
+            'notifications': {
+                'webhook_url': self.notifications.webhook_url,
+                'webhook_headers': self.notifications.webhook_headers
+            }
+        }

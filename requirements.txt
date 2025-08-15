@@ -1,2 +1,6 @@
-requests
-plexapi
+Flask==2.3.3
+plexapi==4.15.4
+requests==2.31.0
+python-dotenv==1.0.0
+APScheduler==3.10.4
+schedule==1.2.0
