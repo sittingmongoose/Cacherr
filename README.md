@@ -85,13 +85,13 @@ PLEX_URL=https://plex.yourdomain.com
 PLEX_TOKEN=your_plex_token_here
 
 # Path Configuration (Unraid defaults)
-CACHE_DESTINATION=/mnt/cache/media
-REAL_SOURCE=/mnt/user
-PLEX_SOURCE=/media
+CACHE_DESTINATION=/cache
+REAL_SOURCE=/mediasource
+PLEX_SOURCE=/plexsource
 
 # Additional source support
-ADDITIONAL_SOURCES=/mnt/remote_share,/mnt/nas_media  # Comma-separated list
-ADDITIONAL_PLEX_SOURCES=/media2,/media3
+ADDITIONAL_SOURCES=/mediasource2 /mediasource3 /mediasource4  # Space-separated list
+ADDITIONAL_PLEX_SOURCES=/plexsource2 /plexsource3 /plexsource4
 
 # Unraid mapping (optional, defaults work for Unraid):
 PUID=99
@@ -116,12 +116,12 @@ Open your browser and navigate to: `http://your-server:5443`
 |----------|-------------|---------|
 | `PLEX_URL` | Your Plex server URL | Required |
 | `PLEX_TOKEN` | Your Plex API token | Required |
-| `CACHE_DESTINATION` | Cache directory for media files | `/mnt/cache/media` |
-| `REAL_SOURCE` | Array drive path | `/mnt/user` |
-| `PLEX_SOURCE` | Plex library path | `/media` |
-| `ADDITIONAL_SOURCES` | Comma-separated list of additional source directories | None |
-| `ADDITIONAL_PLEX_SOURCES` | Comma-separated list of corresponding plex internal paths | None |
-| `CONFIG_DIR` | Application configuration directory | `/mnt/user/appdata/plexcacheultra/config` |
+| `CACHE_DESTINATION` | Cache directory for media files | `/cache` |
+| `REAL_SOURCE` | Array drive path | `/mediasource` |
+| `PLEX_SOURCE` | Plex library path | `/plexsource` |
+| `ADDITIONAL_SOURCES` | Space-separated list of additional source directories | `/mediasource2` |
+| `ADDITIONAL_PLEX_SOURCES` | Space-separated list of corresponding plex internal paths | `/plexsource2` |
+| `CONFIG_DIR` | Application configuration directory | `/config` |
 | `LOG_LEVEL` | Logging level | `INFO` |
 | `WEBHOOK_URL` | Discord/Slack webhook URL | Optional |
 | `NOTIFICATION_TYPE` | Notification method | `webhook` |
@@ -209,15 +209,15 @@ docker run -d \
   -e PUID=99 -e PGID=100 \
   -e PLEX_URL=https://plex.yourdomain.com \
   -e PLEX_TOKEN=your_token \
-  -e CACHE_DESTINATION=/mnt/cache/media \
-  -e ADDITIONAL_SOURCES=/mnt/remote_share,/mnt/nas_media \
+  -e CACHE_DESTINATION=/cache \
+  -e ADDITIONAL_SOURCES="/mediasource2 /mediasource3" \
   -e TEST_MODE=false \
-  -v /mnt/cache:/mnt/cache \
-  -v /mnt/user:/mnt/user \
-  -v /media:/media \
-  -v /mnt/remote_share:/mnt/remote_share:ro \
-  -v /mnt/nas_media:/mnt/nas_media:ro \
-  -v /mnt/user/appdata/plexcacheultra/config:/app/config \
+  -v /mnt/cache:/cache \
+  -v /mnt/user:/mediasource \
+  -v /plexsource:/plexsource \
+  -v /mnt/remote_share:/mediasource2:ro \
+  -v /mnt/nas_media:/mediasource3:ro \
+  -v /mnt/user/appdata/plexcacheultra/config:/config \
   sittingmongoose/plexcacheultra:dev
 ```
 

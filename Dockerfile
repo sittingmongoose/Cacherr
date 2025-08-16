@@ -35,7 +35,7 @@ COPY main.py .
 COPY dashboard.html .
 
 # Create necessary directories with proper ownership
-RUN mkdir -p /app/config/logs /app/config/data /app/cache && \
+RUN mkdir -p /config/logs /config/data /cache && \
     chown -R plexcache:plexcache /app
 
 # Set proper permissions

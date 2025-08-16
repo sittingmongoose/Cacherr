@@ -16,12 +16,12 @@ services:
       - PLEX_TOKEN=${PLEX_TOKEN}
       
       # Unraid Path Configuration (defaults)
-      - CONFIG_DIR=${CONFIG_DIR:-/mnt/user/appdata/plexcacheultra/config}
-      - REAL_SOURCE=${REAL_SOURCE:-/mnt/user}
-      - PLEX_SOURCE=${PLEX_SOURCE:-/media}
-      - CACHE_DESTINATION=${CACHE_DESTINATION:-/mnt/cache/media}
-      - ADDITIONAL_SOURCES=${ADDITIONAL_SOURCES:-}
-      - ADDITIONAL_PLEX_SOURCES=${ADDITIONAL_PLEX_SOURCES:-}
+      - CONFIG_DIR=${CONFIG_DIR:-/config}
+      - REAL_SOURCE=${REAL_SOURCE:-/mediasource}
+      - PLEX_SOURCE=${PLEX_SOURCE:-/plexsource}
+      - CACHE_DESTINATION=${CACHE_DESTINATION:-/cache}
+      - ADDITIONAL_SOURCES=${ADDITIONAL_SOURCES:-/mediasource2}
+      - ADDITIONAL_PLEX_SOURCES=${ADDITIONAL_PLEX_SOURCES:-/plexsource2}
       
       # Media Settings
       - NUMBER_EPISODES=${NUMBER_EPISODES:-5}
@@ -84,12 +84,12 @@ services:
       - TZ=${TZ:-UTC}
     volumes:
       # Unraid media paths (adjust these for your system)
-      - ${CACHE_DESTINATION:-/mnt/cache/media}:${CACHE_DESTINATION:-/mnt/cache/media}:rw
-      - ${REAL_SOURCE:-/mnt/user}:${REAL_SOURCE:-/mnt/user}:rw
-      - ${PLEX_SOURCE:-/media}:${PLEX_SOURCE:-/media}:ro
+      - ${CACHE_DESTINATION:-/mnt/cache}:/cache:rw
+      - ${REAL_SOURCE:-/mnt/user}:/mediasource:rw
+      - ${PLEX_SOURCE:-/plexsource}:${PLEX_SOURCE:-/plexsource}:ro
       
       # Application data (persistent)
-      - ${CONFIG_DIR:-/mnt/user/appdata/plexcacheultra/config}:/app/config:rw
+      - ${CONFIG_DIR:-/mnt/user/appdata/plexcacheultra/config}:/config:rw
     networks:
       - plexcache-network
     security_opt:
