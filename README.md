@@ -65,7 +65,7 @@ TRAKT_CHECK_INTERVAL=3600
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/PlexCacheUltra.git
+git clone https://github.com/sittingmongoose/PlexCacheUltra.git
 cd PlexCacheUltra
 ```
 
@@ -85,34 +85,17 @@ PLEX_URL=https://plex.yourdomain.com
 PLEX_TOKEN=your_plex_token_here
 
 # Path Configuration (Unraid defaults)
-CACHE_DIR=/mnt/cache
+CACHE_DESTINATION=/mnt/cache/media
 REAL_SOURCE=/mnt/user
 PLEX_SOURCE=/media
 
-# New: Flexible destination configuration
-CACHE_DESTINATION=/mnt/cache/media  # Optional: Custom destination for cached media
-
-# New: Multiple source support
+# Additional source support
 ADDITIONAL_SOURCES=/mnt/remote_share,/mnt/nas_media  # Comma-separated list
+ADDITIONAL_PLEX_SOURCES=/media2,/media3
 
 # Unraid mapping (optional, defaults work for Unraid):
 PUID=99
 PGID=100
-
-# New: Test mode configuration
-TEST_MODE=false                    # Enable test mode (analyze without moving)
-TEST_SHOW_FILE_SIZES=true         # Show individual file sizes
-TEST_SHOW_TOTAL_SIZE=true         # Show total size
-TEST_DRY_RUN=true                 # Don't actually move files
-
-# New: Copy vs Move behavior
-COPY_TO_CACHE=false                    # Copy files to cache instead of moving
-DELETE_FROM_CACHE_WHEN_DONE=true       # Delete from cache when done (vs moving back)
-USE_SYMLINKS_FOR_CACHE=true            # Create symlinks so Plex uses cached files
-MOVE_WITH_SYMLINKS=false               # Enable hybrid move+symlink mode
-
-# Optional: Enable scheduler
-ENABLE_SCHEDULER=true
 ```
 
 ### 3. Deploy with Docker Compose
@@ -133,16 +116,17 @@ Open your browser and navigate to: `http://your-server:5443`
 |----------|-------------|---------|
 | `PLEX_URL` | Your Plex server URL | Required |
 | `PLEX_TOKEN` | Your Plex API token | Required |
-| `CACHE_DIR` | Cache drive path | `/mnt/cache` |
+| `CACHE_DESTINATION` | Cache directory for media files | `/mnt/cache/media` |
 | `REAL_SOURCE` | Array drive path | `/mnt/user` |
 | `PLEX_SOURCE` | Plex library path | `/media` |
-| **🆕 `CACHE_DESTINATION`** | **Custom destination for cached media** | **`CACHE_DIR`** |
-| **🆕 `ADDITIONAL_SOURCES`** | **Comma-separated list of additional source directories** | **None** |
+| `ADDITIONAL_SOURCES` | Comma-separated list of additional source directories | None |
+| `ADDITIONAL_PLEX_SOURCES` | Comma-separated list of corresponding plex internal paths | None |
+| `CONFIG_DIR` | Application configuration directory | `/mnt/user/appdata/plexcacheultra/config` |
 | `LOG_LEVEL` | Logging level | `INFO` |
 | `WEBHOOK_URL` | Discord/Slack webhook URL | Optional |
 | `NOTIFICATION_TYPE` | Notification method | `webhook` |
-| `MAX_CONCURRENT_MOVES_CACHE` | Concurrent moves to cache | `5` |
-| `MAX_CONCURRENT_MOVES_ARRAY` | Concurrent moves to array | `2` |
+| `MAX_CONCURRENT_MOVES_CACHE` | Concurrent moves to cache | `3` |
+| `MAX_CONCURRENT_MOVES_ARRAY` | Concurrent moves to array | `1` |
 | `NUMBER_EPISODES` | Episodes to cache ahead | `5` |
 | `DAYS_TO_MONITOR` | Days to monitor onDeck | `99` |
 | `WATCHLIST_TOGGLE` | Enable watchlist caching | `true` |
@@ -152,23 +136,23 @@ Open your browser and navigate to: `http://your-server:5443`
 | `WATCHED_CACHE_EXPIRY` | Watched cache expiry (hours) | `48` |
 | `USERS_TOGGLE` | Enable multi-user support | `true` |
 | `EXIT_IF_ACTIVE_SESSION` | Exit on active Plex sessions | `false` |
-| **🆕 `TEST_MODE`** | **Enable test mode** | **`false`** |
-| **🆕 `TEST_SHOW_FILE_SIZES`** | **Show individual file sizes in test mode** | **`true`** |
-| **🆕 `TEST_SHOW_TOTAL_SIZE`** | **Show total size in test mode** | **`true`** |
-| **🆕 `TEST_DRY_RUN`** | **Don't move files in test mode** | **`true`** |
-| **🆕 `REAL_TIME_WATCH_ENABLED`** | **Enable real-time Plex watching** | **`false`** |
-| **🆕 `REAL_TIME_WATCH_CHECK_INTERVAL`** | **Check interval for Plex activity (seconds)** | **`30`** |
-| **🆕 `REAL_TIME_WATCH_AUTO_CACHE_ON_WATCH`** | **Auto-cache media when watching starts** | **`true`** |
-| **🆕 `REAL_TIME_WATCH_CACHE_ON_COMPLETE`** | **Cache media when watching completes** | **`true`** |
-| **🆕 `REAL_TIME_WATCH_RESPECT_EXISTING_RULES`** | **Respect user inclusion and watchlist rules** | **`true`** |
-| **🆕 `REAL_TIME_WATCH_MAX_CONCURRENT_WATCHES`** | **Maximum concurrent watch operations** | **`5`** |
-| **🆕 `REAL_TIME_WATCH_REMOVE_FROM_CACHE_AFTER_HOURS`** | **Hours before removing media from cache (0 = never)** | **`24`** |
-| **🆕 `REAL_TIME_WATCH_RESPECT_OTHER_USERS_WATCHLISTS`** | **Keep media in cache for other users' watchlists** | **`true`** |
-| **🆕 `REAL_TIME_WATCH_EXCLUDE_INACTIVE_USERS_DAYS`** | **Days of inactivity before excluding users (0 = no exclusion)** | **`30`** |
-| **🆕 `COPY_TO_CACHE`** | **Copy files to cache instead of moving** | **`false`** |
-| **🆕 `DELETE_FROM_CACHE_WHEN_DONE`** | **Delete from cache when done (vs moving back)** | **`true`** |
-| **🆕 `USE_SYMLINKS_FOR_CACHE`** | **Create symlinks so Plex uses cached files** | **`true`** |
-| **🆕 `MOVE_WITH_SYMLINKS`** | **Enable hybrid move+symlink mode** | **`false`** |
+| `TEST_MODE` | Enable test mode | `false` |
+| `TEST_SHOW_FILE_SIZES` | Show individual file sizes in test mode | `true` |
+| `TEST_SHOW_TOTAL_SIZE` | Show total size in test mode | `true` |
+| `TEST_DRY_RUN` | Don't move files in test mode | `true` |
+| `REAL_TIME_WATCH_ENABLED` | Enable real-time Plex watching | `false` |
+| `REAL_TIME_WATCH_CHECK_INTERVAL` | Check interval for Plex activity (seconds) | `30` |
+| `REAL_TIME_WATCH_AUTO_CACHE_ON_WATCH` | Auto-cache media when watching starts | `true` |
+| `REAL_TIME_WATCH_CACHE_ON_COMPLETE` | Cache media when watching completes | `true` |
+| `REAL_TIME_WATCH_RESPECT_EXISTING_RULES` | Respect user inclusion and watchlist rules | `true` |
+| `REAL_TIME_WATCH_MAX_CONCURRENT_WATCHES` | Maximum concurrent watch operations | `5` |
+| `REAL_TIME_WATCH_REMOVE_FROM_CACHE_AFTER_HOURS` | Hours before removing media from cache (0 = never) | `24` |
+| `REAL_TIME_WATCH_RESPECT_OTHER_USERS_WATCHLISTS` | Keep media in cache for other users' watchlists | `true` |
+| `REAL_TIME_WATCH_EXCLUDE_INACTIVE_USERS_DAYS` | Days of inactivity before excluding users (0 = no exclusion) | `30` |
+| `COPY_TO_CACHE` | Copy files to cache instead of moving | `false` |
+| `DELETE_FROM_CACHE_WHEN_DONE` | Delete from cache when done (vs moving back) | `true` |
+| `USE_SYMLINKS_FOR_CACHE` | Create symlinks so Plex uses cached files | `true` |
+| `MOVE_WITH_SYMLINKS` | Enable hybrid move+symlink mode | `false` |
 | `DEBUG` | Enable debug mode | `false` |
 | `ENABLE_SCHEDULER` | Enable automatic scheduling | `false` |
 | `PORT` | Web interface port | `5443` |
@@ -196,137 +180,13 @@ On Unraid, recommended user and group mappings are:
 - `PUID=99` (user `nobody`)
 - `PGID=100` (group `users`)
 
-These are exposed as environment variables and applied at container start so mounted volumes are owned correctly.
-
-### 🆕 New Configuration Options
-
-#### Flexible Destination Paths
-
-You can now specify a custom destination for cached media that's different from your main cache directory:
-
-```bash
-# Cache media to a specific subdirectory
-CACHE_DESTINATION=/mnt/cache/media
-
-# Cache media to a different drive entirely
-CACHE_DESTINATION=/mnt/ssd/plex_cache
-```
-
-#### Multiple Source Support
-
-Access media from additional mounted shares, network drives, or remote sources:
-
-```bash
-# Multiple comma-separated sources
-ADDITIONAL_SOURCES=/mnt/remote_share,/mnt/nas_media,/mnt/backup_drive
-
-# Network shares
-ADDITIONAL_SOURCES=/mnt/smb_share,/mnt/nfs_media
-```
-
-The system will automatically scan these sources for media files that match your current media list.
-
-#### Test Mode
-
-Preview operations without actually moving files:
-
-```bash
-# Enable test mode
-TEST_MODE=true
-
-# Configure test mode behavior
-TEST_SHOW_FILE_SIZES=true      # Show individual file sizes
-TEST_SHOW_TOTAL_SIZE=true      # Show total size
-TEST_DRY_RUN=true              # Don't move files (always true in test mode)
-```
-
-Test mode provides detailed analysis of what would be moved, including:
-- File counts and individual file sizes
-- Total size calculations
-- Source and destination paths
-- Operation previews
-
-#### Copy vs Move Modes
-
-PlexCacheUltra supports three different workflows for caching media:
-
-**Traditional Move Mode (Default):**
-```bash
-COPY_TO_CACHE=false                    # Move files to cache
-DELETE_FROM_CACHE_WHEN_DONE=false      # Move files back when done
-USE_SYMLINKS_FOR_CACHE=false           # Don't create symlinks
-MOVE_WITH_SYMLINKS=false               # Don't use hybrid mode
-```
-- Files are moved from source to cache
-- After watching, files are moved back to source
-- Plex continues reading from original paths
-
-**🆕 Copy + Symlink Mode (Recommended):**
-```bash
-COPY_TO_CACHE=true                     # Copy files to cache
-DELETE_FROM_CACHE_WHEN_DONE=true       # Delete from cache when done
-USE_SYMLINKS_FOR_CACHE=true            # Create symlinks for Plex
-MOVE_WITH_SYMLINKS=false               # Don't use hybrid mode
-```
-- Files are copied to cache (originals preserved)
-- Symlinks are created pointing to cached files
-- **Plex automatically uses cached files** (follows symlinks)
-- After watching, cached files are deleted, symlinks removed
-- Originals remain untouched in their locations
-
-**🆕 Move + Symlink Mode (Hybrid - Best of Both Worlds):**
-```bash
-COPY_TO_CACHE=false                    # Move files to cache
-DELETE_FROM_CACHE_WHEN_DONE=true       # Delete from cache when done
-USE_SYMLINKS_FOR_CACHE=false           # Not used in hybrid mode
-MOVE_WITH_SYMLINKS=true                # Enable hybrid move+symlink mode
-```
-- Files are moved from source to cache (freeing source space)
-- Symlinks are created back to original locations
-- **Plex automatically uses cached files** (follows symlinks)
-- After watching, cached files are deleted, symlinks removed
-- Source space is freed, but Plex library remains intact
-
-**Why Use Copy + Symlink Mode?**
-- ✅ **Plex automatically uses cache** - no manual path updates
-- ✅ **Preserves originals** - source files never moved
-- ✅ **Instant cache access** - symlinks provide transparent redirection
-- ✅ **Perfect for NAS setups** - network shares remain untouched
-- ✅ **Multiple users** - same files accessible from multiple locations
-
-**Why Use Move + Symlink Mode?**
-- ✅ **Plex automatically uses cache** - no manual path updates
-- ✅ **Frees source space** - files moved to cache, not copied
-- ✅ **No library scans** - Plex follows symlinks without triggering rescans
-- ✅ **Best performance** - combines space savings with cache benefits
-- ✅ **Perfect for limited storage** - maximize cache usage while keeping Plex happy
-
-## 📁 Project Structure
-
-```
-PlexCacheUltra/
-├── src/
-│   ├── config/          # Configuration management
-│   ├── core/            # Core application logic
-│   └── __init__.py
-├── config/              # Configuration files
-├── data/                # Persistent data storage
-├── logs/                # Application logs
-├── main.py              # Main application entry point
-├── Dockerfile           # Docker container definition
-├── docker-compose.yml   # Docker Compose configuration
-├── requirements.txt     # Python dependencies
-├── env.example          # Environment variables template
-└── README.md           # This file
-```
-
 ## 🐳 Docker Deployment
 
 ### Using Docker Compose (Recommended)
 
 ```bash
 # Start the service
-docker compose up -d
+docker-compose up -d
 
 # View logs
 docker-compose logs -f
@@ -335,8 +195,8 @@ docker-compose logs -f
 docker-compose down
 
 # Update and restart
-docker compose pull
-docker compose up -d
+docker-compose pull
+docker-compose up -d
 ```
 
 ### Using Docker Run
@@ -357,9 +217,8 @@ docker run -d \
   -v /media:/media \
   -v /mnt/remote_share:/mnt/remote_share:ro \
   -v /mnt/nas_media:/mnt/nas_media:ro \
-  -v ./data:/app/data \
-  -v ./logs:/app/logs \
-  plexcache-ultra:latest
+  -v /mnt/user/appdata/plexcacheultra/config:/app/config \
+  sittingmongoose/plexcacheultra:dev
 ```
 
 ## 🌐 Web Dashboard
@@ -370,39 +229,39 @@ The web dashboard provides a comprehensive interface with three main tabs:
 - **Real-time Status**: Current system status and operations
 - **Statistics**: Files moved, cache usage, performance metrics
 - **Manual Control**: Trigger cache operations manually
-- **🆕 Test Mode Control**: Run test mode operations**
-- **🆕 Real-Time Watcher Control**: Start/stop Plex activity monitoring**
+- **🆕 Test Mode Control**: Run test mode operations
+- **🆕 Real-Time Watcher Control**: Start/stop Plex activity monitoring
 - **Scheduler Control**: Start/stop automatic scheduling
-- **🆕 Test Results Display**: Detailed test mode analysis**
-- **🆕 Watcher Status**: Real-time monitoring statistics and watch history**
+- **🆕 Test Results Display**: Detailed test mode analysis
+- **🆕 Watcher Status**: Real-time monitoring statistics and watch history
 
 ### Settings Tab
-- **🆕 Configuration Management**: View and modify all settings through web forms**
-- **🆕 Real-time Validation**: Validate paths, permissions, and Plex connections**
-- **🆕 Path Testing**: Check if directories exist and are accessible**
-- **🆕 Plex Connection Testing**: Verify Plex server connectivity and authentication**
-- **🆕 Real-Time Watcher Settings**: Configure Plex activity monitoring behavior**
-- **🆕 Settings Reset**: Restore default configuration values**
-- **🆕 Form-based Editing**: Easy-to-use forms for all configuration options**
+- **🆕 Configuration Management**: View and modify all settings through web forms
+- **🆕 Real-time Validation**: Validate paths, permissions, and Plex connections
+- **🆕 Path Testing**: Check if directories exist and are accessible
+- **🆕 Plex Connection Testing**: Verify Plex server connectivity and authentication
+- **🆕 Real-Time Watcher Settings**: Configure Plex activity monitoring behavior
+- **🆕 Settings Reset**: Restore default configuration values
+- **🆕 Form-based Editing**: Easy-to-use forms for all configuration options
 
 ### Logs Tab
 - **Live Logs**: Real-time application logs
 - **Configuration Display**: Current settings and path mappings
 - **Manual Operations**: Trigger cache operations on demand
-- **🆕 Test Mode Operations**: Preview operations without moving files**
+- **🆕 Test Mode Operations**: Preview operations without moving files
 - **Scheduler Management**: Control automatic execution
-- **🆕 Enhanced File Analysis**: View file sizes, totals, and operation previews**
+- **🆕 Enhanced File Analysis**: View file sizes, totals, and operation previews
 
 ## 🔄 How It Works
 
 ### 1. Media Discovery
 - **OnDeck Media**: Automatically detects what users are currently watching
 - **Watchlist Media**: Caches items from user watchlists
-- **🆕 Additional Sources**: Scans mounted shares and remote sources for matching media**
+- **🆕 Additional Sources**: Scans mounted shares and remote sources for matching media
 - **Smart Prediction**: Caches next episodes in TV series
 
 ### 2. Intelligent Caching
-- **🆕 Flexible Destinations**: Move media to custom cache locations**
+- **🆕 Flexible Destinations**: Move media to custom cache locations
 - **Cache Priority**: Moves frequently accessed media to fast cache drives
 - **Subtitle Support**: Automatically includes subtitle files
 - **Space Management**: Checks available space before operations
@@ -415,7 +274,7 @@ The web dashboard provides a comprehensive interface with three main tabs:
 
 ### 4. Monitoring & Control
 - **Web Interface**: Real-time dashboard and control
-- **🆕 Test Mode**: Preview operations with detailed analysis**
+- **🆕 Test Mode**: Preview operations with detailed analysis
 - **Scheduled Execution**: Automatic periodic operations
 - **Health Checks**: Docker health monitoring
 - **Notifications**: Status updates via webhooks
@@ -582,7 +441,24 @@ docker-compose logs -f
 docker logs -f plexcache-ultra
 
 # Direct file access
-tail -f logs/plexcache_ultra.log
+tail -f /mnt/user/appdata/plexcacheultra/config/logs/plexcache_ultra.log
+```
+
+## 📁 Project Structure
+
+```
+PlexCacheUltra/
+├── src/
+│   ├── config/          # Configuration management
+│   ├── core/            # Core application logic
+│   └── __init__.py
+├── main.py              # Main application entry point
+├── Dockerfile           # Docker container definition
+├── docker-compose.yml   # Docker Compose configuration
+├── requirements.txt     # Python dependencies
+├── env.example          # Environment variables template
+├── dashboard.html       # Web interface
+└── README.md           # This file
 ```
 
 ## 🤝 Contributing

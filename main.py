@@ -28,7 +28,7 @@ load_dotenv()
 # Configure logging
 def setup_logging(config: Config):
     """Setup logging configuration"""
-    log_dir = Path("/app/logs")
+    log_dir = Path("/app/config/logs")
     log_dir.mkdir(exist_ok=True)
     
     # Set log level
@@ -820,7 +820,7 @@ def api_watcher_clear_history():
 def api_logs():
     """Get recent logs"""
     try:
-        log_file = Path("/app/logs/plexcache_ultra.log")
+        log_file = Path("/app/config/logs/plexcache_ultra.log")
         if not log_file.exists():
             return jsonify({'logs': [], 'message': 'No log file found'})
         

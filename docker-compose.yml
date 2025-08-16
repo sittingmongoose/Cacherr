@@ -2,27 +2,28 @@ version: '3.8'
 
 services:
   plexcache-ultra:
-    build: .
-    container_name: plexcache-ultra
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    image: plexcache-ultra:unraid
+    container_name: plexcache-ultra-unraid
     restart: unless-stopped
     ports:
       - "5443:5443"
     environment:
+      # Plex Configuration
       - PLEX_URL=${PLEX_URL}
       - PLEX_TOKEN=${PLEX_TOKEN}
-      - CACHE_DIR=${CACHE_DIR:-/mnt/cache}
+      
+      # Unraid Path Configuration (defaults)
+      - CONFIG_DIR=${CONFIG_DIR:-/mnt/user/appdata/plexcacheultra/config}
       - REAL_SOURCE=${REAL_SOURCE:-/mnt/user}
       - PLEX_SOURCE=${PLEX_SOURCE:-/media}
-      - CACHE_DESTINATION=${CACHE_DESTINATION:-}
+      - CACHE_DESTINATION=${CACHE_DESTINATION:-/mnt/cache/media}
       - ADDITIONAL_SOURCES=${ADDITIONAL_SOURCES:-}
       - ADDITIONAL_PLEX_SOURCES=${ADDITIONAL_PLEX_SOURCES:-}
-      - LOG_LEVEL=${LOG_LEVEL:-INFO}
-      - WEBHOOK_URL=${WEBHOOK_URL:-}
-      - NOTIFICATION_TYPE=${NOTIFICATION_TYPE:-webhook}
-      - MAX_CONCURRENT_MOVES_CACHE=${MAX_CONCURRENT_MOVES_CACHE:-5}
-      - MAX_CONCURRENT_MOVES_ARRAY=${MAX_CONCURRENT_MOVES_ARRAY:-2}
-      - MAX_CONCURRENT_LOCAL_TRANSFERS=${MAX_CONCURRENT_LOCAL_TRANSFERS:-5}
-      - MAX_CONCURRENT_NETWORK_TRANSFERS=${MAX_CONCURRENT_NETWORK_TRANSFERS:-2}
+      
+      # Media Settings
       - NUMBER_EPISODES=${NUMBER_EPISODES:-5}
       - DAYS_TO_MONITOR=${DAYS_TO_MONITOR:-99}
       - WATCHLIST_TOGGLE=${WATCHLIST_TOGGLE:-true}
@@ -32,41 +33,93 @@ services:
       - WATCHED_CACHE_EXPIRY=${WATCHED_CACHE_EXPIRY:-48}
       - USERS_TOGGLE=${USERS_TOGGLE:-true}
       - EXIT_IF_ACTIVE_SESSION=${EXIT_IF_ACTIVE_SESSION:-false}
+      
+      # Cache Behavior (Unraid optimized)
       - COPY_TO_CACHE=${COPY_TO_CACHE:-false}
       - DELETE_FROM_CACHE_WHEN_DONE=${DELETE_FROM_CACHE_WHEN_DONE:-true}
       - USE_SYMLINKS_FOR_CACHE=${USE_SYMLINKS_FOR_CACHE:-true}
       - MOVE_WITH_SYMLINKS=${MOVE_WITH_SYMLINKS:-false}
-      - TEST_MODE=${TEST_MODE:-false}
-      - TEST_SHOW_FILE_SIZES=${TEST_SHOW_FILE_SIZES:-true}
-      - TEST_SHOW_TOTAL_SIZE=${TEST_SHOW_TOTAL_SIZE:-true}
-      - TEST_DRY_RUN=${TEST_DRY_RUN:-true}
+      
+      # Performance Settings (Unraid optimized)
+      - MAX_CONCURRENT_MOVES_CACHE=${MAX_CONCURRENT_MOVES_CACHE:-3}
+      - MAX_CONCURRENT_MOVES_ARRAY=${MAX_CONCURRENT_MOVES_ARRAY:-1}
+      - MAX_CONCURRENT_LOCAL_TRANSFERS=${MAX_CONCURRENT_LOCAL_TRANSFERS:-3}
+      - MAX_CONCURRENT_NETWORK_TRANSFERS=${MAX_CONCURRENT_NETWORK_TRANSFERS:-1}
+      
+      # Real-time Watching
       - REAL_TIME_WATCH_ENABLED=${REAL_TIME_WATCH_ENABLED:-false}
       - REAL_TIME_WATCH_CHECK_INTERVAL=${REAL_TIME_WATCH_CHECK_INTERVAL:-30}
       - REAL_TIME_WATCH_AUTO_CACHE_ON_WATCH=${REAL_TIME_WATCH_AUTO_CACHE_ON_WATCH:-true}
       - REAL_TIME_WATCH_CACHE_ON_COMPLETE=${REAL_TIME_WATCH_CACHE_ON_COMPLETE:-true}
       - REAL_TIME_WATCH_RESPECT_EXISTING_RULES=${REAL_TIME_WATCH_RESPECT_EXISTING_RULES:-true}
-      - REAL_TIME_WATCH_MAX_CONCURRENT_WATCHES=${REAL_TIME_WATCH_MAX_CONCURRENT_WATCHES:-10}
+      - REAL_TIME_WATCH_MAX_CONCURRENT_WATCHES=${REAL_TIME_WATCH_MAX_CONCURRENT_WATCHES:-5}
       - REAL_TIME_WATCH_REMOVE_FROM_CACHE_AFTER_HOURS=${REAL_TIME_WATCH_REMOVE_FROM_CACHE_AFTER_HOURS:-24}
       - REAL_TIME_WATCH_RESPECT_OTHER_USERS_WATCHLISTS=${REAL_TIME_WATCH_RESPECT_OTHER_USERS_WATCHLISTS:-true}
       - REAL_TIME_WATCH_EXCLUDE_INACTIVE_USERS_DAYS=${REAL_TIME_WATCH_EXCLUDE_INACTIVE_USERS_DAYS:-30}
+      
+      # Trakt.tv Integration
       - TRAKT_ENABLED=${TRAKT_ENABLED:-false}
       - TRAKT_CLIENT_ID=${TRAKT_CLIENT_ID:-}
       - TRAKT_CLIENT_SECRET=${TRAKT_CLIENT_SECRET:-}
       - TRAKT_TRENDING_MOVIES_COUNT=${TRAKT_TRENDING_MOVIES_COUNT:-10}
       - TRAKT_CHECK_INTERVAL=${TRAKT_CHECK_INTERVAL:-3600}
-      - WEB_PORT=${PORT:-5443}
+      
+      # Test Mode
+      - TEST_MODE=${TEST_MODE:-false}
+      - TEST_SHOW_FILE_SIZES=${TEST_SHOW_FILE_SIZES:-true}
+      - TEST_SHOW_TOTAL_SIZE=${TEST_SHOW_TOTAL_SIZE:-true}
+      - TEST_DRY_RUN=${TEST_DRY_RUN:-true}
+      
+      # Web Interface
       - PORT=${PORT:-5443}
-      - WEB_DEBUG=${DEBUG:-false}
+      - DEBUG=${DEBUG:-false}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - ENABLE_SCHEDULER=${ENABLE_SCHEDULER:-false}
+      
+      # Notifications
+      - WEBHOOK_URL=${WEBHOOK_URL:-}
+      - NOTIFICATION_TYPE=${NOTIFICATION_TYPE:-webhook}
+      
+      # Container Configuration
+      - TZ=${TZ:-UTC}
     volumes:
-      - ${CACHE_DIR:-/mnt/cache}:${CACHE_DIR:-/mnt/cache}:rw
+      # Unraid media paths (adjust these for your system)
+      - ${CACHE_DESTINATION:-/mnt/cache/media}:${CACHE_DESTINATION:-/mnt/cache/media}:rw
       - ${REAL_SOURCE:-/mnt/user}:${REAL_SOURCE:-/mnt/user}:rw
       - ${PLEX_SOURCE:-/media}:${PLEX_SOURCE:-/media}:ro
-      - ./data:/app/data:rw
-      - ./logs:/app/logs:rw
+      
+      # Application data (persistent)
+      - ${CONFIG_DIR:-/mnt/user/appdata/plexcacheultra/config}:/app/config:rw
     networks:
       - plexcache-network
+    security_opt:
+      - no-new-privileges:true
+    read_only: false
+    tmpfs:
+      - /tmp:noexec,nosuid,size=100m
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5443/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
 
 networks:
   plexcache-network:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
