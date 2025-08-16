@@ -366,27 +366,42 @@ def api_update_settings():
         if not data:
             return jsonify({'error': 'No data provided'}), 400
         
-        # Update environment variables
-        updated_vars = {}
+        # Filter out additional sources - these should only be configured via Docker environment variables
+        filtered_data = {}
         for key, value in data.items():
+            if key == 'paths':
+                # Only allow plex_source and cache_destination, not additional_sources
+                filtered_paths = {}
+                if 'plex_source' in value:
+                    filtered_paths['plex_source'] = value['plex_source']
+                if 'cache_destination' in value:
+                    filtered_paths['cache_destination'] = value['cache_destination']
+                if filtered_paths:
+                    filtered_data['paths'] = filtered_paths
+            else:
+                filtered_data[key] = value
+        
+        # Update persistent configuration
+        updated_vars = {}
+        for key, value in filtered_data.items():
             if hasattr(config, key) and hasattr(getattr(config, key), '__dict__'):
                 # Handle nested configuration objects
                 section = getattr(config, key)
                 for subkey, subvalue in value.items():
                     if hasattr(section, subkey):
-                        env_key = f"{key.upper()}_{subkey.upper()}"
-                        os.environ[env_key] = str(subvalue)
-                        updated_vars[env_key] = subvalue
+                        # Update persistent config instead of environment variables
+                        if config.update_persistent_config(key, subkey, subvalue):
+                            updated_vars[f"{key}.{subkey}"] = subvalue
             else:
                 # Handle top-level configuration
-                os.environ[key.upper()] = str(value)
-                updated_vars[key.upper()] = value
+                if config.update_persistent_config('general', key, value):
+                    updated_vars[key] = value
         
         # Reinitialize engine if Plex settings were updated
         global engine
-        if 'plex' in data and (data['plex'].get('url') or data['plex'].get('token')):
+        if 'plex' in filtered_data and (filtered_data['plex'].get('url') or filtered_data['plex'].get('token')):
             try:
-                # Reload config to get new environment variables
+                # Reload config to get new persistent configuration
                 config.reload()
                 # Try to reinitialize engine with new Plex credentials
                 engine = PlexCacheUltraEngine(config)
@@ -461,49 +476,7 @@ def api_validate_settings():
                     }
                     validation_results['warnings'].append(f"Cache destination directory does not exist: {cache_dest}")
             
-            # Check additional sources
-            if 'additional_sources' in paths and paths['additional_sources']:
-                additional_sources = paths['additional_sources']
-                validation_results['path_checks']['additional_sources'] = []
-                
-                for source in additional_sources:
-                    if os.path.exists(source):
-                        validation_results['path_checks']['additional_sources'].append({
-                            'exists': True,
-                            'readable': os.access(source, os.R_OK),
-                            'path': source
-                        })
-                    else:
-                        validation_results['path_checks']['additional_sources'].append({
-                            'exists': False,
-                            'readable': False,
-                            'path': source
-                        })
-                        validation_results['warnings'].append(f"Additional source directory does not exist: {source}")
-                
-                # Check additional plex sources
-                if 'additional_plex_sources' in paths and paths['additional_plex_sources']:
-                    additional_plex_sources = paths['additional_plex_sources']
-                    
-                    # Validate count matching
-                    if len(additional_sources) != len(additional_plex_sources):
-                        validation_results['errors'].append(f"Additional sources count mismatch: {len(additional_sources)} real sources vs {len(additional_plex_sources)} plex sources")
-                        validation_results['valid'] = False
-                    
-                    # Check for duplicate plex sources
-                    if len(set(additional_plex_sources)) != len(additional_plex_sources):
-                        validation_results['warnings'].append("Duplicate plex source paths detected in additional plex sources")
-                    
-                    validation_results['path_checks']['additional_plex_sources'] = []
-                    for plex_source in additional_plex_sources:
-                        validation_results['path_checks']['additional_plex_sources'].append({
-                            'exists': True,  # Plex sources are internal paths, so they "exist" by definition
-                            'readable': True,
-                            'path': plex_source
-                        })
-                else:
-                    if additional_sources:
-                        validation_results['warnings'].append("Additional sources specified but no additional plex sources provided")
+            # Note: Additional sources are validated from Docker environment variables, not web interface
         
         # Validate Plex connection
         if 'plex' in data:
@@ -578,7 +551,7 @@ def api_reset_settings():
             'TEST_MODE': 'false',
             'TEST_SHOW_FILE_SIZES': 'true',
             'TEST_SHOW_TOTAL_SIZE': 'true',
-            'TEST_DRY_RUN': 'true',
+    
             'DEBUG': 'false'
         }
         

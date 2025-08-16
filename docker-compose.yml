@@ -68,7 +68,6 @@ services:
       - TEST_MODE=${TEST_MODE:-false}
       - TEST_SHOW_FILE_SIZES=${TEST_SHOW_FILE_SIZES:-true}
       - TEST_SHOW_TOTAL_SIZE=${TEST_SHOW_TOTAL_SIZE:-true}
-      - TEST_DRY_RUN=${TEST_DRY_RUN:-true}
       
       # Web Interface
       - PORT=${PORT:-5443}

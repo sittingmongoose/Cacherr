@@ -1,4 +1,5 @@
 import os
+import json
 import logging
 from typing import List, Optional
 from dataclasses import dataclass
@@ -101,6 +102,9 @@ class Config:
         # Setup logger first
         self.logger = logging.getLogger(__name__)
         
+        # Load persistent config file path
+        self.config_file = Path("/config/plexcache_ultra_config.json")
+        
         self.logging = self._load_logging_config()
         self.plex = self._load_plex_config()
         self.cache = self._load_cache_config()
@@ -112,6 +116,63 @@ class Config:
         self.test_mode = self._load_test_mode_config()
         self.notifications = self._load_notification_config()
         self.performance = self._load_performance_config()
+
+    def _load_persistent_config(self) -> dict:
+        """Load persistent configuration from JSON file"""
+        try:
+            if self.config_file.exists():
+                with open(self.config_file, 'r') as f:
+                    return json.load(f)
+        except Exception as e:
+            self.logger.warning(f"Failed to load persistent config: {e}")
+        return {}
+
+    def _save_persistent_config(self, config_data: dict):
+        """Save configuration to JSON file"""
+        try:
+            # Ensure config directory exists
+            self.config_file.parent.mkdir(parents=True, exist_ok=True)
+            
+            with open(self.config_file, 'w') as f:
+                json.dump(config_data, f, indent=2)
+            
+            self.logger.info(f"Configuration saved to {self.config_file}")
+        except Exception as e:
+            self.logger.error(f"Failed to save persistent config: {e}")
+
+    def _get_setting_value(self, env_key: str, default: str, persistent_key: str = None) -> str:
+        """Get setting value with priority: environment variable > persistent config > default"""
+        # First try environment variable
+        env_value = os.getenv(env_key)
+        if env_value:
+            return env_value
+        
+        # Then try persistent config
+        if persistent_key:
+            persistent_config = self._load_persistent_config()
+            # Handle nested keys (e.g., 'plex_url' -> persistent_config['plex']['url'])
+            if '.' in persistent_key:
+                section, key = persistent_key.split('.', 1)
+                if section in persistent_config and key in persistent_config[section]:
+                    return str(persistent_config[section][key])
+            elif persistent_key in persistent_config:
+                return str(persistent_config[persistent_key])
+        
+        # Finally use default
+        return default
+
+    def _get_setting_bool(self, env_key: str, default: bool, persistent_key: str = None) -> bool:
+        """Get boolean setting value with priority: environment variable > persistent config > default"""
+        value = self._get_setting_value(env_key, str(default), persistent_key)
+        return value.lower() == 'true'
+
+    def _get_setting_int(self, env_key: str, default: int, persistent_key: str = None) -> int:
+        """Get integer setting value with priority: environment variable > persistent config > default"""
+        value = self._get_setting_value(env_key, str(default), persistent_key)
+        try:
+            return int(value)
+        except (ValueError, TypeError):
+            return default
 
     def _load_logging_config(self) -> LoggingConfig:
         def _to_int(value: str, default: int) -> int:
@@ -126,14 +187,11 @@ class Config:
         )
 
     def _load_plex_config(self) -> PlexConfig:
-        plex_url = os.getenv('PLEX_URL', '')
-        # Don't require PLEX_URL at startup - it can be configured via web interface
-        
         return PlexConfig(
-            url=plex_url,
-            token=os.getenv('PLEX_TOKEN', ''),
-            username=os.getenv('PLEX_USERNAME', ''),
-            password=os.getenv('PLEX_PASSWORD', '')
+            url=self._get_setting_value('PLEX_URL', '', 'plex.url'),
+            token=self._get_setting_value('PLEX_TOKEN', '', 'plex.token'),
+            username=self._get_setting_value('PLEX_USERNAME', '', 'plex.username'),
+            password=self._get_setting_value('PLEX_PASSWORD', '', 'plex.password')
         )
 
     def _load_cache_config(self) -> CacheConfig:
@@ -150,19 +208,19 @@ class Config:
             # For Docker, the main source is hardcoded to /mediasource
             source_paths.append('/mediasource')  # Hardcoded Docker volume mapping
             if os.getenv('ADDITIONAL_SOURCES'):
-                source_paths.extend([s.strip() for s in os.getenv('ADDITIONAL_SOURCES').split(',') if s.strip()])
+                source_paths.extend([s.strip() for s in os.getenv('ADDITIONAL_SOURCES').split() if s.strip()])
 
         # If no sources defined, use default
         if not source_paths:
             source_paths = ['/mediasource']  # Hardcoded Docker volume mapping
 
-        destination_path = legacy_dest if legacy_dest else os.getenv('CACHE_DESTINATION', '/cache')  # Hardcoded Docker volume mapping
-        test_mode = (legacy_test_mode.lower() == 'true') if legacy_test_mode else (os.getenv('TEST_MODE', 'false').lower() == 'true')
+        destination_path = legacy_dest if legacy_dest else self._get_setting_value('CACHE_DESTINATION', '/cache', 'cache.destination')
+        test_mode = (legacy_test_mode.lower() == 'true') if legacy_test_mode else self._get_setting_bool('TEST_MODE', False, 'test_mode.enabled')
 
         return CacheConfig(
             source_paths=source_paths,
             destination_path=destination_path,
-            max_cache_size_gb=int(os.getenv('CACHE_MAX_SIZE_GB', '100')),
+            max_cache_size_gb=self._get_setting_int('CACHE_MAX_SIZE_GB', 100, 'cache.max_cache_size_gb'),
             test_mode=test_mode
         )
 
@@ -240,12 +298,12 @@ class Config:
         # Clean up additional sources - remove empty strings
         additional_sources = []
         if os.getenv('ADDITIONAL_SOURCES'):
-            additional_sources = [s.strip() for s in os.getenv('ADDITIONAL_SOURCES').split(',') if s.strip()]
+            additional_sources = [s.strip() for s in os.getenv('ADDITIONAL_SOURCES').split() if s.strip()]
         
         # Clean up additional plex sources - remove empty strings
         additional_plex_sources = []
         if os.getenv('ADDITIONAL_PLEX_SOURCES'):
-            additional_plex_sources = [s.strip() for s in os.getenv('ADDITIONAL_PLEX_SOURCES').split(',') if s.strip()]
+            additional_plex_sources = [s.strip() for s in os.getenv('ADDITIONAL_PLEX_SOURCES').split() if s.strip()]
         
         return PathsConfig(
             plex_source=os.getenv('PLEX_SOURCE', '/media'),
@@ -260,7 +318,7 @@ class Config:
             enabled=enabled,
             show_file_sizes=os.getenv('TEST_SHOW_FILE_SIZES', 'true').lower() == 'true',
             show_total_size=os.getenv('TEST_SHOW_TOTAL_SIZE', 'true').lower() == 'true',
-            dry_run=os.getenv('TEST_DRY_RUN', 'true').lower() == 'true' if enabled else False
+            dry_run=True  # Test mode should always be safe - no file movement
         )
 
     def _load_performance_config(self) -> PerformanceConfig:
@@ -315,7 +373,7 @@ class Config:
             return False
 
     def reload(self):
-        """Reload configuration from environment variables"""
+        """Reload configuration from environment variables and persistent config"""
         self.plex = self._load_plex_config()
         self.cache = self._load_cache_config()
         self.real_time_watch = self._load_real_time_watch_config()
@@ -326,7 +384,48 @@ class Config:
         self.test_mode = self._load_test_mode_config()
         self.notifications = self._load_notification_config()
         self.performance = self._load_performance_config()
-        self.logger.info("Configuration reloaded from environment variables")
+        self.logger.info("Configuration reloaded from environment variables and persistent config")
+
+    def update_persistent_config(self, section: str, key: str, value):
+        """Update a setting in persistent configuration"""
+        try:
+            persistent_config = self._load_persistent_config()
+            
+            if section not in persistent_config:
+                persistent_config[section] = {}
+            
+            persistent_config[section][key] = value
+            
+            self._save_persistent_config(persistent_config)
+            
+            # Reload the specific section
+            if section == 'plex':
+                self.plex = self._load_plex_config()
+            elif section == 'cache':
+                self.cache = self._load_cache_config()
+            elif section == 'real_time_watch':
+                self.real_time_watch = self._load_real_time_watch_config()
+            elif section == 'trakt':
+                self.trakt = self._load_trakt_config()
+            elif section == 'web':
+                self.web = self._load_web_config()
+            elif section == 'media':
+                self.media = self._load_media_config()
+            elif section == 'paths':
+                self.paths = self._load_paths_config()
+            elif section == 'test_mode':
+                self.test_mode = self._load_test_mode_config()
+            elif section == 'notifications':
+                self.notifications = self._load_notification_config()
+            elif section == 'performance':
+                self.performance = self._load_performance_config()
+            
+            self.logger.info(f"Updated persistent config: {section}.{key} = {value}")
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"Failed to update persistent config: {e}")
+            return False
 
     def to_dict(self):
         """Convert configuration to dictionary for API responses"""
@@ -384,8 +483,8 @@ class Config:
             },
             'paths': {
                 'plex_source': self.paths.plex_source,
-                'cache_destination': self.paths.cache_destination,
-                'additional_sources': self.paths.additional_sources
+                'cache_destination': self.paths.cache_destination
+                # Note: additional_sources and additional_plex_sources are only configurable via Docker environment variables
             },
             'test_mode': {
                 'enabled': self.test_mode.enabled,

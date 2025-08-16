@@ -362,14 +362,13 @@
                         <input type="text" class="form-input" id="cache_destination" name="paths[cache_destination]" placeholder="/mnt/cache/media">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Additional Sources (Comma-separated):</label>
-                        <textarea class="form-textarea" id="additional_sources" name="paths[additional_sources]" placeholder="/mnt/remote_share,/mnt/nas_media"></textarea>
-                        <small class="form-help">Real filesystem paths where your additional media is stored</small>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Additional Plex Sources (Comma-separated):</label>
-                        <textarea class="form-textarea" id="additional_plex_sources" name="paths[additional_plex_sources]" placeholder="/media2,/media3"></textarea>
-                        <small class="form-help">Corresponding plex internal paths that Plex sees for these additional sources</small>
+                        <label class="form-label">Additional Sources:</label>
+                        <div class="info-box" style="background: #e7f3ff; border: 1px solid #b3d9ff; border-radius: 6px; padding: 15px; margin: 10px 0;">
+                            <p><strong>Note:</strong> Additional sources are configured via Docker environment variables only.</p>
+                            <p>Use <code>ADDITIONAL_SOURCES</code> and <code>ADDITIONAL_PLEX_SOURCES</code> in your docker-compose.yml or Unraid template.</p>
+                            <p>Values should be <strong>space-separated</strong>, not comma-separated.</p>
+                            <p><strong>Example:</strong> <code>ADDITIONAL_SOURCES=/mediasource2 /mediasource3 /mediasource4</code></p>
+                        </div>
                     </div>
                     
                     <h4>Media Settings</h4>
@@ -496,10 +495,7 @@
                         </label>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">
-                            <input type="checkbox" class="form-checkbox" id="test_dry_run" name="test_mode[dry_run]" checked>
-                            Dry Run in Test Mode
-                        </label>
+                        <small style="color: #28a745; font-style: italic;">✅ Test mode is always safe - files are never moved during testing</small>
                     </div>
                     
                     <h3>Real-Time Plex Watching</h3>
@@ -717,8 +713,7 @@
                     
                     document.getElementById('plex_source').value = data.paths?.plex_source || '';
                     document.getElementById('cache_destination').value = data.paths?.cache_destination || '';
-                    document.getElementById('additional_sources').value = Array.isArray(data.paths?.additional_sources) ? data.paths.additional_sources.join(', ') : '';
-                    document.getElementById('additional_plex_sources').value = Array.isArray(data.paths?.additional_plex_sources) ? data.paths.additional_plex_sources.join(', ') : '';
+
                     
                     document.getElementById('number_episodes').value = data.media?.number_episodes || 5;
                     document.getElementById('days_to_monitor').value = data.media?.days_to_monitor || 99;
@@ -742,7 +737,7 @@
                     document.getElementById('test_mode').checked = data.test_mode?.enabled || false;
                     document.getElementById('test_show_file_sizes').checked = data.test_mode?.show_file_sizes || false;
                     document.getElementById('test_show_total_size').checked = data.test_mode?.show_total_size || false;
-                    document.getElementById('test_dry_run').checked = data.test_mode?.dry_run || false;
+            
                     
                     document.getElementById('real_time_watch_enabled').checked = data.real_time_watch?.enabled || false;
                     document.getElementById('real_time_watch_check_interval').value = data.real_time_watch?.check_interval || 30;
@@ -821,15 +816,7 @@
                 }
             }
             
-            // Handle special cases for comma-separated values
-            if (formData.get('paths[additional_sources]')) {
-                if (!settings.paths) settings.paths = {};
-                settings.paths.additional_sources = formData.get('paths[additional_sources]').split(',').map(s => s.trim()).filter(s => s);
-            }
-            if (formData.get('paths[additional_plex_sources]')) {
-                if (!settings.paths) settings.paths = {};
-                settings.paths.additional_plex_sources = formData.get('paths[additional_plex_sources]').split(',').map(s => s.trim()).filter(s => s);
-            }
+
             
             // Handle performance settings with proper nesting
             if (formData.get('performance[max_concurrent_moves_cache]')) {
@@ -918,14 +905,7 @@
             }
             
             // Handle special cases for comma-separated values
-            if (formData.get('paths[additional_sources]')) {
-                if (!settings.paths) settings.paths = {};
-                settings.paths.additional_sources = formData.get('paths[additional_sources]').split(',').map(s => s.trim()).filter(s => s);
-            }
-            if (formData.get('paths[additional_plex_sources]')) {
-                if (!settings.paths) settings.paths = {};
-                settings.paths.additional_plex_sources = formData.get('paths[additional_plex_sources]').split(',').map(s => s.trim()).filter(s => s);
-            }
+
             
             fetch('/api/settings/validate', {
                 method: 'POST',

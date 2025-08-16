@@ -111,6 +111,19 @@ Open your browser and navigate to: `http://your-server:5443`
 
 ## 🔧 Configuration
 
+### Recent Changes & Updates
+
+**Configuration Persistence (v2.1.1)**
+- **Persistent Settings**: Web-configured settings are now automatically saved to a JSON file (`/config/plexcache_ultra_config.json`) and persist across container restarts
+- **Environment Variable Priority**: Docker environment variables take precedence over web-configured settings, ensuring Docker/Unraid template configurations are always respected
+- **Additional Sources**: `ADDITIONAL_SOURCES` and `ADDITIONAL_PLEX_SOURCES` are now **only configurable via Docker environment variables** and are no longer editable in the web GUI
+- **Space-Separated Values**: Environment variables now correctly use space-separated values (e.g., `/mediasource2 /mediasource3`) instead of comma-separated values
+
+**Configuration Loading Priority:**
+1. **Docker Environment Variables** (highest priority)
+2. **Persistent Configuration File** (web-configured settings)
+3. **Default Values** (lowest priority)
+
 ### Environment Variables
 
 | Variable | Description | Default |
@@ -140,7 +153,7 @@ Open your browser and navigate to: `http://your-server:5443`
 | `TEST_MODE` | Enable test mode | `false` |
 | `TEST_SHOW_FILE_SIZES` | Show individual file sizes in test mode | `true` |
 | `TEST_SHOW_TOTAL_SIZE` | Show total size in test mode | `true` |
-| `TEST_DRY_RUN` | Don't move files in test mode | `true` |
+| *Test mode is always safe* | Files are never moved during testing | *Built-in safety* |
 | `REAL_TIME_WATCH_ENABLED` | Enable real-time Plex watching | `false` |
 | `REAL_TIME_WATCH_CHECK_INTERVAL` | Check interval for Plex activity (seconds) | `30` |
 | `REAL_TIME_WATCH_AUTO_CACHE_ON_WATCH` | Auto-cache media when watching starts | `true` |
@@ -245,6 +258,11 @@ For Unraid users, the container is now optimized with safe defaults. Simply:
 
 **No environment variables needed** - Safe defaults are built-in and won't interfere with Plex!
 
+**Configuration Persistence:**
+- Web-configured settings are automatically saved to `/mnt/user/appdata/plexcacheultra/config/plexcache_ultra_config.json`
+- Settings persist across container restarts and updates
+- Docker environment variables always take precedence over web-configured settings
+
 ### 🐳 Unraid-Specific Setup
 
 #### Quick Start (Zero Configuration)
@@ -307,6 +325,15 @@ The web dashboard provides a comprehensive interface with three main tabs:
 ## 🚨 Troubleshooting
 
 ### Common Issues & Solutions
+
+#### Configuration Persistence Issues
+**Problem:** Settings reset when container restarts or updates
+
+**Solution:** 
+- Web-configured settings are now automatically saved to `/config/plexcache_ultra_config.json`
+- Ensure the `/config` volume is properly mounted and persistent
+- Docker environment variables take precedence over web-configured settings
+- Check the configuration file exists: `docker exec plexcache-ultra ls -la /config/`
 
 #### Permission Denied Errors
 **Problem:** `ERROR:root:Failed to start PlexCacheUltra: [Errno 13] Permission denied: '/config/logs'`
@@ -483,9 +510,8 @@ DEBUG=true docker-compose up -d
 Use test mode to safely analyze operations:
 
 ```bash
-# Enable test mode for safe analysis
+# Enable test mode for safe analysis (always safe)
 TEST_MODE=true
-TEST_DRY_RUN=true
 
 # Check test results in web dashboard
 # View detailed file analysis without moving files
@@ -541,6 +567,10 @@ PlexCacheUltra/
 ├── env.example          # Environment variables template
 ├── dashboard.html       # Web interface
 └── README.md           # This file
+
+**Runtime Files (created automatically):**
+├── /config/plexcache_ultra_config.json  # Persistent web-configured settings
+└── /config/logs/                        # Application logs
 ```
 
 ## 🤝 Contributing

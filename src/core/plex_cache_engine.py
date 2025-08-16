@@ -295,8 +295,9 @@ class PlexCacheUltraEngine:
             operation = "copy"
         else:
             operation = "move"
+        # Test mode is always safe - files are never moved
         if self.config.test_mode.dry_run:
-            self.logger.info(f"DRY RUN: Would {operation} {moved_count} files to cache ({total_size} bytes)")
+            self.logger.info(f"TEST MODE: Would {operation} {moved_count} files to cache ({total_size} bytes)")
         else:
             self.logger.info(f"{operation.capitalize()}d {moved_count} files to cache ({total_size} bytes)")
     
@@ -339,8 +340,9 @@ class PlexCacheUltraEngine:
         self.stats.files_moved_to_array = moved_count
         self.stats.total_size_moved += total_size
         
+        # Test mode is always safe - files are never moved
         if self.config.test_mode.dry_run:
-            self.logger.info(f"DRY RUN: Would {operation} {moved_count} files from cache ({total_size} bytes)")
+            self.logger.info(f"TEST MODE: Would {operation} {moved_count} files from cache ({total_size} bytes)")
         else:
             self.logger.info(f"{operation.capitalize()}d {moved_count} files from cache ({total_size} bytes)")
     
