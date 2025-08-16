@@ -344,83 +344,76 @@
                     <h4>Plex Configuration</h4>
                     <div class="form-group">
                         <label class="form-label">Plex URL:</label>
-                        <input type="text" class="form-input" id="plex_url" name="plex_url" placeholder="https://plex.yourdomain.com">
+                        <input type="text" class="form-input" id="plex_url" name="plex[url]" placeholder="https://plex.yourdomain.com">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Plex Token:</label>
-                        <input type="password" class="form-input" id="plex_token" name="plex_token" placeholder="your_plex_token">
+                        <input type="password" class="form-input" id="plex_token" name="plex[token]" placeholder="your_plex_token">
                     </div>
                     
                     <h4>Path Configuration</h4>
-                    <div class="form-group">
-                        <label class="form-label">Cache Directory:</label>
-                        <input type="text" class="form-input" id="cache_dir" name="cache_dir" placeholder="/mnt/cache">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Real Source:</label>
-                        <input type="text" class="form-input" id="real_source" name="real_source" placeholder="/mnt/user">
-                    </div>
+
                     <div class="form-group">
                         <label class="form-label">Plex Source:</label>
-                        <input type="text" class="form-input" id="plex_source" name="plex_source" placeholder="/media">
+                        <input type="text" class="form-input" id="plex_source" name="paths[plex_source]" placeholder="/media">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Cache Destination (Optional):</label>
-                        <input type="text" class="form-input" id="cache_destination" name="cache_destination" placeholder="/mnt/cache/media">
+                        <input type="text" class="form-input" id="cache_destination" name="paths[cache_destination]" placeholder="/mnt/cache/media">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Additional Sources (Comma-separated):</label>
-                        <textarea class="form-textarea" id="additional_sources" name="additional_sources" placeholder="/mnt/remote_share,/mnt/nas_media"></textarea>
+                        <textarea class="form-textarea" id="additional_sources" name="paths[additional_sources]" placeholder="/mnt/remote_share,/mnt/nas_media"></textarea>
                         <small class="form-help">Real filesystem paths where your additional media is stored</small>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Additional Plex Sources (Comma-separated):</label>
-                        <textarea class="form-textarea" id="additional_plex_sources" name="additional_plex_sources" placeholder="/media2,/media3"></textarea>
+                        <textarea class="form-textarea" id="additional_plex_sources" name="paths[additional_plex_sources]" placeholder="/media2,/media3"></textarea>
                         <small class="form-help">Corresponding plex internal paths that Plex sees for these additional sources</small>
                     </div>
                     
                     <h4>Media Settings</h4>
                     <div class="form-group">
                         <label class="form-label">Number of Episodes:</label>
-                        <input type="number" class="form-input" id="number_episodes" name="number_episodes" value="5">
+                        <input type="number" class="form-input" id="number_episodes" name="media[number_episodes]" value="5">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Days to Monitor:</label>
-                        <input type="number" class="form-input" id="days_to_monitor" name="days_to_monitor" value="99">
+                        <input type="number" class="form-input" id="days_to_monitor" name="media[days_to_monitor]" value="99">
                     </div>
                     <div class="form-group">
                         <label class="form-label">
-                            <input type="checkbox" class="form-checkbox" id="watchlist_toggle" name="watchlist_toggle" checked>
+                            <input type="checkbox" class="form-checkbox" id="watchlist_toggle" name="media[watchlist_toggle]" checked>
                             Enable Watchlist Caching
                         </label>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Watchlist Episodes:</label>
-                        <input type="number" class="form-input" id="watchlist_episodes" name="watchlist_episodes" value="1">
+                        <input type="number" class="form-input" id="watchlist_episodes" name="media[watchlist_episodes]" value="1">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Watchlist Cache Expiry (hours):</label>
-                        <input type="number" class="form-input" id="watchlist_cache_expiry" name="watchlist_cache_expiry" value="6">
+                        <input type="number" class="form-input" id="watchlist_cache_expiry" name="media[watchlist_cache_expiry]" value="6">
                     </div>
                     <div class="form-group">
                         <label class="form-label">
-                            <input type="checkbox" class="form-checkbox" id="watched_move" name="watched_move" checked>
+                            <input type="checkbox" class="form-checkbox" id="watched_move" name="media[watched_move]" checked>
                             Move Watched Content to Array
                         </label>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Watched Cache Expiry (hours):</label>
-                        <input type="number" class="form-input" id="watched_cache_expiry" name="watched_cache_expiry" value="48">
+                        <input type="number" class="form-input" id="watched_cache_expiry" name="media[watched_cache_expiry]" value="48">
                     </div>
                     <div class="form-group">
                         <label class="form-label">
-                            <input type="checkbox" class="form-checkbox" id="users_toggle" name="users_toggle" checked>
+                            <input type="checkbox" class="form-checkbox" id="users_toggle" name="media[users_toggle]" checked>
                             Enable Multi-User Support
                         </label>
                     </div>
                     <div class="form-group">
                         <label class="form-label">
-                            <input type="checkbox" class="form-checkbox" id="exit_if_active_session" name="exit_if_active_session">
+                            <input type="checkbox" class="form-checkbox" id="exit_if_active_session" name="media[exit_if_active_session]">
                             Exit on Active Plex Sessions
                         </label>
                     </div>
@@ -428,28 +421,28 @@
                     <h4>🆕 Copy vs Move Behavior</h4>
                     <div class="form-group">
                         <label class="form-label">
-                            <input type="checkbox" class="form-checkbox" id="copy_to_cache" name="copy_to_cache">
+                            <input type="checkbox" class="form-checkbox" id="copy_to_cache" name="media[copy_to_cache]">
                             Copy to Cache (instead of moving)
                         </label>
                         <small class="form-help">When enabled, files are copied to cache, preserving originals in source locations</small>
                     </div>
                     <div class="form-group">
                         <label class="form-label">
-                            <input type="checkbox" class="form-checkbox" id="delete_from_cache_when_done" name="delete_from_cache_when_done" checked>
+                            <input type="checkbox" class="form-checkbox" id="delete_from_cache_when_done" name="media[delete_from_cache_when_done]" checked>
                             Delete from Cache When Done
                         </label>
                         <small class="form-help">When copy mode is enabled, delete files from cache instead of moving them back</small>
                     </div>
                     <div class="form-group">
                         <label class="form-label">
-                            <input type="checkbox" class="form-checkbox" id="use_symlinks_for_cache" name="use_symlinks_for_cache" checked>
+                            <input type="checkbox" class="form-checkbox" id="use_symlinks_for_cache" name="media[use_symlinks_for_cache]" checked>
                             Use Symlinks for Cache
                         </label>
                         <small class="form-help">Create symlinks so Plex automatically uses cached files</small>
                     </div>
                     <div class="form-group">
                         <label class="form-label">
-                            <input type="checkbox" class="form-checkbox" id="move_with_symlinks" name="move_with_symlinks">
+                            <input type="checkbox" class="form-checkbox" id="move_with_symlinks" name="media[move_with_symlinks]">
                             🆕 Move + Symlink Mode (Hybrid)
                         </label>
                         <small class="form-help">Move files to cache and create symlinks back - frees source space while keeping Plex happy</small>
@@ -461,22 +454,22 @@
                     <h4>Performance Settings</h4>
                     <div class="form-group">
                         <label class="form-label">Max Concurrent Moves to Cache:</label>
-                        <input type="number" class="form-input" id="max_concurrent_moves_cache" name="max_concurrent_moves_cache" value="5">
+                        <input type="number" class="form-input" id="max_concurrent_moves_cache" name="performance[max_concurrent_moves_cache]" value="5">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Max Concurrent Moves to Array:</label>
-                        <input type="number" class="form-input" id="max_concurrent_moves_array" name="max_concurrent_moves_array" value="2">
+                        <input type="number" class="form-input" id="max_concurrent_moves_array" name="performance[max_concurrent_moves_array]" value="2">
                     </div>
                     
                     <h5>🆕 Per-Source Concurrency Control</h5>
                     <div class="form-group">
                         <label class="form-label">Max Concurrent Local Transfers (Server):</label>
-                        <input type="number" class="form-input" id="max_concurrent_local_transfers" name="max_concurrent_local_transfers" value="5" min="1" max="10">
+                        <input type="number" class="form-input" id="max_concurrent_local_transfers" name="performance[max_concurrent_local_transfers]" value="5" min="1" max="10">
                         <small class="form-help">Higher values for fast local server transfers (SSD/HDD)</small>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Max Concurrent Network Transfers (NAS):</label>
-                        <input type="number" class="form-input" id="max_concurrent_network_transfers" name="max_concurrent_network_transfers" value="2" min="1" max="5">
+                        <input type="number" class="form-input" id="max_concurrent_network_transfers" name="performance[max_concurrent_network_transfers]" value="2" min="1" max="5">
                         <small class="form-help">Lower values for network/NAS transfers to avoid congestion</small>
                     </div>
                     <div class="form-group">
@@ -486,25 +479,25 @@
                     <h4>Test Mode Settings</h4>
                     <div class="form-group">
                         <label class="form-label">
-                            <input type="checkbox" class="form-checkbox" id="test_mode" name="test_mode">
+                            <input type="checkbox" class="form-checkbox" id="test_mode" name="test_mode[enabled]">
                             Enable Test Mode
                         </label>
                     </div>
                     <div class="form-group">
                         <label class="form-label">
-                            <input type="checkbox" class="form-checkbox" id="test_show_file_sizes" name="test_show_file_sizes" checked>
+                            <input type="checkbox" class="form-checkbox" id="test_show_file_sizes" name="test_mode[show_file_sizes]" checked>
                             Show File Sizes in Test Mode
                         </label>
                     </div>
                     <div class="form-group">
                         <label class="form-label">
-                            <input type="checkbox" class="form-checkbox" id="test_show_total_size" name="test_show_total_size" checked>
+                            <input type="checkbox" class="form-checkbox" id="test_show_total_size" name="test_mode[show_total_size]" checked>
                             Show Total Size in Test Mode
                         </label>
                     </div>
                     <div class="form-group">
                         <label class="form-label">
-                            <input type="checkbox" class="form-checkbox" id="test_dry_run" name="test_dry_run" checked>
+                            <input type="checkbox" class="form-checkbox" id="test_dry_run" name="test_mode[dry_run]" checked>
                             Dry Run in Test Mode
                         </label>
                     </div>
@@ -512,41 +505,41 @@
                     <h3>Real-Time Plex Watching</h3>
                     <div class="form-group">
                         <label for="real_time_watch_enabled">Enable Real-Time Watching:</label>
-                        <input type="checkbox" id="real_time_watch_enabled" name="real_time_watch_enabled">
+                        <input type="checkbox" id="real_time_watch_enabled" name="real_time_watch[enabled]">
                     </div>
                     <div class="form-group">
                         <label for="real_time_watch_check_interval">Check Interval (seconds):</label>
-                        <input type="number" id="real_time_watch_check_interval" name="real_time_watch_check_interval" min="10" max="300">
+                        <input type="number" id="real_time_watch_check_interval" name="real_time_watch[check_interval]" min="10" max="300">
                     </div>
                     <div class="form-group">
                         <label for="real_time_watch_auto_cache_on_watch">Auto-Cache on Watch Start:</label>
-                        <input type="checkbox" id="real_time_watch_auto_cache_on_watch" name="real_time_watch_auto_cache_on_watch">
+                        <input type="checkbox" id="real_time_watch_auto_cache_on_watch" name="real_time_watch[auto_cache_on_watch]">
                     </div>
                     <div class="form-group">
                         <label for="real_time_watch_cache_on_complete">Cache on Watch Complete:</label>
-                        <input type="checkbox" id="real_time_watch_cache_on_complete" name="real_time_watch_cache_on_complete">
+                        <input type="checkbox" id="real_time_watch_cache_on_complete" name="real_time_watch[cache_on_complete]">
                     </div>
                     <div class="form-group">
                         <label for="real_time_watch_respect_existing_rules">Respect Existing Rules:</label>
-                        <input type="checkbox" id="real_time_watch_respect_existing_rules" name="real_time_watch_respect_existing_rules">
+                        <input type="checkbox" id="real_time_watch_respect_existing_rules" name="real_time_watch[respect_existing_rules]">
                     </div>
                     <div class="form-group">
                         <label for="real_time_watch_max_concurrent_watches">Max Concurrent Watches:</label>
-                        <input type="number" id="real_time_watch_max_concurrent_watches" name="real_time_watch_max_concurrent_watches" min="1" max="50">
+                        <input type="number" id="real_time_watch_max_concurrent_watches" name="real_time_watch[max_concurrent_watches]" min="1" max="50">
                     </div>
                     <div class="form-group">
                         <label for="real_time_watch_remove_from_cache_after_hours">Remove from Cache After (hours):</label>
-                        <input type="number" id="real_time_watch_remove_from_cache_after_hours" name="real_time_watch_remove_from_cache_after_hours" min="0" max="720">
+                        <input type="number" id="real_time_watch_remove_from_cache_after_hours" name="real_time_watch[remove_from_cache_after_hours]" min="0" max="720">
                         <small>0 = never remove automatically</small>
                     </div>
                     <div class="form-group">
                         <label for="real_time_watch_respect_other_users_watchlists">Respect Other Users' Watchlists:</label>
-                        <input type="checkbox" id="real_time_watch_respect_other_users_watchlists" name="real_time_watch_respect_other_users_watchlists">
+                        <input type="checkbox" id="real_time_watch_respect_other_users_watchlists" name="real_time_watch[respect_other_users_watchlists]">
                         <small>Keep media in cache if other users have it in their watchlists</small>
                     </div>
                     <div class="form-group">
                         <label for="real_time_watch_exclude_inactive_users_days">Exclude Inactive Users (Days)</label>
-                        <input type="number" id="real_time_watch_exclude_inactive_users_days" class="form-control" min="1" max="365">
+                        <input type="number" id="real_time_watch_exclude_inactive_users_days" name="real_time_watch[exclude_inactive_users_days]" class="form-control" min="1" max="365">
                         <small class="form-text text-muted">Users inactive for this many days will be excluded from caching considerations</small>
                     </div>
                     
@@ -555,27 +548,27 @@
                         <h4>Trakt.tv Integration</h4>
                         <div class="form-group">
                             <label for="trakt_enabled">Enable Trakt.tv Integration</label>
-                            <input type="checkbox" id="trakt_enabled" class="form-check-input">
+                            <input type="checkbox" id="trakt_enabled" name="trakt[enabled]" class="form-checkbox">
                             <small class="form-text text-muted">Enable automatic caching of trending movies from Trakt.tv</small>
                         </div>
                         <div class="form-group">
                             <label for="trakt_client_id">Trakt Client ID</label>
-                            <input type="text" id="trakt_client_id" class="form-control">
+                            <input type="text" id="trakt_client_id" name="trakt[client_id]" class="form-input">
                             <small class="form-text text-muted">Your Trakt.tv API client ID</small>
                         </div>
                         <div class="form-group">
                             <label for="trakt_client_secret">Trakt Client Secret</label>
-                            <input type="password" id="trakt_client_secret" class="form-control">
+                            <input type="password" id="trakt_client_secret" name="trakt[client_secret]" class="form-input">
                             <small class="form-text text-muted">Your Trakt.tv API client secret</small>
                         </div>
                         <div class="form-group">
                             <label for="trakt_trending_movies_count">Trending Movies Count</label>
-                            <input type="number" id="trakt_trending_movies_count" class="form-control" min="1" max="50">
+                            <input type="number" id="trakt_trending_movies_count" name="trakt[trending_movies_count]" class="form-input" min="1" max="50">
                             <small class="form-text text-muted">Number of trending movies to include for caching</small>
                         </div>
                         <div class="form-group">
                             <label for="trakt_check_interval">Check Interval (Seconds)</label>
-                            <input type="number" id="trakt_check_interval" class="form-control" min="60" max="86400">
+                            <input type="number" id="trakt_check_interval" name="trakt[check_interval]" class="form-input" min="60" max="86400">
                             <small class="form-text text-muted">How often to check for new trending movies</small>
                         </div>
                     </div>
@@ -584,7 +577,7 @@
                     <h4>Other Settings</h4>
                     <div class="form-group">
                         <label class="form-label">Log Level:</label>
-                        <select class="form-select" id="log_level" name="log_level">
+                        <select class="form-select" id="log_level" name="logging[level]">
                             <option value="DEBUG">DEBUG</option>
                             <option value="INFO" selected>INFO</option>
                             <option value="WARNING">WARNING</option>
@@ -721,8 +714,7 @@
                     // Populate form fields
                     document.getElementById('plex_url').value = data.plex?.url || '';
                     document.getElementById('plex_token').value = data.plex?.token || '';
-                    document.getElementById('cache_dir').value = data.paths?.cache_dir || '';
-                    document.getElementById('real_source').value = data.paths?.real_source || '';
+                    
                     document.getElementById('plex_source').value = data.paths?.plex_source || '';
                     document.getElementById('cache_destination').value = data.paths?.cache_destination || '';
                     document.getElementById('additional_sources').value = Array.isArray(data.paths?.additional_sources) ? data.paths.additional_sources.join(', ') : '';
@@ -781,9 +773,34 @@
             const formData = new FormData(document.getElementById('settingsForm'));
             const settings = {};
             
+            // Debug: Log all form data entries
+            console.log('Form data entries:');
+            for (const [key, value] of formData.entries()) {
+                console.log(`${key}: ${value}`);
+            }
+            
             // Convert form data to settings object
             for (const [key, value] of formData.entries()) {
-                if (key.includes('_')) {
+                // Handle bracket notation (e.g., plex[url] -> plex.url)
+                if (key.includes('[') && key.includes(']')) {
+                    const match = key.match(/^([^\[]+)\[([^\]]+)\]$/);
+                    if (match) {
+                        const section = match[1];
+                        const setting = match[2];
+                        
+                        if (!settings[section]) {
+                            settings[section] = {};
+                        }
+                        
+                        if (value === 'on') {
+                            settings[section][setting] = true;
+                        } else if (value === 'off') {
+                            settings[section][setting] = false;
+                        } else {
+                            settings[section][setting] = value;
+                        }
+                    }
+                } else if (key.includes('_')) {
                     const parts = key.split('_');
                     const section = parts[0];
                     const setting = parts.slice(1).join('_');
@@ -804,31 +821,36 @@
                 }
             }
             
-            // Handle special cases
-            if (formData.get('additional_sources')) {
-                settings.paths.additional_sources = formData.get('additional_sources').split(',').map(s => s.trim()).filter(s => s);
+            // Handle special cases for comma-separated values
+            if (formData.get('paths[additional_sources]')) {
+                if (!settings.paths) settings.paths = {};
+                settings.paths.additional_sources = formData.get('paths[additional_sources]').split(',').map(s => s.trim()).filter(s => s);
             }
-            if (formData.get('additional_plex_sources')) {
-                settings.paths.additional_plex_sources = formData.get('additional_plex_sources').split(',').map(s => s.trim()).filter(s => s);
+            if (formData.get('paths[additional_plex_sources]')) {
+                if (!settings.paths) settings.paths = {};
+                settings.paths.additional_plex_sources = formData.get('paths[additional_plex_sources]').split(',').map(s => s.trim()).filter(s => s);
             }
             
             // Handle performance settings with proper nesting
-            if (formData.get('max_concurrent_moves_cache')) {
+            if (formData.get('performance[max_concurrent_moves_cache]')) {
                 if (!settings.performance) settings.performance = {};
-                settings.performance.max_concurrent_moves_cache = parseInt(formData.get('max_concurrent_moves_cache'));
+                settings.performance.max_concurrent_moves_cache = parseInt(formData.get('performance[max_concurrent_moves_cache]'));
             }
-            if (formData.get('max_concurrent_moves_array')) {
+            if (formData.get('performance[max_concurrent_moves_array]')) {
                 if (!settings.performance) settings.performance = {};
-                settings.performance.max_concurrent_moves_array = parseInt(formData.get('max_concurrent_moves_array'));
+                settings.performance.max_concurrent_moves_array = parseInt(formData.get('performance[max_concurrent_moves_array]'));
             }
-            if (formData.get('max_concurrent_local_transfers')) {
+            if (formData.get('performance[max_concurrent_local_transfers]')) {
                 if (!settings.performance) settings.performance = {};
-                settings.performance.max_concurrent_local_transfers = parseInt(formData.get('max_concurrent_local_transfers'));
+                settings.performance.max_concurrent_local_transfers = parseInt(formData.get('performance[max_concurrent_local_transfers]'));
             }
-            if (formData.get('max_concurrent_network_transfers')) {
+            if (formData.get('performance[max_concurrent_network_transfers]')) {
                 if (!settings.performance) settings.performance = {};
-                settings.performance.max_concurrent_network_transfers = parseInt(formData.get('max_concurrent_network_transfers'));
+                settings.performance.max_concurrent_network_transfers = parseInt(formData.get('performance[max_concurrent_network_transfers]'));
             }
+            
+            // Debug: Log the settings object being sent
+            console.log('Settings being sent:', settings);
             
             fetch('/api/settings', {
                 method: 'POST',
@@ -855,7 +877,26 @@
             
             // Convert form data to settings object
             for (const [key, value] of formData.entries()) {
-                if (key.includes('_')) {
+                // Handle bracket notation (e.g., plex[url] -> plex.url)
+                if (key.includes('[') && key.includes(']')) {
+                    const match = key.match(/^([^\[]+)\[([^\]]+)\]$/);
+                    if (match) {
+                        const section = match[1];
+                        const setting = match[2];
+                        
+                        if (!settings[section]) {
+                            settings[section] = {};
+                        }
+                        
+                        if (value === 'on') {
+                            settings[section][setting] = true;
+                        } else if (value === 'off') {
+                            settings[section][setting] = false;
+                        } else {
+                            settings[section][setting] = value;
+                        }
+                    }
+                } else if (key.includes('_')) {
                     const parts = key.split('_');
                     const section = parts[0];
                     const setting = parts.slice(1).join('_');
@@ -876,12 +917,14 @@
                 }
             }
             
-            // Handle special cases
-            if (formData.get('additional_sources')) {
-                settings.paths.additional_sources = formData.get('additional_sources').split(',').map(s => s.trim()).filter(s => s);
+            // Handle special cases for comma-separated values
+            if (formData.get('paths[additional_sources]')) {
+                if (!settings.paths) settings.paths = {};
+                settings.paths.additional_sources = formData.get('paths[additional_sources]').split(',').map(s => s.trim()).filter(s => s);
             }
-            if (formData.get('additional_plex_sources')) {
-                settings.paths.additional_plex_sources = formData.get('additional_plex_sources').split(',').map(s => s.trim()).filter(s => s);
+            if (formData.get('paths[additional_plex_sources]')) {
+                if (!settings.paths) settings.paths = {};
+                settings.paths.additional_plex_sources = formData.get('paths[additional_plex_sources]').split(',').map(s => s.trim()).filter(s => s);
             }
             
             fetch('/api/settings/validate', {
@@ -998,14 +1041,21 @@
         
         function runTestMode() {
             fetch('/api/run', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ test_mode: true }) })
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(errorData => {
+                            throw new Error(errorData.error || 'HTTP error ' + response.status);
+                        });
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     alert(data.message);
                     setTimeout(updateStatus, 1000);
                 })
                 .catch(error => {
                     console.error('Error running test mode:', error);
-                    alert('Error running test mode');
+                    alert('Error running test mode: ' + error.message);
                 });
         }
         

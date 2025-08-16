@@ -13,6 +13,7 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     tzdata \
     procps \
+    gosu \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
@@ -33,23 +34,30 @@ RUN pip install --no-cache-dir --upgrade pip && \
 COPY src/ ./src/
 COPY main.py .
 COPY dashboard.html .
+COPY entrypoint.sh .
 
 # Create necessary directories with proper ownership
 RUN mkdir -p /config/logs /config/data /cache && \
-    chown -R plexcache:plexcache /app
+    chown -R plexcache:plexcache /app && \
+    chown -R plexcache:plexcache /config && \
+    chown -R plexcache:plexcache /cache
 
 # Set proper permissions
-RUN chmod -R 755 /app
+RUN chmod -R 755 /app && \
+    chmod -R 755 /config && \
+    chmod -R 755 /cache && \
+    chmod +x entrypoint.sh
 
-# Switch to non-root user
-USER plexcache
+# Keep as root for entrypoint script to work properly
+# USER plexcache
 
 # Expose default web port
 EXPOSE 5443
 
-# Health check
+# Health check (run as plexcache user)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:5443/health || exit 1
 
 # Default command
+ENTRYPOINT ["./entrypoint.sh"]
 CMD ["python", "main.py"]

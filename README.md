@@ -14,6 +14,7 @@ A Docker-optimized Plex media caching system designed specifically for Unraid en
 - **Subtitle Handling**: Automatically includes subtitle files in operations
 - **Notification System**: Discord, Slack, and Unraid notifications
 - **Health Monitoring**: Docker health checks and monitoring endpoints
+- **Port 5444**: Optimized for Unraid environments (avoids routing conflicts)
 - **🆕 Flexible Destination Paths**: Specify custom destinations for cached media
 - **🆕 Multiple Source Support**: Access media from mounted shares and remote sources
 - **🆕 Test Mode**: Preview operations without moving files, showing sizes and totals
@@ -155,7 +156,8 @@ Open your browser and navigate to: `http://your-server:5443`
 | `MOVE_WITH_SYMLINKS` | Enable hybrid move+symlink mode | `false` |
 | `DEBUG` | Enable debug mode | `false` |
 | `ENABLE_SCHEDULER` | Enable automatic scheduling | `false` |
-| `PORT` | Web interface port | `5443` |
+| `PORT` | Web interface port (container) | `5443` |
+| `WEB_PORT` | Web interface port (host) | `5444` (Unraid optimized) |
 
 ### Trakt.tv Configuration
 
@@ -184,6 +186,8 @@ On Unraid, recommended user and group mappings are:
 
 ### Using Docker Compose (Recommended)
 
+The `docker-compose.yml` is now configured with safe defaults for Unraid environments:
+
 ```bash
 # Start the service
 docker-compose up -d
@@ -199,27 +203,75 @@ docker-compose pull
 docker-compose up -d
 ```
 
+**Key Features:**
+- ✅ **Safe Default Paths** - Won't conflict with Plex
+- ✅ **Port 5444** - Avoids Unraid routing issues
+- ✅ **No Environment Variables Required** - Built-in defaults
+- ✅ **Unraid Optimized** - Designed for Unraid environments
+
 ### Using Docker Run
 
 ```bash
 docker run -d \
   --name plexcache-ultra \
   --restart unless-stopped \
-  -p 5443:5443 \
-  -e PUID=99 -e PGID=100 \
+  -p 5444:5443 \
   -e PLEX_URL=https://plex.yourdomain.com \
   -e PLEX_TOKEN=your_token \
-  -e CACHE_DESTINATION=/cache \
-  -e ADDITIONAL_SOURCES="/mediasource2 /mediasource3" \
-  -e TEST_MODE=false \
-  -v /mnt/cache:/cache \
-  -v /mnt/user:/mediasource \
-  -v /plexsource:/plexsource \
-  -v /mnt/remote_share:/mediasource2:ro \
-  -v /mnt/nas_media:/mediasource3:ro \
+  -v /mnt/cache/apps/plexcacheultra:/cache \
+  -v /mnt/user/media:/mediasource \
+  -v /mnt/user/plex:/plexsource \
   -v /mnt/user/appdata/plexcacheultra/config:/config \
   sittingmongoose/plexcacheultra:dev
 ```
+
+**Note:** The container now uses safe default paths that won't conflict with Plex. No additional environment variables are required.
+
+### Unraid Docker Template
+
+For Unraid users, the container is now optimized with safe defaults. Simply:
+
+1. **Set Volume Paths:**
+   - `/mnt/cache/apps/plexcacheultra` → `/cache`
+   - `/mnt/user/media` → `/mediasource`
+   - `/mnt/user/plex` → `/plexsource`
+   - `/mnt/user/appdata/plexcacheultra/config` → `/config`
+
+2. **Set Port Mapping:** `5444:5443`
+
+3. **Set WebUI:** `http://[IP]:5444`
+
+4. **Optional:** Set `PLEX_URL` and `PLEX_TOKEN` if you want Plex integration
+
+**No environment variables needed** - Safe defaults are built-in and won't interfere with Plex!
+
+### 🐳 Unraid-Specific Setup
+
+#### Quick Start (Zero Configuration)
+1. **Import Template:** Download `plexcacheultra-unraid-template.xml` and import via Docker → Add Container → Template
+2. **Or Manual Setup:** Set Repository to `sittingmongoose/plexcacheultra:dev`
+3. **Start Container:** Click Apply - no additional configuration needed!
+
+#### Directory Setup (if needed)
+```bash
+mkdir -p /mnt/cache/apps/plexcacheultra
+mkdir -p /mnt/user/media
+mkdir -p /mnt/user/plex
+mkdir -p /mnt/user/appdata/plexcacheultra/config
+chown -R nobody:users /mnt/cache/apps/plexcacheultra
+chown -R nobody:users /mnt/user/media
+chown -R nobody:users /mnt/user/plex
+chown -R nobody:users /mnt/user/appdata/plexcacheultra/config
+```
+
+#### Unraid Optimizations
+- **Port 5444:** Avoids Unraid routing conflicts
+- **Automatic Permissions:** No more "Permission denied" errors
+- **Safe Paths:** Won't interfere with existing Plex installation
+- **Health Checks:** Built-in Docker health monitoring
+- **Zero Config:** Works out of the box with safe defaults
+
+**📖 For detailed Unraid setup instructions, see the Unraid Docker Template section below**
 
 ## 🌐 Web Dashboard
 
@@ -251,6 +303,36 @@ The web dashboard provides a comprehensive interface with three main tabs:
 - **🆕 Test Mode Operations**: Preview operations without moving files
 - **Scheduler Management**: Control automatic execution
 - **🆕 Enhanced File Analysis**: View file sizes, totals, and operation previews
+
+## 🚨 Troubleshooting
+
+### Common Issues & Solutions
+
+#### Permission Denied Errors
+**Problem:** `ERROR:root:Failed to start PlexCacheUltra: [Errno 13] Permission denied: '/config/logs'`
+
+**Solution:** The container now handles permissions automatically. No manual configuration needed.
+
+#### Plex Service Restarting
+**Problem:** Plex service restarts when PlexCacheUltra starts
+
+**Solution:** The container now uses safe default paths that won't conflict with Plex:
+- Cache: `/mnt/cache/apps/plexcacheultra` (dedicated directory)
+- Media: `/mnt/user/media` (separate from Plex media)
+- Plex Source: `/mnt/user/plex` (read-only access)
+
+#### Unraid Web GUI Issues
+**Problem:** Web GUI redirects to malformed URLs like `@https://192.168.50.119:1444/5444`
+
+**Solution:** 
+1. Set Host Port to `5444` (not 5443)
+2. Set WebUI to `http://[IP]:5444`
+3. Container Port remains `5443`
+
+#### Container Won't Start
+**Problem:** Container exits immediately with permission errors
+
+**Solution:** The entrypoint script now handles all permission issues automatically. Container runs as root initially, then switches to `plexcache` user.
 
 ## 🔄 How It Works
 

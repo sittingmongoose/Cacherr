@@ -382,6 +382,20 @@ def api_update_settings():
                 os.environ[key.upper()] = str(value)
                 updated_vars[key.upper()] = value
         
+        # Reinitialize engine if Plex settings were updated
+        global engine
+        if 'plex' in data and (data['plex'].get('url') or data['plex'].get('token')):
+            try:
+                # Reload config to get new environment variables
+                config.reload()
+                # Try to reinitialize engine with new Plex credentials
+                engine = PlexCacheUltraEngine(config)
+                logging.info("Engine reinitialized with new Plex credentials")
+            except Exception as e:
+                logging.warning(f"Failed to reinitialize engine with new Plex credentials: {e}")
+                # Keep old engine if reinitialization fails
+                pass
+        
         return jsonify({
             'success': True,
             'message': f'Updated {len(updated_vars)} settings',
@@ -411,42 +425,6 @@ def api_validate_settings():
         # Validate paths
         if 'paths' in data:
             paths = data['paths']
-            
-            # Check cache directory
-            if 'cache_dir' in paths:
-                cache_dir = paths['cache_dir']
-                if os.path.exists(cache_dir):
-                    validation_results['path_checks']['cache_dir'] = {
-                        'exists': True,
-                        'writable': os.access(cache_dir, os.W_OK),
-                        'path': cache_dir
-                    }
-                else:
-                    validation_results['path_checks']['cache_dir'] = {
-                        'exists': False,
-                        'writable': False,
-                        'path': cache_dir
-                    }
-                    validation_results['errors'].append(f"Cache directory does not exist: {cache_dir}")
-                    validation_results['valid'] = False
-            
-            # Check real source
-            if 'real_source' in paths:
-                real_source = paths['real_source']
-                if os.path.exists(real_source):
-                    validation_results['path_checks']['real_source'] = {
-                        'exists': True,
-                        'readable': os.access(real_source, os.R_OK),
-                        'path': real_source
-                    }
-                else:
-                    validation_results['path_checks']['real_source'] = {
-                        'exists': False,
-                        'readable': False,
-                        'path': real_source
-                    }
-                    validation_results['errors'].append(f"Real source directory does not exist: {real_source}")
-                    validation_results['valid'] = False
             
             # Check plex source
             if 'plex_source' in paths:
@@ -577,8 +555,6 @@ def api_reset_settings():
     try:
         # Reset to default values
         default_settings = {
-            'CACHE_DIR': '/mnt/cache',
-            'REAL_SOURCE': '/mnt/user',
             'PLEX_SOURCE': '/media',
             'LOG_LEVEL': 'INFO',
             'NOTIFICATION_TYPE': 'webhook',
@@ -820,7 +796,7 @@ def api_watcher_clear_history():
 def api_logs():
     """Get recent logs"""
     try:
-                    log_file = Path("/config/logs/plexcache_ultra.log")
+        log_file = Path("/config/logs/plexcache_ultra.log")
         if not log_file.exists():
             return jsonify({'logs': [], 'message': 'No log file found'})
         
@@ -910,9 +886,14 @@ def main():
         logging.info("Configuration loaded successfully")
         logging.info(f"Configuration: {config.to_dict()}")
         
-        # Initialize engine
-        engine = PlexCacheUltraEngine(config)
-        logging.info("PlexCacheUltra engine initialized")
+        # Initialize engine (Plex connection is optional for container startup)
+        try:
+            engine = PlexCacheUltraEngine(config)
+            logging.info("PlexCacheUltra engine initialized")
+        except Exception as e:
+            logging.warning(f"PlexCacheUltra engine initialization failed (Plex connection issue): {e}")
+            logging.info("Container will start but Plex operations will be limited until connection is established")
+            engine = None
         
         # Start scheduler if configured
         if not config.test_mode.enabled and config.web.enable_scheduler:

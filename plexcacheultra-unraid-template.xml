@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>PlexCacheUltra</Name>
+  <Repository>sittingmongoose/plexcacheultra:dev</Repository>
+  <Registry>https://hub.docker.com/r/sittingmongoose/plexcacheultra</Registry>
+  <Network>bridge</Network>
+  <MyIP/>
+  <Shell>bash</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/sittingmongoose/plexcacheultra</Support>
+  <Overview>PlexCacheUltra - Docker-optimized Plex media caching system designed specifically for Unraid environments. Automatically moves frequently accessed media files to fast cache drives and moves watched content back to array drives.</Overview>
+  <Category>Media</Category>
+  <WebUI>http://[IP]:5444</WebUI>
+  <TemplateURL>https://raw.githubusercontent.com/sittingmongoose/plexcacheultra/main/plexcacheultra-unraid-template.xml</TemplateURL>
+  <Icon>https://raw.githubusercontent.com/sittingmongoose/plexcacheultra/main/plexcacheultra-icon.png</Icon>
+  <ExtraParams/>
+  <PostArgs/>
+  <CPUset/>
+  <DateInstalled>1703123456</DateInstalled>
+  <DonateText/>
+  <DonateLink/>
+  <Requires>https://emby.media/</Requires>
+  <Project>https://github.com/sittingmongoose/plexcacheultra</Project>
+
+
+
+  <Config Name="Port 5444" Target="5443" Default="5444" Mode="tcp" Description="Web interface port (Host: 5444 → Container: 5443)" Type="Port" Required="false"/>
+  
+  <!-- Environment Variables (prevent Plex restarts) -->
+  <Config Name="PLEX_SOURCE" Target="PLEX_SOURCE" Default="/media" Mode="" Description="Plex source path (container path)" Type="Variable" Required="false"/>
+  <Config Name="CACHE_DESTINATION" Target="CACHE_DESTINATION" Default="/cache" Mode="" Description="Cache destination path (container path)" Type="Variable" Required="false"/>
+  <Config Name="ADDITIONAL_PLEX_SOURCES" Target="ADDITIONAL_PLEX_SOURCES" Default="" Mode="" Description="Additional Plex sources (space-separated container paths)" Type="Variable" Required="false"/>
+  
+  <!-- Volume Paths (Host → Container) -->
+  <Config Name="Cache" Target="/cache" Default="/mnt/cache/apps/plexcacheultra" Mode="rw" Description="Cache directory" Type="Path" Required="false"/>
+  <Config Name="Media Source" Target="/mediasource" Default="/mnt/user/media" Mode="rw" Description="Media source directory" Type="Path" Required="false"/>
+  <Config Name="Config" Target="/config" Default="/mnt/user/appdata/plexcacheultra/config" Mode="rw" Description="Configuration directory" Type="Path" Required="false"/>
+  <Config Name="Additional Sources" Target="/mediasource2" Default="/mnt/user/media2" Mode="rw" Description="Additional media sources directory" Type="Path" Required="false"/>
+</Container>

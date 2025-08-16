@@ -116,6 +116,12 @@ class PlexCacheUltraEngine:
         
     def _connect_to_plex(self):
         """Establish connection to Plex server"""
+        if not self.config.plex.url:
+            raise ValueError("PLEX_URL is not configured. Please configure it via the web interface.")
+        
+        if not self.config.plex.token:
+            raise ValueError("PLEX_TOKEN is not configured. Please configure it via the web interface.")
+        
         try:
             self.plex = PlexServer(self.config.plex.url, self.config.plex.token)
             self.logger.info(f"Connected to Plex server: {self.config.plex.url}")
@@ -264,7 +270,7 @@ class PlexCacheUltraEngine:
             return
         
         # Check available space in cache destination
-        cache_dest = self.config.paths.cache_destination or self.config.paths.cache_dir
+        cache_dest = self.config.paths.cache_destination or '/cache'  # Hardcoded Docker volume mapping
         if not self.file_operations.check_available_space(files_to_cache, cache_dest):
             self.logger.error("Insufficient space in cache destination directory")
             return
@@ -272,7 +278,7 @@ class PlexCacheUltraEngine:
         # Execute moves, copies, or move+symlink
         moved_count, total_size = self.file_operations.move_files(
             files_to_cache,
-            self.config.paths.real_source,
+            '/mediasource',  # Hardcoded Docker volume mapping
             cache_dest,
             self.config.performance.max_concurrent_moves_cache,
             dry_run=self.config.test_mode.dry_run,
@@ -306,12 +312,12 @@ class PlexCacheUltraEngine:
             return
         
         # Check available space
-        if not self.file_operations.check_available_space(files_to_array, self.config.paths.real_source):
+        if not self.file_operations.check_available_space(files_to_array, '/mediasource'):  # Hardcoded Docker volume mapping
             self.logger.error("Insufficient space in array directory")
             return
         
         # Execute moves from cache to array or delete from cache
-        cache_dest = self.config.paths.cache_destination or self.config.paths.cache_dir
+        cache_dest = self.config.paths.cache_destination or '/cache'  # Hardcoded Docker volume mapping
         if self.config.media.copy_to_cache and self.config.media.delete_from_cache_when_done:
             # Delete from cache instead of moving back
             moved_count, total_size = self.file_operations.delete_files(
@@ -324,7 +330,7 @@ class PlexCacheUltraEngine:
             moved_count, total_size = self.file_operations.move_files(
                 files_to_array,
                 cache_dest,
-                self.config.paths.real_source,
+                '/mediasource',  # Hardcoded Docker volume mapping
                 self.config.performance.max_concurrent_moves_array,
                 dry_run=self.config.test_mode.dry_run
             )

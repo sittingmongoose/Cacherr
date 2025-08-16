@@ -29,8 +29,9 @@ class FileOperations:
         processed_files = []
         
         # Build mapping of plex sources to real sources
+        # For Docker, the main source is hardcoded to /mediasource
         source_mappings = [
-            (self.config.paths.plex_source, self.config.paths.real_source)
+            (self.config.paths.plex_source, '/mediasource')
         ]
         
         # Add additional source mappings
@@ -558,27 +559,19 @@ class FileOperations:
         file_path = Path(file_path_str)
         
         # Use the flexible cache destination if specified
-        cache_destination = Path(self.config.paths.cache_destination or self.config.paths.cache_dir)
-        real_source = Path(self.config.paths.real_source)
+        cache_destination = Path(self.config.paths.cache_destination)
         
-        if self.config.paths.cache_destination:
-            # Try to find the file in any of the source directories
-            all_sources = [real_source] + [Path(s) for s in self.config.paths.additional_sources]
-            for source_dir in all_sources:
+        if cache_destination:
+            # Try to find the file in any of the additional source directories
+            for source_dir in [Path(s) for s in self.config.paths.additional_sources]:
                 if file_path.is_relative_to(source_dir):
                     rel_path = file_path.relative_to(source_dir)
                     return str(cache_destination / rel_path)
-            
-            # Fallback to original logic if not found in any source
-            if file_path.is_relative_to(real_source):
-                rel_path = file_path.relative_to(real_source)
-                return str(cache_destination / rel_path)
         
-        # Default to original cache directory logic
-        if file_path.is_relative_to(real_source):
-            rel_path = file_path.relative_to(real_source)
-            return str(Path(self.config.paths.cache_dir) / rel_path)
-
+        # For Docker, the cache destination is hardcoded to /cache
+        # and the real source is hardcoded to /mediasource
+        # This method is primarily used for additional sources
+        
         return "" # Should not happen if paths are correct
     
     def _get_array_path(self, file_path: str) -> str:
@@ -602,8 +595,10 @@ class FileOperations:
                 self.logger.debug(f"Using network concurrency for source: {source_path_str}")
                 return self.config.performance.max_concurrent_network_transfers
         
-        # Check if source is the main real_source (local server)
-        if source_path_str.startswith(self.config.paths.real_source):
+        # Check if source is in additional sources (network/NAS)
+        # For Docker, the main source is hardcoded to /mediasource
+        # so we'll use local concurrency for any path not in additional sources
+        if not any(source_path_str.startswith(additional_source) for additional_source in self.config.paths.additional_sources):
             self.logger.debug(f"Using local concurrency for source: {source_path_str}")
             return self.config.performance.max_concurrent_local_transfers
         

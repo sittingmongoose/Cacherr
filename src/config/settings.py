@@ -72,8 +72,6 @@ class MediaConfig:
 @dataclass
 class PathsConfig:
     plex_source: str
-    real_source: str
-    cache_dir: str
     cache_destination: str
     additional_sources: List[str]
     additional_plex_sources: List[str]  # New: corresponding plex sources for additional real sources
@@ -128,9 +126,8 @@ class Config:
         )
 
     def _load_plex_config(self) -> PlexConfig:
-        plex_url = os.getenv('PLEX_URL')
-        if not plex_url:
-            raise ValueError("Required environment variable PLEX_URL is not set")
+        plex_url = os.getenv('PLEX_URL', '')
+        # Don't require PLEX_URL at startup - it can be configured via web interface
         
         return PlexConfig(
             url=plex_url,
@@ -150,16 +147,16 @@ class Config:
         if legacy_sources:
             source_paths = [s.strip() for s in legacy_sources.split(',') if s.strip()]
         else:
-            if os.getenv('REAL_SOURCE'):
-                source_paths.append(os.getenv('REAL_SOURCE'))
+            # For Docker, the main source is hardcoded to /mediasource
+            source_paths.append('/mediasource')  # Hardcoded Docker volume mapping
             if os.getenv('ADDITIONAL_SOURCES'):
                 source_paths.extend([s.strip() for s in os.getenv('ADDITIONAL_SOURCES').split(',') if s.strip()])
 
         # If no sources defined, use default
         if not source_paths:
-            source_paths = ['/mnt/user']
+            source_paths = ['/mediasource']  # Hardcoded Docker volume mapping
 
-        destination_path = legacy_dest if legacy_dest else os.getenv('CACHE_DESTINATION', os.getenv('CACHE_DIR', '/mnt/cache'))
+        destination_path = legacy_dest if legacy_dest else os.getenv('CACHE_DESTINATION', '/cache')  # Hardcoded Docker volume mapping
         test_mode = (legacy_test_mode.lower() == 'true') if legacy_test_mode else (os.getenv('TEST_MODE', 'false').lower() == 'true')
 
         return CacheConfig(
@@ -172,7 +169,7 @@ class Config:
     def _load_real_time_watch_config(self) -> RealTimeWatchConfig:
         # Support both old and new env var names
         cache_when_watching = os.getenv('REAL_TIME_WATCH_CACHE_WHEN_WATCHING', 'false').lower() == 'true'
-        auto_cache_on_watch = os.getenv('REAL_TIME_WATCH_AUTO_CACHE_ON_WATCH', str(cache_when_watching)).lower() == 'true'
+        auto_cache_on_watch = os.getenv('REAL_TIME_WATCH_AUTO_CACHE_ON_WATCH', 'false').lower() == 'true'
         cache_on_complete = os.getenv('REAL_TIME_WATCH_CACHE_ON_COMPLETE', 'true').lower() == 'true'
         respect_existing_rules = os.getenv('REAL_TIME_WATCH_RESPECT_EXISTING_RULES', 'true').lower() == 'true'
 
@@ -252,8 +249,6 @@ class Config:
         
         return PathsConfig(
             plex_source=os.getenv('PLEX_SOURCE', '/media'),
-            real_source=os.getenv('REAL_SOURCE', '/mnt/user'),
-            cache_dir=os.getenv('CACHE_DIR', '/mnt/cache'),
             cache_destination=os.getenv('CACHE_DESTINATION', ''),
             additional_sources=additional_sources,
             additional_plex_sources=additional_plex_sources
@@ -307,18 +302,9 @@ class Config:
         """Validate the configuration"""
         try:
             # Basic validation - check required fields
-            if not self.plex.url:
-                self.logger.error("PLEX_URL is required")
-                return False
-            if not self.plex.token:
-                self.logger.error("PLEX_TOKEN is required")
-                return False
-            if not self.paths.real_source:
-                self.logger.error("REAL_SOURCE is required")
-                return False
-            if not self.paths.cache_dir:
-                self.logger.error("CACHE_DIR is required")
-                return False
+            # Note: PLEX_URL and PLEX_TOKEN can be configured via web interface
+            # so they're not required at startup
+            # Note: real_source and cache_dir are hardcoded Docker volume mappings
             
             # Check if paths exist (for Docker, these should be mounted volumes)
             # We'll skip this check in Docker environment as paths are mounted
@@ -327,6 +313,20 @@ class Config:
         except Exception as e:
             self.logger.error(f"Configuration validation failed: {e}")
             return False
+
+    def reload(self):
+        """Reload configuration from environment variables"""
+        self.plex = self._load_plex_config()
+        self.cache = self._load_cache_config()
+        self.real_time_watch = self._load_real_time_watch_config()
+        self.trakt = self._load_trakt_config()
+        self.web = self._load_web_config()
+        self.media = self._load_media_config()
+        self.paths = self._load_paths_config()
+        self.test_mode = self._load_test_mode_config()
+        self.notifications = self._load_notification_config()
+        self.performance = self._load_performance_config()
+        self.logger.info("Configuration reloaded from environment variables")
 
     def to_dict(self):
         """Convert configuration to dictionary for API responses"""
@@ -384,8 +384,6 @@ class Config:
             },
             'paths': {
                 'plex_source': self.paths.plex_source,
-                'real_source': self.paths.real_source,
-                'cache_dir': self.paths.cache_dir,
                 'cache_destination': self.paths.cache_destination,
                 'additional_sources': self.paths.additional_sources
             },
