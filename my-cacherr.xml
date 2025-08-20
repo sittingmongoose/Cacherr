@@ -1,18 +1,18 @@
 <?xml version="1.0"?>
 <Container version="2">
-  <Name>PlexCacheUltra</Name>
-  <Repository>sittingmongoose/plexcacheultra:dev</Repository>
-  <Registry>https://hub.docker.com/r/sittingmongoose/plexcacheultra</Registry>
+  <Name>Cacherr</Name>
+  <Repository>sittingmongoose/cacherr:dev</Repository>
+  <Registry>https://hub.docker.com/r/sittingmongoose/cacherr</Registry>
   <Network>bridge</Network>
   <MyIP/>
   <Shell>bash</Shell>
   <Privileged>false</Privileged>
-  <Support>https://github.com/sittingmongoose/plexcacheultra</Support>
-  <Overview>PlexCacheUltra - Docker-optimized Plex media caching system designed specifically for Unraid environments. Automatically moves frequently accessed media files to fast cache drives and moves watched content back to array drives.</Overview>
+  <Support>https://github.com/sittingmongoose/cacherr</Support>
+  <Overview>Cacherr - Docker-optimized Plex media caching system designed specifically for Unraid environments. Automatically moves frequently accessed media files to fast cache drives and moves watched content back to array drives.</Overview>
   <Category>Media</Category>
   <WebUI>http://[IP]:5444</WebUI>
-  <TemplateURL>https://raw.githubusercontent.com/sittingmongoose/plexcacheultra/main/plexcacheultra-unraid-template.xml</TemplateURL>
-  <Icon>https://raw.githubusercontent.com/sittingmongoose/plexcacheultra/main/plexcacheultra-icon.png</Icon>
+  <TemplateURL>https://raw.githubusercontent.com/sittingmongoose/cacherr/main/cacherr-unraid-template.xml</TemplateURL>
+  <Icon>https://raw.githubusercontent.com/sittingmongoose/cacherr/main/cacherr-icon.png</Icon>
   <ExtraParams/>
   <PostArgs/>
   <CPUset/>
@@ -20,7 +20,7 @@
   <DonateText/>
   <DonateLink/>
   <Requires>https://emby.media/</Requires>
-  <Project>https://github.com/sittingmongoose/plexcacheultra</Project>
+  <Project>https://github.com/sittingmongoose/cacherr</Project>
 
 
 
@@ -32,8 +32,8 @@
   <Config Name="ADDITIONAL_PLEX_SOURCES" Target="ADDITIONAL_PLEX_SOURCES" Default="" Mode="" Description="Additional Plex sources (space-separated container paths)" Type="Variable" Required="false"/>
   
   <!-- Volume Paths (Host → Container) -->
-  <Config Name="Cache" Target="/cache" Default="/mnt/cache/apps/plexcacheultra" Mode="rw" Description="Cache directory" Type="Path" Required="false"/>
+  <Config Name="Cache" Target="/cache" Default="/mnt/cache/apps/cacherr" Mode="rw" Description="Cache directory" Type="Path" Required="false"/>
   <Config Name="Media Source" Target="/mediasource" Default="/mnt/user/media" Mode="rw" Description="Media source directory" Type="Path" Required="false"/>
-  <Config Name="Config" Target="/config" Default="/mnt/user/appdata/plexcacheultra/config" Mode="rw" Description="Configuration directory" Type="Path" Required="false"/>
+  <Config Name="Config" Target="/config" Default="/mnt/user/appdata/cacherr/config" Mode="rw" Description="Configuration directory" Type="Path" Required="false"/>
   <Config Name="Additional Sources" Target="/mediasource2" Default="/mnt/user/media2" Mode="rw" Description="Additional media sources directory" Type="Path" Required="false"/>
 </Container>

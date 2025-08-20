@@ -15,10 +15,10 @@ echo "Running as root, setting up directories..."
 mkdir -p /config/logs /config/data /cache
 
 # Set proper ownership for all directories
-chown -R plexcache:plexcache /app /config /cache
+chown -R cacherr:cacherr /app /config /cache
 
-echo "Directories set up, switching to plexcache user..."
+echo "Directories set up, switching to cacherr user..."
 
-# Switch to plexcache user and execute the command
+# Switch to cacherr user and execute the command
 # Use exec to replace the current process
-exec gosu plexcache "$@"
+exec gosu cacherr "$@"

@@ -16,7 +16,7 @@ except ImportError:
     from config.settings import Config
 
 class PlexOperations:
-    """Handles Plex API operations for PlexCacheUltra"""
+    """Handles Plex API operations for Cacherr"""
     
     def __init__(self, config: Config):
         self.config = config

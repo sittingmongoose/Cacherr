@@ -18,7 +18,7 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean
 
 # Create non-root user
-RUN groupadd -r plexcache && useradd -r -g plexcache plexcache
+RUN groupadd -r cacherr && useradd -r -g cacherr cacherr
 
 # Create app directory
 WORKDIR /app
@@ -38,9 +38,9 @@ COPY entrypoint.sh .
 
 # Create necessary directories with proper ownership
 RUN mkdir -p /config/logs /config/data /cache && \
-    chown -R plexcache:plexcache /app && \
-    chown -R plexcache:plexcache /config && \
-    chown -R plexcache:plexcache /cache
+    chown -R cacherr:cacherr /app && \
+    chown -R cacherr:cacherr /config && \
+    chown -R cacherr:cacherr /cache
 
 # Set proper permissions
 RUN chmod -R 755 /app && \
@@ -49,12 +49,12 @@ RUN chmod -R 755 /app && \
     chmod +x entrypoint.sh
 
 # Keep as root for entrypoint script to work properly
-# USER plexcache
+# USER cacherr
 
 # Expose default web port
 EXPOSE 5443
 
-# Health check (run as plexcache user)
+# Health check (run as cacherr user)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:5443/health || exit 1
 

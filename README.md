@@ -1,6 +1,6 @@
-# PlexCacheUltra 🎬
+# Cacherr 🎬
 
-A Docker-optimized Plex media caching system designed specifically for Unraid environments. PlexCacheUltra automatically moves frequently accessed media files to fast cache drives and moves watched content back to slower array drives, optimizing your Plex streaming performance.
+A Docker-optimized Plex media caching system designed specifically for Unraid environments. Cacherr automatically moves frequently accessed media files to fast cache drives and moves watched content back to slower array drives, optimizing your Plex streaming performance.
 
 ## ✨ Features
 
@@ -66,8 +66,8 @@ TRAKT_CHECK_INTERVAL=3600
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/sittingmongoose/PlexCacheUltra.git
-cd PlexCacheUltra
+git clone https://github.com/sittingmongoose/Cacherr.git
+cd Cacherr
 ```
 
 ### 2. Configure Environment Variables
@@ -114,7 +114,7 @@ Open your browser and navigate to: `http://your-server:5443`
 ### Recent Changes & Updates
 
 **Configuration Persistence (v2.1.1)**
-- **Persistent Settings**: Web-configured settings are now automatically saved to a JSON file (`/config/plexcache_ultra_config.json`) and persist across container restarts
+- **Persistent Settings**: Web-configured settings are now automatically saved to a JSON file (`/config/cacherr_config.json`) and persist across container restarts
 - **Environment Variable Priority**: Docker environment variables take precedence over web-configured settings, ensuring Docker/Unraid template configurations are always respected
 - **Additional Sources**: `ADDITIONAL_SOURCES` and `ADDITIONAL_PLEX_SOURCES` are now **only configurable via Docker environment variables** and are no longer editable in the web GUI
 - **Space-Separated Values**: Environment variables now correctly use space-separated values (e.g., `/mediasource2 /mediasource3`) instead of comma-separated values
@@ -226,16 +226,16 @@ docker-compose up -d
 
 ```bash
 docker run -d \
-  --name plexcache-ultra \
+  --name cacherr \
   --restart unless-stopped \
   -p 5444:5443 \
   -e PLEX_URL=https://plex.yourdomain.com \
   -e PLEX_TOKEN=your_token \
-  -v /mnt/cache/apps/plexcacheultra:/cache \
+  -v /mnt/cache/apps/cacherr:/cache \
   -v /mnt/user/media:/mediasource \
   -v /mnt/user/plex:/plexsource \
-  -v /mnt/user/appdata/plexcacheultra/config:/config \
-  sittingmongoose/plexcacheultra:dev
+  -v /mnt/user/appdata/cacherr/config:/config \
+  sittingmongoose/cacherr:dev
 ```
 
 **Note:** The container now uses safe default paths that won't conflict with Plex. No additional environment variables are required.
@@ -245,10 +245,10 @@ docker run -d \
 For Unraid users, the container is now optimized with safe defaults. Simply:
 
 1. **Set Volume Paths:**
-   - `/mnt/cache/apps/plexcacheultra` → `/cache`
+   - `/mnt/cache/apps/cacherr` → `/cache`
    - `/mnt/user/media` → `/mediasource`
    - `/mnt/user/plex` → `/plexsource`
-   - `/mnt/user/appdata/plexcacheultra/config` → `/config`
+   - `/mnt/user/appdata/cacherr/config` → `/config`
 
 2. **Set Port Mapping:** `5444:5443`
 
@@ -259,27 +259,27 @@ For Unraid users, the container is now optimized with safe defaults. Simply:
 **No environment variables needed** - Safe defaults are built-in and won't interfere with Plex!
 
 **Configuration Persistence:**
-- Web-configured settings are automatically saved to `/mnt/user/appdata/plexcacheultra/config/plexcache_ultra_config.json`
+- Web-configured settings are automatically saved to `/mnt/user/appdata/cacherr/config/cacherr_config.json`
 - Settings persist across container restarts and updates
 - Docker environment variables always take precedence over web-configured settings
 
 ### 🐳 Unraid-Specific Setup
 
 #### Quick Start (Zero Configuration)
-1. **Import Template:** Download `plexcacheultra-unraid-template.xml` and import via Docker → Add Container → Template
-2. **Or Manual Setup:** Set Repository to `sittingmongoose/plexcacheultra:dev`
+1. **Import Template:** Download `cacherr-unraid-template.xml` and import via Docker → Add Container → Template
+2. **Or Manual Setup:** Set Repository to `sittingmongoose/cacherr:dev`
 3. **Start Container:** Click Apply - no additional configuration needed!
 
 #### Directory Setup (if needed)
 ```bash
-mkdir -p /mnt/cache/apps/plexcacheultra
+mkdir -p /mnt/cache/apps/cacherr
 mkdir -p /mnt/user/media
 mkdir -p /mnt/user/plex
-mkdir -p /mnt/user/appdata/plexcacheultra/config
-chown -R nobody:users /mnt/cache/apps/plexcacheultra
+mkdir -p /mnt/user/appdata/cacherr/config
+chown -R nobody:users /mnt/cache/apps/cacherr
 chown -R nobody:users /mnt/user/media
 chown -R nobody:users /mnt/user/plex
-chown -R nobody:users /mnt/user/appdata/plexcacheultra/config
+chown -R nobody:users /mnt/user/appdata/cacherr/config
 ```
 
 #### Unraid Optimizations
@@ -330,21 +330,21 @@ The web dashboard provides a comprehensive interface with three main tabs:
 **Problem:** Settings reset when container restarts or updates
 
 **Solution:** 
-- Web-configured settings are now automatically saved to `/config/plexcache_ultra_config.json`
+- Web-configured settings are now automatically saved to `/config/cacherr_config.json`
 - Ensure the `/config` volume is properly mounted and persistent
 - Docker environment variables take precedence over web-configured settings
-- Check the configuration file exists: `docker exec plexcache-ultra ls -la /config/`
+- Check the configuration file exists: `docker exec cacherr ls -la /config/`
 
 #### Permission Denied Errors
-**Problem:** `ERROR:root:Failed to start PlexCacheUltra: [Errno 13] Permission denied: '/config/logs'`
+**Problem:** `ERROR:root:Failed to start Cacherr: [Errno 13] Permission denied: '/config/logs'`
 
 **Solution:** The container now handles permissions automatically. No manual configuration needed.
 
 #### Plex Service Restarting
-**Problem:** Plex service restarts when PlexCacheUltra starts
+**Problem:** Plex service restarts when Cacherr starts
 
 **Solution:** The container now uses safe default paths that won't conflict with Plex:
-- Cache: `/mnt/cache/apps/plexcacheultra` (dedicated directory)
+- Cache: `/mnt/cache/apps/cacherr` (dedicated directory)
 - Media: `/mnt/user/media` (separate from Plex media)
 - Plex Source: `/mnt/user/plex` (read-only access)
 
@@ -359,7 +359,7 @@ The web dashboard provides a comprehensive interface with three main tabs:
 #### Container Won't Start
 **Problem:** Container exits immediately with permission errors
 
-**Solution:** The entrypoint script now handles all permission issues automatically. Container runs as root initially, then switches to `plexcache` user.
+**Solution:** The entrypoint script now handles all permission issues automatically. Container runs as root initially, then switches to `cacherr` user.
 
 ## 🔄 How It Works
 
@@ -546,16 +546,16 @@ View application logs:
 docker-compose logs -f
 
 # Docker Run
-docker logs -f plexcache-ultra
+docker logs -f cacherr
 
 # Direct file access
-tail -f /mnt/user/appdata/plexcacheultra/config/logs/plexcache_ultra.log
+tail -f /mnt/user/appdata/cacherr/config/cacherr.log
 ```
 
 ## 📁 Project Structure
 
 ```
-PlexCacheUltra/
+Cacherr/
 ├── src/
 │   ├── config/          # Configuration management
 │   ├── core/            # Core application logic
@@ -569,7 +569,7 @@ PlexCacheUltra/
 └── README.md           # This file
 
 **Runtime Files (created automatically):**
-├── /config/plexcache_ultra_config.json  # Persistent web-configured settings
+├── /config/cacherr_config.json  # Persistent web-configured settings
 └── /config/logs/                        # Application logs
 ```
 
@@ -600,6 +600,6 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ---
 
-**PlexCacheUltra** - Optimize your Plex experience with intelligent media caching! 🎬✨
+**Cacherr** - Optimize your Plex experience with intelligent media caching! 🎬✨
 
 **🆕 New in v2.1**: Flexible destinations, multiple sources, comprehensive test mode, real-time Plex watching, and copy-to-cache with symlink integration for automatic Plex cache usage!

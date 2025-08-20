@@ -12,7 +12,7 @@ except ImportError:
     from config.settings import Config
 
 class FileOperations:
-    """Handles file operations for PlexCacheUltra"""
+    """Handles file operations for Cacherr"""
     
     def __init__(self, config: Config):
         self.config = config

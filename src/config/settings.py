@@ -103,7 +103,7 @@ class Config:
         self.logger = logging.getLogger(__name__)
         
         # Load persistent config file path
-        self.config_file = Path("/config/plexcache_ultra_config.json")
+        self.config_file = Path("/config/cacherr_config.json")
         
         self.logging = self._load_logging_config()
         self.plex = self._load_plex_config()

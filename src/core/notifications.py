@@ -10,7 +10,7 @@ except ImportError:
     from config.settings import Config
 
 class NotificationManager:
-    """Manages notifications for PlexCacheUltra"""
+    """Manages notifications for Cacherr"""
     
     def __init__(self, config: Config):
         self.config = config
@@ -54,18 +54,18 @@ class NotificationManager:
             # Create payload based on level
             if level == "error":
                 color = 0xFF0000  # Red
-                title = "PlexCacheUltra Error"
+                title = "Cacherr Error"
             elif level == "warning":
                 color = 0xFFA500  # Orange
-                title = "PlexCacheUltra Warning"
+                title = "Cacherr Warning"
             elif level == "success":
                 color = 0x00FF00  # Green
             elif level == "summary":
                 color = 0x0099FF  # Blue
-                title = "PlexCacheUltra Summary"
+                title = "Cacherr Summary"
             else:
                 color = 0x808080  # Gray
-                title = "PlexCacheUltra Info"
+                title = "Cacherr Info"
             
             # Discord-style embed
             embed = {
@@ -176,7 +176,7 @@ class NotificationManager:
             import subprocess
             cmd = [
                 "/usr/local/emhttp/webGui/scripts/notify",
-                "-e", "PlexCacheUltra",
+                "-e", "Cacherr",
                 "-s", level.title(),
                 "-d", message,
                 "-i", icon

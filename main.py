@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-PlexCacheUltra - Docker-optimized Plex media caching system
+Cacherr - Docker-optimized Plex media caching system
 Main application entry point with web interface and scheduled execution
 """
 
@@ -13,14 +13,29 @@ from datetime import datetime
 from pathlib import Path
 
 # Add src to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+src_path = os.path.join(os.path.dirname(__file__), 'src')
+sys.path.insert(0, src_path)
 
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request, render_template_string
 import schedule
 
-from config.settings import Config
-from core.plex_cache_engine import PlexCacheUltraEngine
+# Import after adding src to path
+# These imports work because we added 'src' to sys.path above
+try:
+    # Import from the src package directly
+    from src.config.settings import Config  # type: ignore # noqa: E402
+    from src.core.plex_cache_engine import CacherrEngine  # type: ignore # noqa: E402
+except ImportError as e:
+    # Fallback to relative imports if package import fails
+    try:
+        from config.settings import Config  # type: ignore # noqa: E402
+        from core.plex_cache_engine import CacherrEngine  # type: ignore # noqa: E402
+    except ImportError:
+        print(f"Import error: {e}")
+        print(f"Current sys.path: {sys.path}")
+        print(f"Looking for src directory at: {src_path}")
+        raise
 
 # Load environment variables
 load_dotenv()
@@ -40,7 +55,7 @@ def setup_logging(config: Config):
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         handlers=[
             logging.StreamHandler(sys.stdout),
-            logging.FileHandler(log_dir / "plexcache_ultra.log")
+            logging.FileHandler(log_dir / "cacherr.log")
         ]
     )
 
@@ -48,10 +63,10 @@ def setup_logging(config: Config):
 app = Flask(__name__)
 
 # Global variables
-config = None
-engine = None
-scheduler_thread = None
-scheduler_running = False
+config: 'Config' = None  # type: ignore
+engine: 'CacherrEngine' = None  # type: ignore
+scheduler_thread: 'threading.Thread' = None
+scheduler_running: bool = False
 
 @app.route('/')
 def index():
@@ -60,7 +75,7 @@ def index():
     <!DOCTYPE html>
     <html>
     <head>
-        <title>PlexCacheUltra Dashboard</title>
+        <title>Cacherr Dashboard</title>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <style>
@@ -96,7 +111,7 @@ def index():
     <body>
         <div class="container">
             <div class="header">
-                <h1>🎬 PlexCacheUltra Dashboard</h1>
+                <h1>🎬 Cacherr Dashboard</h1>
                 <p>Docker-optimized Plex media caching system with enhanced features</p>
             </div>
             
@@ -404,7 +419,7 @@ def api_update_settings():
                 # Reload config to get new persistent configuration
                 config.reload()
                 # Try to reinitialize engine with new Plex credentials
-                engine = PlexCacheUltraEngine(config)
+                engine = CacherrEngine(config)
                 logging.info("Engine reinitialized with new Plex credentials")
             except Exception as e:
                 logging.warning(f"Failed to reinitialize engine with new Plex credentials: {e}")
@@ -769,7 +784,7 @@ def api_watcher_clear_history():
 def api_logs():
     """Get recent logs"""
     try:
-        log_file = Path("/config/logs/plexcache_ultra.log")
+        log_file = Path("/config/logs/cacherr.log")
         if not log_file.exists():
             return jsonify({'logs': [], 'message': 'No log file found'})
         
@@ -861,10 +876,10 @@ def main():
         
         # Initialize engine (Plex connection is optional for container startup)
         try:
-            engine = PlexCacheUltraEngine(config)
-            logging.info("PlexCacheUltra engine initialized")
+            engine = CacherrEngine(config)
+            logging.info("Cacherr engine initialized")
         except Exception as e:
-            logging.warning(f"PlexCacheUltra engine initialization failed (Plex connection issue): {e}")
+            logging.warning(f"Cacherr engine initialization failed (Plex connection issue): {e}")
             logging.info("Container will start but Plex operations will be limited until connection is established")
             engine = None
         
@@ -877,7 +892,7 @@ def main():
         app.run(host=config.web.host, port=config.web.port, debug=config.web.debug)
         
     except Exception as e:
-        logging.error(f"Failed to start PlexCacheUltra: {e}")
+        logging.error(f"Failed to start Cacherr: {e}")
         sys.exit(1)
 
 if __name__ == '__main__':

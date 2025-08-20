@@ -64,8 +64,8 @@ class CacheStats:
         
         return ", ".join(parts) if parts else "0 seconds"
 
-class PlexCacheUltraEngine:
-    """Main engine for PlexCacheUltra operations"""
+class CacherrEngine:
+    """Main engine for Cacherr operations"""
     
     def __init__(self, config: Config):
         self.config = config
@@ -134,9 +134,9 @@ class PlexCacheUltraEngine:
         self.stats.start_time = datetime.now()
         
         if test_mode:
-            self.logger.info("Starting PlexCacheUltra execution in TEST MODE")
+            self.logger.info("Starting Cacherr execution in TEST MODE")
         else:
-            self.logger.info("Starting PlexCacheUltra execution")
+            self.logger.info("Starting Cacherr execution")
         
         try:
             # Check for active sessions
@@ -164,7 +164,7 @@ class PlexCacheUltraEngine:
             
         except Exception as e:
             self.logger.error(f"Error during execution: {e}")
-            self.notification_manager.send_error_notification(f"PlexCacheUltra execution failed: {e}")
+            self.notification_manager.send_error_notification(f"Cacherr execution failed: {e}")
             return False
         finally:
             self.stats.end_time = datetime.now()
@@ -350,13 +350,13 @@ class PlexCacheUltraEngine:
         """Generate and send execution summary"""
         if test_mode:
             summary = (
-                f"PlexCacheUltra TEST MODE execution completed in {self.stats.execution_time}. "
+                f"Cacherr TEST MODE execution completed in {self.stats.execution_time}. "
                 f"Files analyzed for cache: {len(self.media_to_cache)}, "
                 f"Files analyzed for array: {len(self.media_to_array)}"
             )
         else:
             summary = (
-                f"PlexCacheUltra execution completed in {self.stats.execution_time}. "
+                f"Cacherr execution completed in {self.stats.execution_time}. "
                 f"Files moved to cache: {self.stats.files_moved_to_cache}, "
                 f"Files moved to array: {self.stats.files_moved_to_array}, "
                 f"Total size moved: {self.stats.total_size_moved} bytes"
