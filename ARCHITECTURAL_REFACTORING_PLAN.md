@@ -6,7 +6,7 @@ This plan addresses the architectural issues identified in the architectural rev
 ## Project Status
 - **Current Phase:** Phase 2 (COMPLETED)
 - **Next Phase:** Phase 3
-- **Overall Progress:** 25% (2/8 phases complete)
+- **Overall Progress:** 22% (2/9 phases complete)
 
 ---
 
@@ -260,7 +260,80 @@ claude code
 
 ---
 
-## Phase 8: Final Integration and Validation
+## Phase 8: React Frontend Development
+**Agent:** `react-ui-builder`  
+**Duration:** 5-6 days  
+**Priority:** High  
+**Status:** PENDING
+
+### Terminal Command:
+```bash
+# In new terminal, run:
+cd "C:\Users\sitti\Documents\PlexCacheUltra\PlexCacheUltra"
+claude code
+# Then tell Claude: "Work on Phase 8 of ARCHITECTURAL_REFACTORING_PLAN.md using react-ui-builder agent"
+```
+
+### Tasks:
+- [ ] Create React application structure with TypeScript
+- [ ] Build responsive dashboard with real-time updates
+- [ ] Implement component library with modern UI/UX
+- [ ] Add state management (Context API or Zustand)
+- [ ] Create WebSocket integration for live status updates
+- [ ] Implement error boundaries and loading states
+- [ ] Add accessibility compliance (WCAG 2.1)
+- [ ] Build responsive design for mobile/tablet
+- [ ] Add dark mode support
+- [ ] Implement client-side routing
+
+### Key Deliverables:
+```
+frontend/
+├── public/
+├── src/
+│   ├── components/
+│   │   ├── Dashboard/
+│   │   ├── StatusCard/
+│   │   ├── StatsGrid/
+│   │   ├── LogViewer/
+│   │   ├── TestResults/
+│   │   └── common/
+│   ├── hooks/
+│   ├── services/
+│   ├── store/
+│   ├── types/
+│   ├── utils/
+│   └── App.tsx
+├── package.json
+├── tsconfig.json
+├── tailwind.config.js
+└── vite.config.ts
+```
+
+### Modern Features:
+- **Real-time updates** via WebSocket
+- **Progressive Web App** capabilities
+- **Responsive design** with Tailwind CSS
+- **TypeScript** for type safety
+- **Component testing** with React Testing Library
+- **Performance optimization** with code splitting
+- **Error tracking** and user feedback
+
+### Benefits Over Current HTML:
+- **Maintainable**: Separate frontend codebase
+- **Scalable**: Component-based architecture
+- **Modern UX**: Real-time updates, better interactions
+- **Mobile-friendly**: Responsive design
+- **Accessible**: WCAG compliance
+- **Fast**: Optimized bundle with lazy loading
+
+### Dependencies:
+- **Requires:** Phase 3 (API separation)
+- **Can run parallel with:** Phase 4, 5, 6, 7
+
+---
+
+## Phase 9: Final Integration and Validation
 **Agent:** `production-code-auditor`  
 **Duration:** 2-3 days  
 **Priority:** Critical  
@@ -271,7 +344,7 @@ claude code
 # In new terminal, run:
 cd "C:\Users\sitti\Documents\PlexCacheUltra\PlexCacheUltra"
 claude code
-# Then tell Claude: "Work on Phase 8 of ARCHITECTURAL_REFACTORING_PLAN.md using production-code-auditor agent"
+# Then tell Claude: "Work on Phase 9 of ARCHITECTURAL_REFACTORING_PLAN.md using production-code-auditor agent"
 ```
 
 ### Tasks:
@@ -282,6 +355,7 @@ claude code
 - [ ] Validate Docker build compatibility
 - [ ] Performance testing and optimization
 - [ ] Final security audit
+- [ ] Test React frontend with backend integration
 
 ### Key Deliverables:
 - Security audit report
@@ -289,9 +363,10 @@ claude code
 - Production deployment checklist
 - Performance benchmark results
 - Final migration documentation
+- Frontend/backend integration tests
 
 ### Dependencies:
-- **Requires:** All previous phases (1-7)
+- **Requires:** All previous phases (1-8)
 - **Final deliverable**
 
 ---
@@ -300,11 +375,13 @@ claude code
 
 ### Can Run in Parallel:
 - **Phases 4, 5, 6** can run simultaneously after Phase 2 is complete
+- **Phase 8 (React)** can run parallel with Phases 4, 5, 6, 7 after Phase 3 is complete
 - **Phase 7** can start partial work after Phase 3 is complete
 
 ### Must Run Sequential:
 - **Phase 1** → **Phase 2** → **Phase 3** (dependencies)
-- **Phase 7** → **Phase 8** (testing before production)
+- **Phase 8** requires Phase 3 (API separation) but can run parallel with others
+- **Phase 7** → **Phase 9** (testing before final production)
 
 ---
 
@@ -312,14 +389,16 @@ claude code
 
 ### High-Risk Areas:
 1. **main.py refactoring** (Phase 3) - Large file with many dependencies
-2. **Integration testing** (Phase 8) - Complex system interactions
-3. **Docker compatibility** - Ensure no breaking changes
+2. **React frontend integration** (Phase 8) - New technology stack
+3. **Integration testing** (Phase 9) - Complex system interactions
+4. **Docker compatibility** - Ensure no breaking changes
 
 ### Mitigation Strategies:
 1. **Incremental approach** - Keep old code working during transition
-2. **Feature flags** - Allow switching between old/new implementations
+2. **Feature flags** - Allow switching between old/new frontend implementations
 3. **Extensive testing** - Unit and integration tests at each phase
-4. **Rollback plan** - Clear steps to revert changes if needed
+4. **Dual frontend support** - Run both old HTML and new React in parallel during transition
+5. **Rollback plan** - Clear steps to revert changes if needed
 
 ---
 
