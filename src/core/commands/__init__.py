@@ -41,6 +41,7 @@ from .interfaces import (
     CommandStatus,
     CommandMetadata,
     CommandContext,
+    CommandPriority,
 )
 
 from .base_commands import (
@@ -76,6 +77,7 @@ __all__ = [
     "CommandStatus",
     "CommandMetadata",
     "CommandContext",
+    "CommandPriority",
     
     # Base classes
     "BaseCommand",

@@ -108,7 +108,7 @@ def create_application_for_mode(mode: str) -> ApplicationContext:
         return create_application({
             'web': {
                 'debug': True,
-                'port': int(os.getenv('WEB_PORT', '8080')),
+                'port': int(os.getenv('WEB_PORT', '5445')),
                 'testing': False,
                 'host': os.getenv('WEB_HOST', '0.0.0.0')
             },
@@ -141,7 +141,7 @@ def create_application_for_mode(mode: str) -> ApplicationContext:
         return create_application({
             'web': {
                 'debug': False,
-                'port': int(os.getenv('WEB_PORT', os.getenv('PORT', '8080'))),
+                'port': int(os.getenv('WEB_PORT', os.getenv('PORT', '5445'))),
                 'testing': False,
                 'host': os.getenv('WEB_HOST', '0.0.0.0')
             },

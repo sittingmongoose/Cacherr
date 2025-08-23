@@ -169,8 +169,8 @@ Open your browser and navigate to: `http://your-server:5443`
 | `MOVE_WITH_SYMLINKS` | Enable hybrid move+symlink mode | `false` |
 | `DEBUG` | Enable debug mode | `false` |
 | `ENABLE_SCHEDULER` | Enable automatic scheduling | `false` |
-| `PORT` | Web interface port (container) | `5443` |
-| `WEB_PORT` | Web interface port (host) | `5444` (Unraid optimized) |
+| `PORT` | Web interface port (container) | `5445` |
+| `WEB_PORT` | Web interface port (host) | `5445` (Unraid optimized) |
 
 ### Trakt.tv Configuration
 
