@@ -23,12 +23,12 @@ try:
     from .trakt_watcher import TraktWatcher
 except ImportError:
     # Fallback for testing
-    from config.settings import Config
-    from core.notifications import NotificationManager
-    from core.file_operations import FileOperations
-    from core.plex_operations import PlexOperations
-    from core.plex_watcher import PlexWatcher
-    from core.trakt_watcher import TraktWatcher
+    from ..config.settings import Config
+    from .notifications import NotificationManager
+    from .file_operations import FileOperations
+    from .plex_operations import PlexOperations
+    from .plex_watcher import PlexWatcher
+    from .trakt_watcher import TraktWatcher
 
 @dataclass
 class CacheStats:

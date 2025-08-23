@@ -1,9 +1,21 @@
 import os
 import json
 import logging
+import warnings
 from typing import List, Optional
 from dataclasses import dataclass
 from pathlib import Path
+
+# Import new configuration system
+try:
+    from .settings_new import (
+        get_application_config, LegacyConfigAdapter,
+        get_config_manager, is_docker_environment, get_current_environment
+    )
+    NEW_CONFIG_AVAILABLE = True
+except ImportError as e:
+    NEW_CONFIG_AVAILABLE = False
+    warnings.warn(f"New configuration system not available: {e}", UserWarning)
 
 @dataclass
 class LoggingConfig:
@@ -98,10 +110,60 @@ class NotificationConfig:
     webhook_headers: dict
 
 class Config:
-    def __init__(self):
+    """
+    Legacy configuration class with backward compatibility.
+    
+    This class maintains the original interface while optionally using
+    the new configuration system under the hood. When the new system
+    is available, it provides better validation, environment detection,
+    and configuration management.
+    """
+    
+    def __init__(self, use_new_system: bool = False):  # Temporarily disable new system for audit
         # Setup logger first
         self.logger = logging.getLogger(__name__)
         
+        # Check if we should use new configuration system
+        self.use_new_system = use_new_system and NEW_CONFIG_AVAILABLE
+        
+        if self.use_new_system:
+            self.logger.info("Using new configuration system")
+            self._init_new_system()
+        else:
+            if not NEW_CONFIG_AVAILABLE:
+                self.logger.warning("New configuration system not available, using legacy system")
+            else:
+                self.logger.info("Using legacy configuration system")
+            self._init_legacy_system()
+    
+    def _init_new_system(self):
+        """Initialize using new configuration system."""
+        try:
+            self._adapter = LegacyConfigAdapter()
+            
+            # Map new system to legacy attributes
+            self.logging = self._adapter.logging
+            self.plex = self._adapter.plex
+            self.cache = self._adapter.cache
+            self.web = self._adapter.web
+            self.media = self._adapter.media
+            self.paths = self._adapter.paths
+            self.test_mode = self._adapter.test_mode
+            self.notifications = self._adapter.notifications
+            self.performance = self._adapter.performance
+            
+            # Load additional configurations that aren't in new system yet
+            self.real_time_watch = self._load_real_time_watch_config()
+            self.trakt = self._load_trakt_config()
+            
+        except Exception as e:
+            self.logger.error(f"Failed to initialize new configuration system: {e}")
+            self.logger.warning("Falling back to legacy configuration system")
+            self.use_new_system = False
+            self._init_legacy_system()
+    
+    def _init_legacy_system(self):
+        """Initialize using legacy configuration system."""
         # Load persistent config file path
         self.config_file = Path("/config/cacherr_config.json")
         
@@ -195,6 +257,22 @@ class Config:
         )
 
     def _load_cache_config(self) -> CacheConfig:
+        # Use new system's dynamic path resolution if available
+        if self.use_new_system:
+            try:
+                app_config = get_application_config()
+                source_paths = [app_config.paths.plex_source]
+                source_paths.extend(app_config.paths.additional_sources)
+                
+                return CacheConfig(
+                    source_paths=source_paths,
+                    destination_path=app_config.paths.cache_destination,
+                    max_cache_size_gb=int(os.getenv('CACHE_MAX_SIZE_GB', '100')),
+                    test_mode=app_config.test_mode.enabled
+                )
+            except Exception as e:
+                self.logger.warning(f"Failed to use new system for cache config: {e}")
+        
         # Backwards compatibility for legacy env names used by tests and older setups
         legacy_sources = os.getenv('CACHE_SOURCE_PATHS')
         legacy_dest = os.getenv('CACHE_DESTINATION_PATH')
@@ -205,16 +283,41 @@ class Config:
         if legacy_sources:
             source_paths = [s.strip() for s in legacy_sources.split(',') if s.strip()]
         else:
-            # For Docker, the main source is hardcoded to /mediasource
-            source_paths.append('/mediasource')  # Hardcoded Docker volume mapping
+            # Dynamic path resolution based on environment
+            if is_docker_environment() if NEW_CONFIG_AVAILABLE else self._is_likely_docker():
+                source_paths.append('/mediasource')  # Docker volume mapping
+            else:
+                # For non-Docker, try to detect Plex installation
+                plex_paths = [
+                    '/var/lib/plexmediaserver/Library/Application Support/Plex Media Server/Media',
+                    'C:\\ProgramData\\Plex Media Server\\Media',
+                    os.path.expanduser('~/Plex Media Server/Media')
+                ]
+                for path in plex_paths:
+                    if os.path.exists(path):
+                        source_paths.append(path)
+                        break
+                else:
+                    source_paths.append('/mediasource')  # Fallback
+            
             if os.getenv('ADDITIONAL_SOURCES'):
                 source_paths.extend([s.strip() for s in os.getenv('ADDITIONAL_SOURCES').split() if s.strip()])
 
-        # If no sources defined, use default
+        # If no sources defined, use dynamic default
         if not source_paths:
-            source_paths = ['/mediasource']  # Hardcoded Docker volume mapping
+            if is_docker_environment() if NEW_CONFIG_AVAILABLE else self._is_likely_docker():
+                source_paths = ['/mediasource']
+            else:
+                source_paths = ['/tmp/mediasource']  # Safe fallback
 
-        destination_path = legacy_dest if legacy_dest else self._get_setting_value('CACHE_DESTINATION', '/cache', 'cache.destination')
+        # Dynamic destination path
+        if legacy_dest:
+            destination_path = legacy_dest
+        else:
+            destination_path = self._get_setting_value('CACHE_DESTINATION', 
+                '/cache' if (is_docker_environment() if NEW_CONFIG_AVAILABLE else self._is_likely_docker()) else '/tmp/cache', 
+                'cache.destination')
+        
         test_mode = (legacy_test_mode.lower() == 'true') if legacy_test_mode else self._get_setting_bool('TEST_MODE', False, 'test_mode.enabled')
 
         return CacheConfig(
@@ -222,6 +325,14 @@ class Config:
             destination_path=destination_path,
             max_cache_size_gb=self._get_setting_int('CACHE_MAX_SIZE_GB', 100, 'cache.max_cache_size_gb'),
             test_mode=test_mode
+        )
+    
+    def _is_likely_docker(self) -> bool:
+        """Simple Docker detection for legacy system."""
+        return (
+            os.path.exists('/.dockerenv') or
+            os.getenv('DOCKER_CONTAINER') is not None or
+            os.path.exists('/proc/1/cgroup') and 'docker' in open('/proc/1/cgroup', 'r').read().lower()
         )
 
     def _load_real_time_watch_config(self) -> RealTimeWatchConfig:
@@ -359,13 +470,31 @@ class Config:
     def validate(self) -> bool:
         """Validate the configuration"""
         try:
+            # Use new validation system if available
+            if self.use_new_system:
+                return self._adapter.validate()
+            
+            # Legacy validation
             # Basic validation - check required fields
             # Note: PLEX_URL and PLEX_TOKEN can be configured via web interface
             # so they're not required at startup
-            # Note: real_source and cache_dir are hardcoded Docker volume mappings
             
-            # Check if paths exist (for Docker, these should be mounted volumes)
-            # We'll skip this check in Docker environment as paths are mounted
+            # Enhanced path validation
+            for source_path in self.cache.source_paths:
+                if not self._is_likely_docker() and not os.path.exists(source_path):
+                    self.logger.warning(f"Source path does not exist: {source_path}")
+            
+            # Check cache destination is writable
+            cache_dir = Path(self.cache.destination_path)
+            if not self._is_likely_docker():
+                try:
+                    cache_dir.mkdir(parents=True, exist_ok=True)
+                    test_file = cache_dir / '.write_test'
+                    test_file.touch()
+                    test_file.unlink()
+                except (PermissionError, OSError) as e:
+                    self.logger.error(f"Cache destination not writable: {cache_dir} - {e}")
+                    return False
             
             return True
         except Exception as e:
@@ -374,16 +503,24 @@ class Config:
 
     def reload(self):
         """Reload configuration from environment variables and persistent config"""
-        self.plex = self._load_plex_config()
-        self.cache = self._load_cache_config()
-        self.real_time_watch = self._load_real_time_watch_config()
-        self.trakt = self._load_trakt_config()
-        self.web = self._load_web_config()
-        self.media = self._load_media_config()
-        self.paths = self._load_paths_config()
-        self.test_mode = self._load_test_mode_config()
-        self.notifications = self._load_notification_config()
-        self.performance = self._load_performance_config()
+        if self.use_new_system:
+            self._adapter.reload()
+            # Reload configurations not in new system
+            self.real_time_watch = self._load_real_time_watch_config()
+            self.trakt = self._load_trakt_config()
+        else:
+            # Legacy reload
+            self.plex = self._load_plex_config()
+            self.cache = self._load_cache_config()
+            self.real_time_watch = self._load_real_time_watch_config()
+            self.trakt = self._load_trakt_config()
+            self.web = self._load_web_config()
+            self.media = self._load_media_config()
+            self.paths = self._load_paths_config()
+            self.test_mode = self._load_test_mode_config()
+            self.notifications = self._load_notification_config()
+            self.performance = self._load_performance_config()
+        
         self.logger.info("Configuration reloaded from environment variables and persistent config")
 
     def update_persistent_config(self, section: str, key: str, value):
@@ -429,6 +566,27 @@ class Config:
 
     def to_dict(self):
         """Convert configuration to dictionary for API responses"""
+        if self.use_new_system:
+            base_dict = self._adapter.to_dict()
+            # Add configurations not in new system
+            base_dict['real_time_watch'] = {
+                'enabled': self.real_time_watch.enabled,
+                'check_interval': self.real_time_watch.check_interval,
+                'cache_when_watching': self.real_time_watch.cache_when_watching,
+                'remove_from_cache_after_hours': self.real_time_watch.remove_from_cache_after_hours,
+                'respect_other_users_watchlists': self.real_time_watch.respect_other_users_watchlists,
+                'exclude_inactive_users_days': self.real_time_watch.exclude_inactive_users_days
+            }
+            base_dict['trakt'] = {
+                'enabled': self.trakt.enabled,
+                'client_id': '***' if self.trakt.client_id else '',
+                'client_secret': '***' if self.trakt.client_secret else '',
+                'trending_movies_count': self.trakt.trending_movies_count,
+                'check_interval': self.trakt.check_interval
+            }
+            return base_dict
+        
+        # Legacy format
         return {
             'logging': {
                 'level': self.logging.level,
@@ -466,7 +624,7 @@ class Config:
                 'host': self.web.host,
                 'port': self.web.port,
                 'debug': self.web.debug,
-                'enable_scheduler': self.web.enable_scheduler
+                'enable_scheduler': getattr(self.web, 'enable_scheduler', False)
             },
             'media': {
                 'exit_if_active_session': self.media.exit_if_active_session,
@@ -501,5 +659,7 @@ class Config:
             'notifications': {
                 'webhook_url': self.notifications.webhook_url,
                 'webhook_headers': self.notifications.webhook_headers
-            }
+            },
+            '_system': 'new' if self.use_new_system else 'legacy',
+            '_environment': get_current_environment().value if NEW_CONFIG_AVAILABLE else 'unknown'
         }

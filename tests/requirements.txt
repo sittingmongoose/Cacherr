@@ -1,0 +1,39 @@
+# Testing requirements for PlexCacheUltra
+# Install with: pip install -r tests/requirements.txt
+
+# Testing Framework
+pytest>=7.0.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.0.0
+pytest-mock>=3.10.0
+pytest-xdist>=3.0.0  # Parallel test execution
+
+# Test Data and Fixtures
+factory-boy>=3.2.0
+faker>=18.0.0
+
+# Performance Testing
+pytest-benchmark>=4.0.0
+
+# Test Reporting
+pytest-html>=3.1.0
+pytest-json-report>=1.5.0
+
+# Code Quality (for test code)
+flake8>=6.0.0
+black>=23.0.0
+isort>=5.12.0
+
+# Coverage Analysis
+coverage[toml]>=7.0.0
+
+# Mock and Stub Libraries
+responses>=0.23.0  # HTTP mocking
+freezegun>=1.2.0   # Time mocking
+
+# Development Dependencies (if running tests in dev mode)
+watchdog>=3.0.0    # File watching for test re-runs
+
+# Type Checking Support
+mypy>=1.0.0
+types-requests>=2.28.0

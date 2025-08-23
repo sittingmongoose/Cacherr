@@ -1,4 +1,4 @@
-# Core functionality package for Cacherr
+# Core functionality package for PlexCacheUltra
 
 # Import main classes for easier access
 from .plex_cache_engine import CacherrEngine
@@ -108,6 +108,68 @@ from .service_locator import (
     temporary_service_registration
 )
 
+# Import command system components
+from .commands import (
+    ICommand,
+    IUndoableCommand,
+    ICommandExecutor,
+    ICommandHistory,
+    ICommandQueue,
+    CommandResult,
+    CommandStatus,
+    CommandMetadata,
+    CommandContext,
+    CommandPriority,
+    BaseCommand,
+    BaseUndoableCommand,
+    CompositeCacheCommand,
+    MoveToCache,
+    MoveToArray,
+    CopyToCache,
+    DeleteFromCache,
+    TestCacheOperation,
+    AnalyzeCacheImpact,
+    CleanupCache,
+    ValidateCache,
+    CommandFactory,
+    CacheCommandFactory
+)
+
+from .command_queue import (
+    CommandQueue,
+    CommandExecutionManager,
+    CommandQueueEntry,
+    CommandQueueStatus
+)
+
+from .command_history import (
+    CommandHistory,
+    PersistentCommandHistory,
+    CommandHistoryManager,
+    CommandHistoryEntry
+)
+
+from .command_monitor import (
+    CommandMonitor,
+    CommandLogger,
+    CommandMetrics
+)
+
+from .command_service import (
+    CommandService,
+    CommandSystemConfiguration,
+    CommandServiceRegistry,
+    setup_command_system
+)
+
+from .operation_integration import (
+    CacheOperationHandler,
+    LegacyOperationBridge,
+    OperationCommandAdapter,
+    create_operation_handler,
+    create_legacy_bridge
+)
+
 __all__ = [
     # Core implementations
     'CacherrEngine',
@@ -208,5 +270,66 @@ __all__ = [
     'has_service',
     'service_scope',
     'locate_service',
-    'temporary_service_registration'
+    'temporary_service_registration',
+    
+    # Command System - Core Interfaces
+    'ICommand',
+    'IUndoableCommand',
+    'ICommandExecutor',
+    'ICommandHistory',
+    'ICommandQueue',
+    'CommandResult',
+    'CommandStatus',
+    'CommandMetadata',
+    'CommandContext',
+    'CommandPriority',
+    
+    # Command System - Base Classes
+    'BaseCommand',
+    'BaseUndoableCommand',
+    'CompositeCacheCommand',
+    
+    # Command System - Cache Commands
+    'MoveToCache',
+    'MoveToArray',
+    'CopyToCache',
+    'DeleteFromCache',
+    'TestCacheOperation',
+    'AnalyzeCacheImpact',
+    'CleanupCache',
+    'ValidateCache',
+    
+    # Command System - Factories
+    'CommandFactory',
+    'CacheCommandFactory',
+    
+    # Command System - Queue Management
+    'CommandQueue',
+    'CommandExecutionManager',
+    'CommandQueueEntry',
+    'CommandQueueStatus',
+    
+    # Command System - History Management
+    'CommandHistory',
+    'PersistentCommandHistory',
+    'CommandHistoryManager',
+    'CommandHistoryEntry',
+    
+    # Command System - Monitoring
+    'CommandMonitor',
+    'CommandLogger',
+    'CommandMetrics',
+    
+    # Command System - Service Integration
+    'CommandService',
+    'CommandSystemConfiguration',
+    'CommandServiceRegistry',
+    'setup_command_system',
+    
+    # Command System - Operation Integration
+    'CacheOperationHandler',
+    'LegacyOperationBridge',
+    'OperationCommandAdapter',
+    'create_operation_handler',
+    'create_legacy_bridge'
 ]

@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offline - PlexCacheUltra</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+        
+        .container {
+            text-align: center;
+            max-width: 500px;
+        }
+        
+        .offline-icon {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            opacity: 0.8;
+        }
+        
+        h1 {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        
+        p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            line-height: 1.6;
+            margin-bottom: 2rem;
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .status {
+            margin-top: 2rem;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 0.5rem;
+            font-family: monospace;
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+        
+        .online {
+            color: #4ade80;
+        }
+        
+        .offline {
+            color: #f87171;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @media (max-width: 640px) {
+            h1 {
+                font-size: 1.5rem;
+            }
+            
+            p {
+                font-size: 1rem;
+            }
+            
+            .buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            button {
+                width: 100%;
+                max-width: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="offline-icon pulse">📡</div>
+        
+        <h1>You're Offline</h1>
+        
+        <p>
+            Your internet connection seems to be down. Some cached data may still be available,
+            but live updates are not possible right now.
+        </p>
+        
+        <div class="buttons">
+            <button onclick="tryReconnect()">Try Again</button>
+            <button onclick="goHome()">Go to Dashboard</button>
+        </div>
+        
+        <div class="status" id="status">
+            Connection Status: <span id="connectionStatus" class="offline">Offline</span>
+        </div>
+    </div>
+    
+    <script>
+        // Check connection status
+        function updateConnectionStatus() {
+            const status = document.getElementById('connectionStatus')
+            if (navigator.onLine) {
+                status.textContent = 'Online'
+                status.className = 'online'
+            } else {
+                status.textContent = 'Offline'
+                status.className = 'offline'
+            }
+        }
+        
+        // Try to reconnect
+        function tryReconnect() {
+            if (navigator.onLine) {
+                location.reload()
+            } else {
+                // Try to navigate to main page anyway
+                window.location.href = '/'
+            }
+        }
+        
+        // Go to home page
+        function goHome() {
+            window.location.href = '/'
+        }
+        
+        // Listen for connection changes
+        window.addEventListener('online', updateConnectionStatus)
+        window.addEventListener('offline', updateConnectionStatus)
+        
+        // Initial status check
+        updateConnectionStatus()
+        
+        // Periodically check if we can reach the server
+        setInterval(async () => {
+            try {
+                const response = await fetch('/health', { 
+                    method: 'HEAD',
+                    cache: 'no-cache'
+                })
+                if (response.ok) {
+                    // Server is reachable, reload the page
+                    location.reload()
+                }
+            } catch (error) {
+                // Still offline
+            }
+        }, 10000) // Check every 10 seconds
+    </script>
+</body>
+</html>
