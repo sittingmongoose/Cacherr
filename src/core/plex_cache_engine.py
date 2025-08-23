@@ -269,11 +269,8 @@ class CacherrEngine:
             self.logger.info("No files need to be moved to cache")
             return
         
-        # Determine cache destination based on mount configuration
-        if Path('/unified/cache').exists():
-            cache_dest = self.config.paths.cache_destination or '/unified/cache'  # Unified mount
-        else:
-            cache_dest = self.config.paths.cache_destination or '/cache'  # Separate mount
+        # Use the configured cache destination path
+        cache_dest = self.config.paths.cache_destination or '/cache'
         
         # Check available space in cache destination
         if not self.file_operations.check_available_space(files_to_cache, cache_dest):
@@ -288,9 +285,8 @@ class CacherrEngine:
             move_with_symlinks=self.config.media.move_with_symlinks
         )
         
-        # Determine source directory based on mount configuration
-        # Check if we're using unified mounts or separate mounts
-        source_dir = '/unified/media' if Path('/unified/media').exists() else '/mediasource'
+        # Use the configured real source path (now matches Plex mount)
+        source_dir = self.config.paths.real_source or '/media'
         
         # Execute moves, copies, or move+symlink
         result = self.file_operations.move_files(
@@ -329,13 +325,14 @@ class CacherrEngine:
             self.logger.info("No files need to be moved to array")
             return
         
-        # Check available space
-        if not self.file_operations.check_available_space(files_to_array, '/mediasource'):  # Hardcoded Docker volume mapping
+        # Check available space in the source directory (now matches Plex mount)
+        source_dir = self.config.paths.real_source or '/media'
+        if not self.file_operations.check_available_space(files_to_array, source_dir):
             self.logger.error("Insufficient space in array directory")
             return
         
         # Execute moves from cache to array or delete from cache
-        cache_dest = self.config.paths.cache_destination or '/cache'  # Hardcoded Docker volume mapping
+        cache_dest = self.config.paths.cache_destination or '/cache'
         if self.config.media.copy_to_cache and self.config.media.delete_from_cache_when_done:
             # Delete from cache instead of moving back
             moved_count, total_size = self.file_operations.delete_files(
@@ -361,11 +358,11 @@ class CacherrEngine:
                 move_with_symlinks=False  # Don't use symlinks for array moves
             )
             
-            # Move back to array
+            # Move back to array  
             result = self.file_operations.move_files(
                 files_to_array,
                 cache_dest,
-                '/mediasource',  # Hardcoded Docker volume mapping
+                source_dir,  # Use the same source directory as Plex
                 file_config
             )
         

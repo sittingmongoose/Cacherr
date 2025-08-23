@@ -8,9 +8,11 @@
   <Shell>bash</Shell>
   <Privileged>false</Privileged>
   <Support>https://github.com/sittingmongoose/cacherr</Support>
-  <Overview>Cacherr - Docker-optimized Plex media caching system designed specifically for Unraid environments. Automatically moves frequently accessed media files to fast cache drives and moves watched content back to array drives.</Overview>
-  <Category>Media</Category>
-  <WebUI>http://[IP]:5444</WebUI>
+  <Overview>Cacherr - Docker-optimized Plex media caching system designed specifically for Unraid environments. Automatically moves frequently accessed media files to fast cache drives and moves watched content back to array drives.
+
+MOUNT COMPATIBILITY SOLUTION: This template uses the SAME mount paths as your Plex container to prevent media visibility issues. Files are moved to cache with hardlinks created back to original locations so Plex NEVER loses access to your media.</Overview>
+  <Category>MediaServer:Other</Category>
+  <WebUI>http://[IP]:5445</WebUI>
   <TemplateURL>https://raw.githubusercontent.com/sittingmongoose/cacherr/main/cacherr-unraid-template.xml</TemplateURL>
   <Icon>https://raw.githubusercontent.com/sittingmongoose/cacherr/main/cacherr-icon.png</Icon>
   <ExtraParams/>
@@ -24,16 +26,28 @@
 
 
 
-  <Config Name="Port 5444" Target="5443" Default="5444" Mode="tcp" Description="Web interface port (Host: 5444 → Container: 5443)" Type="Port" Required="false"/>
+  <!-- Required Configuration -->
+  <Config Name="PLEX_URL" Target="PLEX_URL" Default="http://YOUR_PLEX_SERVER:32400" Mode="" Description="Your Plex server URL (REQUIRED)" Type="Variable" Display="always" Required="true" Mask="false"/>
+  <Config Name="PLEX_TOKEN" Target="PLEX_TOKEN" Default="" Mode="" Description="Your Plex authentication token (REQUIRED)" Type="Variable" Display="always" Required="true" Mask="true"/>
   
-  <!-- Environment Variables (prevent Plex restarts) -->
-  <Config Name="PLEX_SOURCE" Target="PLEX_SOURCE" Default="/media" Mode="" Description="Plex source path (container path)" Type="Variable" Required="false"/>
-  <Config Name="CACHE_DESTINATION" Target="CACHE_DESTINATION" Default="/cache" Mode="" Description="Cache destination path (container path)" Type="Variable" Required="false"/>
-  <Config Name="ADDITIONAL_PLEX_SOURCES" Target="ADDITIONAL_PLEX_SOURCES" Default="" Mode="" Description="Additional Plex sources (space-separated container paths)" Type="Variable" Required="false"/>
+  <!-- Network Port -->
+  <Config Name="Web Port" Target="5445" Default="5445" Mode="tcp" Description="Web interface port" Type="Port" Display="always" Required="true" Mask="false"/>
   
-  <!-- Volume Paths (Host → Container) -->
-  <Config Name="Cache" Target="/cache" Default="/mnt/cache/apps/cacherr" Mode="rw" Description="Cache directory" Type="Path" Required="false"/>
-  <Config Name="Media Source" Target="/mediasource" Default="/mnt/user/media" Mode="rw" Description="Media source directory" Type="Path" Required="false"/>
-  <Config Name="Config" Target="/config" Default="/mnt/user/appdata/cacherr/config" Mode="rw" Description="Configuration directory" Type="Path" Required="false"/>
-  <Config Name="Additional Sources" Target="/mediasource2" Default="/mnt/user/media2" Mode="rw" Description="Additional media sources directory" Type="Path" Required="false"/>
+  <!-- CRITICAL: Media Paths - MUST match your Plex container exactly -->
+  <Config Name="Media (Primary)" Target="/media" Default="/mnt/user/Media" Mode="rw" Description="Primary media path - MUST match your Plex /media mount EXACTLY" Type="Path" Display="always" Required="true" Mask="false"/>
+  <Config Name="Media (NAS Remote)" Target="/Nas1" Default="/mnt/remotes/NAS1_Media2" Mode="rw" Description="NAS media path - MUST match your Plex /Nas1 mount EXACTLY" Type="Path" Display="always" Required="true" Mask="false"/>
+  
+  <!-- Cache and Config -->
+  <Config Name="Cache Directory" Target="/cache" Default="/mnt/user/MediaTranscodes" Mode="rw" Description="Fast cache directory (transcodes folder recommended)" Type="Path" Display="always" Required="true" Mask="false"/>
+  <Config Name="Config Directory" Target="/config" Default="/mnt/user/appdata/cacherr" Mode="rw" Description="Configuration and data storage" Type="Path" Display="always" Required="true" Mask="false"/>
+  
+  <!-- Media Processing Settings -->
+  <Config Name="NUMBER_EPISODES" Target="NUMBER_EPISODES" Default="5" Mode="" Description="Number of episodes to cache per series" Type="Variable" Display="always" Required="false" Mask="false"/>
+  <Config Name="WATCHLIST_TOGGLE" Target="WATCHLIST_TOGGLE" Default="true" Mode="" Description="Enable watchlist caching" Type="Variable" Display="always" Required="false" Mask="false"/>
+  <Config Name="WATCHED_MOVE" Target="WATCHED_MOVE" Default="true" Mode="" Description="Move watched content back to array" Type="Variable" Display="always" Required="false" Mask="false"/>
+  
+  <!-- Advanced Settings -->
+  <Config Name="TEST_MODE" Target="TEST_MODE" Default="false" Mode="" Description="Test mode - shows what would be moved without actually moving files" Type="Variable" Display="advanced" Required="false" Mask="false"/>
+  <Config Name="LOG_LEVEL" Target="LOG_LEVEL" Default="INFO" Mode="" Description="Logging level (DEBUG, INFO, WARNING, ERROR)" Type="Variable" Display="advanced" Required="false" Mask="false"/>
+  <Config Name="TZ" Target="TZ" Default="America/New_York" Mode="" Description="Container timezone" Type="Variable" Display="advanced" Required="false" Mask="false"/>
 </Container>

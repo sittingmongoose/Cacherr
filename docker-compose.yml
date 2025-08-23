@@ -15,13 +15,13 @@ services:
       - PLEX_URL=${PLEX_URL}
       - PLEX_TOKEN=${PLEX_TOKEN}
       
-      # Unraid Path Configuration (safe defaults)
-      - CONFIG_DIR=${CONFIG_DIR:-/mnt/user/appdata/cacherr/config}
-      - REAL_SOURCE=${REAL_SOURCE:-/mnt/user/media}
-      - PLEX_SOURCE=${PLEX_SOURCE:-/mnt/user/plex}
-      - CACHE_DESTINATION=${CACHE_DESTINATION:-/mnt/cache/apps/cacherr}
-      - ADDITIONAL_SOURCES=${ADDITIONAL_SOURCES:-/mnt/user/media2}
-      - ADDITIONAL_PLEX_SOURCES=${ADDITIONAL_PLEX_SOURCES:-/mnt/user/plex2}
+      # Path Configuration (matched to your Plex setup)
+      - CONFIG_DIR=/config
+      - REAL_SOURCE=/media
+      - PLEX_SOURCE=/media
+      - CACHE_DESTINATION=/cache
+      - ADDITIONAL_SOURCES=/Nas1
+      - ADDITIONAL_PLEX_SOURCES=/Nas1
       
       # Media Settings
       - NUMBER_EPISODES=${NUMBER_EPISODES:-5}
@@ -84,10 +84,22 @@ services:
       # Container Configuration
       - TZ=${TZ:-UTC}
     volumes:
-      # Unraid media paths (safe defaults that won't conflict with Plex)
-      - ${CACHE_DESTINATION:-/mnt/cache/apps/cacherr}:/cache:rw
-      - ${REAL_SOURCE:-/mnt/user/media}:/mediasource:rw
-      - ${PLEX_SOURCE:-/mnt/user/plex}:/plexsource:ro
+      # SOLUTION: Use same mount paths as Plex for compatibility
+      # This ensures cacherr and Plex see files through identical paths
+      
+      # Cache destination (where files are moved for performance)
+      - ${CACHE_DESTINATION:-/mnt/transcode}:/cache:rw
+      
+      # PRIMARY MEDIA: Mount exactly like Plex does
+      - /mnt/user/Media:/media:rw
+      
+      # REMOTE MEDIA: Mount NAS exactly like Plex does  
+      - /mnt/remotes/NAS1_Media2:/Nas1:rw
+      
+      # PLEX-COMPATIBLE PATHS: cacherr will create hardlinks/symlinks here
+      # These should point to subdirectories within the same mount as cache
+      - /mnt/user/Media:/plexmedia:rw
+      - /mnt/remotes/NAS1_Media2:/plexnas:rw
       
       # Application data (persistent)
       - ${CONFIG_DIR:-/mnt/user/appdata/cacherr/config}:/config:rw

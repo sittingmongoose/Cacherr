@@ -720,54 +720,28 @@ class FileOperations:
     def _get_plex_visible_path(self, real_file_path: str) -> Optional[str]:
         """Convert a real file path to the corresponding Plex-visible path.
         
-        This maps paths so Plex can still see files after they've been moved to cache
-        with hardlinks created in Plex locations.
+        For the user's setup where Plex and cacherr share the same mount paths,
+        the Plex-visible path IS the same as the real file path since both
+        containers mount media at the same container paths.
         
-        Supports both separate volume mounts and unified mount configurations:
-        - Separate mounts: /mediasource -> /plexsource (may use symlinks)
-        - Unified mounts: /unified/media -> /unified/plex (uses hardlinks)
+        This approach works because:
+        - Plex sees media at /media and /Nas1
+        - cacherr also mounts media at /media and /Nas1  
+        - When files are moved to /cache, we create hardlinks back to original locations
+        - Plex continues to see files at expected paths through hardlinks
         
         Args:
-            real_file_path: The original file path
+            real_file_path: The original file path in container
             
         Returns:
-            The corresponding path in Plex-visible location, or None if no mapping applies
+            The same path (since Plex and cacherr use identical mount paths)
         """
         if not real_file_path:
             return None
             
-        real_path = Path(real_file_path)
-        
-        # For unified mount environment: map /unified/media to /unified/plex
-        if real_path.is_relative_to('/unified/media'):
-            try:
-                rel_path = real_path.relative_to('/unified/media')
-                plex_path = Path('/unified/plex') / rel_path
-                return str(plex_path)
-            except ValueError:
-                pass
-        
-        # For separate mount environment: map /mediasource to /plexsource
-        if real_path.is_relative_to('/mediasource'):
-            try:
-                rel_path = real_path.relative_to('/mediasource')
-                plex_path = Path('/plexsource') / rel_path
-                return str(plex_path)
-            except ValueError:
-                pass
-        
-        # Handle additional source mappings if configured
-        if self.config.paths.additional_sources and self.config.paths.additional_plex_sources:
-            for real_source, plex_source in zip(self.config.paths.additional_sources, self.config.paths.additional_plex_sources):
-                try:
-                    if real_path.is_relative_to(real_source):
-                        rel_path = real_path.relative_to(real_source)
-                        plex_path = Path(plex_source) / rel_path
-                        return str(plex_path)
-                except ValueError:
-                    continue
-        
-        return None
+        # For shared mount setup, Plex-visible path is the same as the real path
+        # This works because both containers mount media at identical paths
+        return real_file_path
     
     def get_file_size_readable(self, size_bytes: int) -> str:
         """Convert file size to human readable format"""
