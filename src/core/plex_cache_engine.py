@@ -17,7 +17,7 @@ from plexapi.exceptions import NotFound, BadRequest
 try:
     from ..config.settings import Config
     from .notifications import NotificationManager
-    from .file_operations import FileOperations
+    from .file_operations import FileOperations, FileOperationConfig
     from .plex_operations import PlexOperations
     from .plex_watcher import PlexWatcher
     from .trakt_watcher import TraktWatcher
@@ -25,7 +25,7 @@ except ImportError:
     # Fallback for testing
     from ..config.settings import Config
     from .notifications import NotificationManager
-    from .file_operations import FileOperations
+    from .file_operations import FileOperations, FileOperationConfig
     from .plex_operations import PlexOperations
     from .plex_watcher import PlexWatcher
     from .trakt_watcher import TraktWatcher
@@ -235,18 +235,18 @@ class CacherrEngine:
             cache_analysis = self.file_operations.analyze_files_for_test_mode(
                 self.media_to_cache, "cache"
             )
-            self.test_results['cache_operation'] = cache_analysis
-            self.logger.info(f"Test mode: {cache_analysis['file_count']} files would be moved to cache")
-            self.logger.info(f"Test mode: Total size would be {cache_analysis['total_size_readable']}")
+            self.test_results['cache_operation'] = cache_analysis.dict()
+            self.logger.info(f"Test mode: {cache_analysis.file_count} files would be moved to cache")
+            self.logger.info(f"Test mode: Total size would be {cache_analysis.total_size_readable}")
         
         # Analyze files for array operation
         if self.media_to_array and self.config.media.watched_move:
             array_analysis = self.file_operations.analyze_files_for_test_mode(
                 self.media_to_array, "array"
             )
-            self.test_results['array_operation'] = array_analysis
-            self.logger.info(f"Test mode: {array_analysis['file_count']} files would be moved to array")
-            self.logger.info(f"Test mode: Total size would be {array_analysis['total_size_readable']}")
+            self.test_results['array_operation'] = array_analysis.dict()
+            self.logger.info(f"Test mode: {array_analysis.file_count} files would be moved to array")
+            self.logger.info(f"Test mode: Total size would be {array_analysis.total_size_readable}")
     
     def _execute_cache_operations(self):
         """Execute the actual file movement operations"""
@@ -269,37 +269,54 @@ class CacherrEngine:
             self.logger.info("No files need to be moved to cache")
             return
         
+        # Determine cache destination based on mount configuration
+        if Path('/unified/cache').exists():
+            cache_dest = self.config.paths.cache_destination or '/unified/cache'  # Unified mount
+        else:
+            cache_dest = self.config.paths.cache_destination or '/cache'  # Separate mount
+        
         # Check available space in cache destination
-        cache_dest = self.config.paths.cache_destination or '/cache'  # Hardcoded Docker volume mapping
         if not self.file_operations.check_available_space(files_to_cache, cache_dest):
             self.logger.error("Insufficient space in cache destination directory")
             return
         
-        # Execute moves, copies, or move+symlink
-        moved_count, total_size = self.file_operations.move_files(
-            files_to_cache,
-            '/mediasource',  # Hardcoded Docker volume mapping
-            cache_dest,
-            self.config.performance.max_concurrent_moves_cache,
+        # Create file operation configuration
+        file_config = FileOperationConfig(
+            max_concurrent=self.config.performance.max_concurrent_moves_cache,
             dry_run=self.config.test_mode.dry_run,
             copy_mode=self.config.media.copy_to_cache,
             move_with_symlinks=self.config.media.move_with_symlinks
         )
         
-        self.stats.files_moved_to_cache = moved_count
-        self.stats.total_size_moved += total_size
+        # Determine source directory based on mount configuration
+        # Check if we're using unified mounts or separate mounts
+        source_dir = '/unified/media' if Path('/unified/media').exists() else '/mediasource'
         
-        if self.config.media.move_with_symlinks:
-            operation = "move+symlink"
-        elif self.config.media.copy_to_cache:
-            operation = "copy"
-        else:
-            operation = "move"
+        # Execute moves, copies, or move+symlink
+        result = self.file_operations.move_files(
+            files_to_cache,
+            source_dir,
+            cache_dest,
+            file_config
+        )
+        
+        self.stats.files_moved_to_cache = result.files_processed
+        self.stats.total_size_moved += result.total_size_bytes
+        
+        # Log results and any errors/warnings
+        if result.errors:
+            for error in result.errors:
+                self.logger.error(error)
+        
+        if result.warnings:
+            for warning in result.warnings:
+                self.logger.warning(warning)
+        
         # Test mode is always safe - files are never moved
         if self.config.test_mode.dry_run:
-            self.logger.info(f"TEST MODE: Would {operation} {moved_count} files to cache ({total_size} bytes)")
+            self.logger.info(f"TEST MODE: Would {result.operation_type} {result.files_processed} files to cache ({result.total_size_readable})")
         else:
-            self.logger.info(f"{operation.capitalize()}d {moved_count} files to cache ({total_size} bytes)")
+            self.logger.info(f"{result.operation_type.capitalize()}d {result.files_processed} files to cache ({result.total_size_readable})")
     
     def _move_files_to_array(self):
         """Move watched files from cache to array or delete them from cache"""
@@ -326,25 +343,49 @@ class CacherrEngine:
                 self.config.performance.max_concurrent_moves_array
             )
             operation = "delete"
+            # Create a simple result for consistency
+            result = type('Result', (), {
+                'files_processed': moved_count, 
+                'total_size_bytes': total_size, 
+                'total_size_readable': self.file_operations.get_file_size_readable(total_size),
+                'operation_type': operation,
+                'errors': [],
+                'warnings': []
+            })()
         else:
+            # Create file operation configuration for move back to array
+            file_config = FileOperationConfig(
+                max_concurrent=self.config.performance.max_concurrent_moves_array,
+                dry_run=self.config.test_mode.dry_run,
+                copy_mode=False,  # Always move back, don't copy
+                move_with_symlinks=False  # Don't use symlinks for array moves
+            )
+            
             # Move back to array
-            moved_count, total_size = self.file_operations.move_files(
+            result = self.file_operations.move_files(
                 files_to_array,
                 cache_dest,
                 '/mediasource',  # Hardcoded Docker volume mapping
-                self.config.performance.max_concurrent_moves_array,
-                dry_run=self.config.test_mode.dry_run
+                file_config
             )
-            operation = "move"
         
-        self.stats.files_moved_to_array = moved_count
-        self.stats.total_size_moved += total_size
+        self.stats.files_moved_to_array = result.files_processed
+        self.stats.total_size_moved += result.total_size_bytes
+        
+        # Log results and any errors/warnings
+        if hasattr(result, 'errors') and result.errors:
+            for error in result.errors:
+                self.logger.error(error)
+        
+        if hasattr(result, 'warnings') and result.warnings:
+            for warning in result.warnings:
+                self.logger.warning(warning)
         
         # Test mode is always safe - files are never moved
         if self.config.test_mode.dry_run:
-            self.logger.info(f"TEST MODE: Would {operation} {moved_count} files from cache ({total_size} bytes)")
+            self.logger.info(f"TEST MODE: Would {result.operation_type} {result.files_processed} files from cache ({result.total_size_readable})")
         else:
-            self.logger.info(f"{operation.capitalize()}d {moved_count} files from cache ({total_size} bytes)")
+            self.logger.info(f"{result.operation_type.capitalize()}d {result.files_processed} files from cache ({result.total_size_readable})")
     
     def _generate_summary(self, test_mode: bool = False):
         """Generate and send execution summary"""

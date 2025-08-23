@@ -720,21 +720,34 @@ class FileOperations:
     def _get_plex_visible_path(self, real_file_path: str) -> Optional[str]:
         """Convert a real file path to the corresponding Plex-visible path.
         
-        This maps paths from /mediasource to /plexsource so Plex can still see files
-        after they've been moved to cache with hardlinks created in Plex locations.
+        This maps paths so Plex can still see files after they've been moved to cache
+        with hardlinks created in Plex locations.
+        
+        Supports both separate volume mounts and unified mount configurations:
+        - Separate mounts: /mediasource -> /plexsource (may use symlinks)
+        - Unified mounts: /unified/media -> /unified/plex (uses hardlinks)
         
         Args:
-            real_file_path: The original file path in /mediasource
+            real_file_path: The original file path
             
         Returns:
-            The corresponding path in /plexsource, or None if no mapping applies
+            The corresponding path in Plex-visible location, or None if no mapping applies
         """
         if not real_file_path:
             return None
             
         real_path = Path(real_file_path)
         
-        # For Docker environment: map /mediasource to /plexsource
+        # For unified mount environment: map /unified/media to /unified/plex
+        if real_path.is_relative_to('/unified/media'):
+            try:
+                rel_path = real_path.relative_to('/unified/media')
+                plex_path = Path('/unified/plex') / rel_path
+                return str(plex_path)
+            except ValueError:
+                pass
+        
+        # For separate mount environment: map /mediasource to /plexsource
         if real_path.is_relative_to('/mediasource'):
             try:
                 rel_path = real_path.relative_to('/mediasource')
