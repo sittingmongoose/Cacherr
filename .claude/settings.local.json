@@ -10,7 +10,9 @@
       "Bash(mkdir:*)",
       "Bash(docker build:*)",
       "Bash(pip install:*)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(chmod:*)",
+      "Bash(bash:*)"
     ],
     "deny": [],
     "ask": []

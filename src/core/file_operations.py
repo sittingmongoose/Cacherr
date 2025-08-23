@@ -2,14 +2,35 @@ import os
 import shutil
 import logging
 from pathlib import Path
-from typing import List, Set, Tuple, Dict
+from typing import List, Set, Tuple, Dict, Optional
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from pydantic import BaseModel
 
 try:
     from ..config.settings import Config
+    from .interfaces import MediaFileInfo, CacheOperationResult, TestModeAnalysis
 except ImportError:
     # Fallback for testing
     from config.settings import Config
+    from .interfaces import MediaFileInfo, CacheOperationResult, TestModeAnalysis
+
+
+class FileOperationConfig(BaseModel):
+    """Configuration for file operations with Pydantic validation."""
+    max_concurrent: Optional[int] = None
+    dry_run: bool = False
+    copy_mode: bool = False
+    create_symlinks: bool = False
+    move_with_symlinks: bool = False
+
+
+class FileOperationResult(BaseModel):
+    """Result of file operation with type safety."""
+    success: bool
+    file_size: int
+    source_path: str
+    destination_path: str
+    error_message: Optional[str] = None
 
 class FileOperations:
     """Handles file operations for Cacherr"""
@@ -219,16 +240,17 @@ class FileOperations:
         self.logger.info(f"Filtered {len(files_to_array)} files for array")
         return files_to_array
     
-    def analyze_files_for_test_mode(self, files: List[str], operation_type: str = "cache") -> Dict:
+    def analyze_files_for_test_mode(self, files: List[str], operation_type: str = "cache") -> TestModeAnalysis:
         """Analyze files for test mode, showing what would be moved without actually moving"""
         if not files:
-            return {
-                'files': [],
-                'total_size': 0,
-                'total_size_readable': '0B',
-                'file_details': [],
-                'operation_type': operation_type
-            }
+            return TestModeAnalysis(
+                files=[],
+                total_size=0,
+                total_size_readable='0B',
+                file_details=[],
+                operation_type=operation_type,
+                file_count=0
+            )
         
         self.logger.info(f"Analyzing {len(files)} files for {operation_type} operation (test mode)")
         
@@ -253,14 +275,13 @@ class FileOperations:
                 else:  # array
                     dest_path = self._get_array_path(file_path_str)
                 
-                file_detail = {
-                    'source': file_path_str,
-                    'destination': dest_path,
-                    'size_bytes': file_size,
-                    'size_readable': file_size_readable,
-                    'filename': file_path.name,
-                    'directory': str(file_path.parent)
-                }
+                file_detail = MediaFileInfo(
+                    path=file_path_str,
+                    size_bytes=file_size,
+                    filename=file_path.name,
+                    directory=str(file_path.parent),
+                    size_readable=file_size_readable
+                )
                 
                 file_details.append(file_detail)
                 total_size += file_size
@@ -268,14 +289,14 @@ class FileOperations:
             except (OSError, PermissionError) as e:
                 self.logger.warning(f"Cannot analyze file {file_path_str}: {e}")
         
-        return {
-            'files': files,
-            'total_size': total_size,
-            'total_size_readable': self.get_file_size_readable(total_size),
-            'file_details': file_details,
-            'operation_type': operation_type,
-            'file_count': len(file_details)
-        }
+        return TestModeAnalysis(
+            files=files,
+            total_size=total_size,
+            total_size_readable=self.get_file_size_readable(total_size),
+            file_details=file_details,
+            operation_type=operation_type,
+            file_count=len(file_details)
+        )
     
     def check_available_space(self, files: List[str], destination: str) -> bool:
         """Check if there's enough space in the destination directory"""
@@ -313,34 +334,52 @@ class FileOperations:
             return False
     
     def move_files(self, files: List[str], source_dir: str, dest_dir: str, 
-                   max_concurrent: int = None, dry_run: bool = False, copy_mode: bool = False, 
-                   create_symlinks: bool = False, move_with_symlinks: bool = False) -> Tuple[int, int]:
+                   config: Optional[FileOperationConfig] = None) -> CacheOperationResult:
         """Move or copy files from source to destination with concurrent operations"""
         if not files:
-            return 0, 0
+            return CacheOperationResult(
+                success=True,
+                files_processed=0,
+                total_size_bytes=0,
+                total_size_readable='0B',
+                operation_type='none'
+            )
+        
+        # Use default config if none provided
+        if config is None:
+            config = FileOperationConfig()
         
         # Auto-detect concurrency based on source type if not specified
+        max_concurrent = config.max_concurrent
         if max_concurrent is None:
             max_concurrent = self._get_optimal_concurrency(source_dir)
         
-        if move_with_symlinks:
+        if config.move_with_symlinks:
             operation = "move+symlink"
-        elif create_symlinks:
+        elif config.create_symlinks:
             operation = "symlink"
-        elif copy_mode:
+        elif config.copy_mode:
             operation = "copy"
         else:
             operation = "move"
         
-        if dry_run:
+        if config.dry_run:
             self.logger.info(f"DRY RUN: Would {operation} {len(files)} files from {source_dir} to {dest_dir} (concurrency: {max_concurrent})")
-            return 0, 0
+            return CacheOperationResult(
+                success=True,
+                files_processed=len(files),
+                total_size_bytes=0,
+                total_size_readable='0B (dry run)',
+                operation_type=f"{operation} (dry run)"
+            )
         
         self.logger.info(f"{operation.capitalize()}ing {len(files)} files from {source_dir} to {dest_dir} (concurrency: {max_concurrent})")
         
         moved_count = 0
         total_size = 0
         failed_files = []
+        errors = []
+        warnings = []
         
         # Create move operations
         move_operations = []
@@ -350,13 +389,16 @@ class FileOperations:
 
             src_path = Path(file_path_str)
             if not src_path.exists():
+                warnings.append(f"File does not exist: {file_path_str}")
                 continue
             
             # Calculate destination path
             try:
                 rel_path = src_path.relative_to(source_dir)
             except ValueError:
-                self.logger.warning(f"File {src_path} is not in source directory {source_dir}, skipping move.")
+                warning_msg = f"File {src_path} is not in source directory {source_dir}, skipping move."
+                self.logger.warning(warning_msg)
+                warnings.append(warning_msg)
                 continue
 
             dest_path = Path(dest_dir) / rel_path
@@ -367,17 +409,24 @@ class FileOperations:
             move_operations.append((str(src_path), str(dest_path)))
         
         if not move_operations:
-            return 0, 0
+            return CacheOperationResult(
+                success=True,
+                files_processed=0,
+                total_size_bytes=0,
+                total_size_readable='0B',
+                operation_type=operation,
+                warnings=warnings
+            )
         
         # Execute operations with thread pool
         with ThreadPoolExecutor(max_workers=max_concurrent) as executor:
             # Submit all operations
-            if move_with_symlinks:
+            if config.move_with_symlinks:
                 future_to_move = {
                     executor.submit(self._move_with_symlink, src, dest): (src, dest)
                     for src, dest in move_operations
                 }
-            elif copy_mode:
+            elif config.copy_mode:
                 future_to_move = {
                     executor.submit(self._copy_single_file, src, dest): (src, dest)
                     for src, dest in move_operations
@@ -395,19 +444,35 @@ class FileOperations:
                     if success:
                         moved_count += 1
                         total_size += file_size
-                        self.logger.debug(f"Successfully moved: {src} -> {dest}")
+                        self.logger.debug(f"Successfully {operation}d: {src} -> {dest}")
                     else:
                         failed_files.append(src)
-                        self.logger.warning(f"Failed to move: {src}")
+                        error_msg = f"Failed to {operation}: {src}"
+                        self.logger.warning(error_msg)
+                        errors.append(error_msg)
                 except Exception as e:
                     failed_files.append(src)
-                    self.logger.error(f"Exception moving {src}: {e}")
+                    error_msg = f"Exception during {operation} {src}: {e}"
+                    self.logger.error(error_msg)
+                    errors.append(error_msg)
         
         if failed_files:
-            self.logger.warning(f"Failed to {operation} {len(failed_files)} files")
+            warning_msg = f"Failed to {operation} {len(failed_files)} files"
+            self.logger.warning(warning_msg)
+            warnings.append(warning_msg)
         
-        self.logger.info(f"Successfully {operation}d {moved_count} files ({self.get_file_size_readable(total_size)})")
-        return moved_count, total_size
+        success_msg = f"Successfully {operation}d {moved_count} files ({self.get_file_size_readable(total_size)})"
+        self.logger.info(success_msg)
+        
+        return CacheOperationResult(
+            success=len(errors) == 0,
+            files_processed=moved_count,
+            total_size_bytes=total_size,
+            total_size_readable=self.get_file_size_readable(total_size),
+            operation_type=operation,
+            errors=errors,
+            warnings=warnings
+        )
     
     def _move_single_file(self, src_str: str, dest_str: str) -> Tuple[bool, int]:
         """Move a single file and return success status and file size"""
@@ -421,6 +486,29 @@ class FileOperations:
             
             # Move the file
             shutil.move(str(src), str(dest))
+            
+            # Create hardlink in Plex-visible location to maintain visibility
+            plex_visible_path = self._get_plex_visible_path(src_str)
+            if plex_visible_path and plex_visible_path != src_str:
+                try:
+                    plex_path = Path(plex_visible_path)
+                    plex_path.parent.mkdir(parents=True, exist_ok=True)
+                    
+                    # Remove existing file/link if present
+                    if plex_path.exists() or plex_path.is_symlink():
+                        plex_path.unlink()
+                    
+                    # Create hardlink from Plex location to cached file
+                    os.link(str(dest), str(plex_path))
+                    self.logger.debug(f"Created Plex-visible hardlink: {plex_path} -> {dest}")
+                    
+                except (OSError, PermissionError) as e:
+                    # Fall back to symlink if hardlink fails
+                    try:
+                        os.symlink(str(dest), str(plex_path))
+                        self.logger.debug(f"Created Plex-visible symlink: {plex_path} -> {dest}")
+                    except (OSError, PermissionError) as fallback_e:
+                        self.logger.warning(f"Failed to create Plex-visible link {plex_path}: hardlink={e}, symlink={fallback_e}")
             
             # Preserve permissions if on Linux
             if os.name == 'posix':
@@ -477,6 +565,29 @@ class FileOperations:
             
             # Copy the file
             shutil.copy2(str(src), str(dest))  # copy2 preserves metadata
+            
+            # Create hardlink in Plex-visible location to point to cached copy
+            plex_visible_path = self._get_plex_visible_path(src_str)
+            if plex_visible_path and plex_visible_path != src_str:
+                try:
+                    plex_path = Path(plex_visible_path)
+                    plex_path.parent.mkdir(parents=True, exist_ok=True)
+                    
+                    # Remove existing file/link if present
+                    if plex_path.exists() or plex_path.is_symlink():
+                        plex_path.unlink()
+                    
+                    # Create hardlink from Plex location to cached file
+                    os.link(str(dest), str(plex_path))
+                    self.logger.debug(f"Created Plex-visible hardlink: {plex_path} -> {dest}")
+                    
+                except (OSError, PermissionError) as e:
+                    # Fall back to symlink if hardlink fails
+                    try:
+                        os.symlink(str(dest), str(plex_path))
+                        self.logger.debug(f"Created Plex-visible symlink: {plex_path} -> {dest}")
+                    except (OSError, PermissionError) as fallback_e:
+                        self.logger.warning(f"Failed to create Plex-visible link {plex_path}: hardlink={e}, symlink={fallback_e}")
             
             # Set reasonable permissions if on Linux
             if os.name == 'posix':
@@ -605,6 +716,45 @@ class FileOperations:
         # Default fallback
         self.logger.debug(f"Using default concurrency for unknown source: {source_path_str}")
         return self.config.performance.max_concurrent_local_transfers
+    
+    def _get_plex_visible_path(self, real_file_path: str) -> Optional[str]:
+        """Convert a real file path to the corresponding Plex-visible path.
+        
+        This maps paths from /mediasource to /plexsource so Plex can still see files
+        after they've been moved to cache with hardlinks created in Plex locations.
+        
+        Args:
+            real_file_path: The original file path in /mediasource
+            
+        Returns:
+            The corresponding path in /plexsource, or None if no mapping applies
+        """
+        if not real_file_path:
+            return None
+            
+        real_path = Path(real_file_path)
+        
+        # For Docker environment: map /mediasource to /plexsource
+        if real_path.is_relative_to('/mediasource'):
+            try:
+                rel_path = real_path.relative_to('/mediasource')
+                plex_path = Path('/plexsource') / rel_path
+                return str(plex_path)
+            except ValueError:
+                pass
+        
+        # Handle additional source mappings if configured
+        if self.config.paths.additional_sources and self.config.paths.additional_plex_sources:
+            for real_source, plex_source in zip(self.config.paths.additional_sources, self.config.paths.additional_plex_sources):
+                try:
+                    if real_path.is_relative_to(real_source):
+                        rel_path = real_path.relative_to(real_source)
+                        plex_path = Path(plex_source) / rel_path
+                        return str(plex_path)
+                except ValueError:
+                    continue
+        
+        return None
     
     def get_file_size_readable(self, size_bytes: int) -> str:
         """Convert file size to human readable format"""
