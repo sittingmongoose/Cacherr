@@ -8,39 +8,85 @@
   <Shell>bash</Shell>
   <Privileged>false</Privileged>
   <Support>https://github.com/sittingmongoose/cacherr</Support>
-  <Overview>Cacherr - Docker-optimized Plex media caching system designed specifically for Unraid environments. Automatically moves frequently accessed media files to fast cache drives and moves watched content back to array drives.
-
-MOUNT COMPATIBILITY SOLUTION: This template uses the SAME mount paths as your Plex container to prevent media visibility issues. Files are moved to cache with hardlinks created back to original locations so Plex NEVER loses access to your media.</Overview>
+  <Project>https://github.com/sittingmongoose/cacherr</Project>
+  <Overview>PlexCacheUltra - Advanced Plex media caching system with WebGUI management. &#xD;
+&#xD;
+FEATURES:&#xD;
+- &#x2705; Web interface with persistent settings across restarts&#xD;
+- &#x2705; Plex validation with masked token display for security  &#xD;
+- &#x2705; Real-time logs display in WebGUI&#xD;
+- &#x2705; Test mode for safe operation&#xD;
+- &#x2705; Automatic cache management with symlinks&#xD;
+- &#x2705; Multi-user watchlist support&#xD;
+- &#x2705; Performance tuning controls&#xD;
+&#xD;
+RECENT FIXES APPLIED:&#xD;
+- &#x2705; Settings persistence across container restarts&#xD;
+- &#x2705; Checkbox settings now save properly&#xD;
+- &#x2705; Plex token/URL persist and don't reset to hardcoded values&#xD;
+- &#x2705; WebGUI logs display correctly&#xD;
+- &#x2705; Masked token display with working validation&#xD;
+&#xD;
+MOUNT COMPATIBILITY: Uses identical mount paths as Plex container to prevent media visibility issues.</Overview>
   <Category>MediaServer:Other</Category>
-  <WebUI>http://[IP]:5445</WebUI>
-  <TemplateURL>https://raw.githubusercontent.com/sittingmongoose/cacherr/main/cacherr-unraid-template.xml</TemplateURL>
+  <WebUI>http://[IP]:5444</WebUI>
+  <TemplateURL/>
   <Icon>https://raw.githubusercontent.com/sittingmongoose/cacherr/main/cacherr-icon.png</Icon>
-  <ExtraParams/>
+  <ExtraParams>--platform linux/amd64</ExtraParams>
   <PostArgs/>
   <CPUset/>
-  <DateInstalled>1703123456</DateInstalled>
+  <DateInstalled>1756232399</DateInstalled>
   <DonateText/>
   <DonateLink/>
-  <Requires>https://emby.media/</Requires>
-  <Project>https://github.com/sittingmongoose/cacherr</Project>
-
-
-
-  <!-- Required Configuration -->
-  <Config Name="PLEX_URL" Target="PLEX_URL" Default="http://YOUR_PLEX_SERVER:32400" Mode="" Description="Your Plex server URL (REQUIRED)" Type="Variable" Display="always" Required="true" Mask="false"/>
-  <Config Name="PLEX_TOKEN" Target="PLEX_TOKEN" Default="" Mode="" Description="Your Plex authentication token (REQUIRED)" Type="Variable" Display="always" Required="true" Mask="true"/>
-  
-  <!-- Network Port -->
-  <Config Name="Web Port" Target="5445" Default="5445" Mode="tcp" Description="Web interface port" Type="Port" Display="always" Required="true" Mask="false"/>
-  
-  <!-- CRITICAL: Media Paths - MUST match your Plex container exactly -->
-  <Config Name="Media (Primary)" Target="/media" Default="/mnt/user/Media" Mode="rw" Description="Primary media path - MUST match your Plex /media mount EXACTLY" Type="Path" Display="always" Required="true" Mask="false"/>
-  <Config Name="Media (NAS Remote)" Target="/Nas1" Default="/mnt/remotes/NAS1_Media2" Mode="rw" Description="NAS media path - MUST match your Plex /Nas1 mount EXACTLY" Type="Path" Display="always" Required="true" Mask="false"/>
-  
-  <!-- Cache and Config -->
-  <Config Name="Cache Directory" Target="/cache" Default="/mnt/user/MediaTranscodes" Mode="rw" Description="Fast cache directory (transcodes folder recommended)" Type="Path" Display="always" Required="true" Mask="false"/>
-  <Config Name="Config Directory" Target="/config" Default="/mnt/user/appdata/cacherr" Mode="rw" Description="Configuration and data storage" Type="Path" Display="always" Required="true" Mask="false"/>
-  
-  <!-- Advanced Settings -->
-  <Config Name="LOG_LEVEL" Target="LOG_LEVEL" Default="INFO" Mode="" Description="Logging level (DEBUG, INFO, WARNING, ERROR)" Type="Variable" Display="advanced" Required="false" Mask="false"/>
+  <Requires>Plex Media Server</Requires>
+  <Config Name="PLEX_URL" Target="PLEX_URL" Default="http://192.168.50.223:32400" Mode="" Description="Your Plex server URL - configurable via WebGUI" Type="Variable" Display="always" Required="true" Mask="false">http://192.168.50.223:32401</Config>
+  <Config Name="PLEX_TOKEN" Target="PLEX_TOKEN" Default="DQ1v2mWT9FTLLEydr_Sw" Mode="" Description="Your Plex authentication token - configurable via WebGUI" Type="Variable" Display="always" Required="true" Mask="true">DQ1v2mWT9FTLLEydr_Sw</Config>
+  <Config Name="Web Port" Target="5443" Default="5444" Mode="tcp" Description="Web interface port (internal: 5443)" Type="Port" Display="always" Required="true" Mask="false">5444</Config>
+  <Config Name="Plex Media Link" Target="/plexmedia" Default="/mnt/user/Media" Mode="rw" Description="Plex-compatible path for primary media (usually same as Media Primary)" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/Media</Config>
+  <Config Name="Cache Directory" Target="/cache" Default="/cache" Mode="rw" Description="Fast cache directory for media files" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/Transcode/</Config>
+  <Config Name="Config Directory" Target="/config" Default="/config" Mode="rw" Description="Configuration and data storage (MUST BE PERSISTENT)" Type="Path" Display="always" Required="true" Mask="false">/config</Config>
+  <Config Name="/config" Target="/config" Default="" Mode="rw" Description="" Type="Path" Display="always" Required="false" Mask="false">/mnt/user/appdata/</Config>
+  <Config Name="PLEX_SOURCE" Target="PLEX_SOURCE" Default="/media" Mode="" Description="What Plex sees internally" Type="Variable" Display="advanced" Required="false" Mask="false">/media</Config>
+  <Config Name="CACHE_DESTINATION" Target="CACHE_DESTINATION" Default="/cache" Mode="" Description="Cache directory for media files" Type="Variable" Display="advanced" Required="false" Mask="false">/cache</Config>
+  <Config Name="NUMBER_EPISODES" Target="NUMBER_EPISODES" Default="5" Mode="" Description="Number of episodes to cache per show" Type="Variable" Display="advanced" Required="false" Mask="false">5</Config>
+  <Config Name="DAYS_TO_MONITOR" Target="DAYS_TO_MONITOR" Default="99" Mode="" Description="How many days back to monitor" Type="Variable" Display="advanced" Required="false" Mask="false">99</Config>
+  <Config Name="WATCHLIST_TOGGLE" Target="WATCHLIST_TOGGLE" Default="true" Mode="" Description="Enable watchlist caching" Type="Variable" Display="advanced" Required="false" Mask="false">true</Config>
+  <Config Name="WATCHLIST_EPISODES" Target="WATCHLIST_EPISODES" Default="1" Mode="" Description="Episodes per watchlist item" Type="Variable" Display="advanced" Required="false" Mask="false">1</Config>
+  <Config Name="WATCHLIST_CACHE_EXPIRY" Target="WATCHLIST_CACHE_EXPIRY" Default="6" Mode="" Description="Hours to keep in cache" Type="Variable" Display="advanced" Required="false" Mask="false">6</Config>
+  <Config Name="WATCHED_MOVE" Target="WATCHED_MOVE" Default="true" Mode="" Description="Move watched content to array" Type="Variable" Display="advanced" Required="false" Mask="false">true</Config>
+  <Config Name="WATCHED_CACHE_EXPIRY" Target="WATCHED_CACHE_EXPIRY" Default="48" Mode="" Description="Hours to keep watched content in cache" Type="Variable" Display="advanced" Required="false" Mask="false">48</Config>
+  <Config Name="USERS_TOGGLE" Target="USERS_TOGGLE" Default="true" Mode="" Description="Enable multi-user support" Type="Variable" Display="advanced" Required="false" Mask="false">true</Config>
+  <Config Name="EXIT_IF_ACTIVE_SESSION" Target="EXIT_IF_ACTIVE_SESSION" Default="false" Mode="" Description="Exit if Plex has active sessions" Type="Variable" Display="advanced" Required="false" Mask="false">false</Config>
+  <Config Name="COPY_TO_CACHE" Target="COPY_TO_CACHE" Default="true" Mode="" Description="Copy instead of move (preserves originals)" Type="Variable" Display="advanced" Required="false" Mask="false">true</Config>
+  <Config Name="DELETE_FROM_CACHE_WHEN_DONE" Target="DELETE_FROM_CACHE_WHEN_DONE" Default="true" Mode="" Description="Delete from cache when done" Type="Variable" Display="advanced" Required="false" Mask="false">true</Config>
+  <Config Name="USE_SYMLINKS_FOR_CACHE" Target="USE_SYMLINKS_FOR_CACHE" Default="true" Mode="" Description="Create symlinks for Plex" Type="Variable" Display="advanced" Required="false" Mask="false">true</Config>
+  <Config Name="MOVE_WITH_SYMLINKS" Target="MOVE_WITH_SYMLINKS" Default="false" Mode="" Description="Move + symlink mode (hybrid)" Type="Variable" Display="advanced" Required="false" Mask="false">false</Config>
+  <Config Name="MAX_CONCURRENT_MOVES_CACHE" Target="MAX_CONCURRENT_MOVES_CACHE" Default="5" Mode="" Description="Max concurrent moves to cache" Type="Variable" Display="advanced" Required="false" Mask="false">5</Config>
+  <Config Name="MAX_CONCURRENT_MOVES_ARRAY" Target="MAX_CONCURRENT_MOVES_ARRAY" Default="2" Mode="" Description="Max concurrent moves to array" Type="Variable" Display="advanced" Required="false" Mask="false">2</Config>
+  <Config Name="MAX_CONCURRENT_LOCAL_TRANSFERS" Target="MAX_CONCURRENT_LOCAL_TRANSFERS" Default="5" Mode="" Description="Max concurrent local transfers" Type="Variable" Display="advanced" Required="false" Mask="false">5</Config>
+  <Config Name="MAX_CONCURRENT_NETWORK_TRANSFERS" Target="MAX_CONCURRENT_NETWORK_TRANSFERS" Default="2" Mode="" Description="Max concurrent network transfers" Type="Variable" Display="advanced" Required="false" Mask="false">2</Config>
+  <Config Name="PORT" Target="PORT" Default="5443" Mode="" Description="Internal web interface port" Type="Variable" Display="advanced" Required="false" Mask="false">5443</Config>
+  <Config Name="DEBUG" Target="DEBUG" Default="false" Mode="" Description="Enable debug mode" Type="Variable" Display="advanced" Required="false" Mask="false">false</Config>
+  <Config Name="LOG_LEVEL" Target="LOG_LEVEL" Default="INFO" Mode="" Description="Logging level (DEBUG, INFO, WARNING, ERROR)" Type="Variable" Display="advanced" Required="false" Mask="false">INFO</Config>
+  <Config Name="ENABLE_SCHEDULER" Target="ENABLE_SCHEDULER" Default="false" Mode="" Description="Enable background scheduler" Type="Variable" Display="advanced" Required="false" Mask="false">false</Config>
+  <Config Name="TEST_MODE" Target="TEST_MODE" Default="false" Mode="" Description="Enable test mode (safe operation)" Type="Variable" Display="advanced" Required="false" Mask="false">false</Config>
+  <Config Name="TEST_SHOW_FILE_SIZES" Target="TEST_SHOW_FILE_SIZES" Default="true" Mode="" Description="Show file sizes in test mode" Type="Variable" Display="advanced" Required="false" Mask="false">true</Config>
+  <Config Name="TEST_SHOW_TOTAL_SIZE" Target="TEST_SHOW_TOTAL_SIZE" Default="true" Mode="" Description="Show total size in test mode" Type="Variable" Display="advanced" Required="false" Mask="false">true</Config>
+  <Config Name="REAL_TIME_WATCH_ENABLED" Target="REAL_TIME_WATCH_ENABLED" Default="false" Mode="" Description="Enable real-time Plex watching" Type="Variable" Display="advanced" Required="false" Mask="false">false</Config>
+  <Config Name="REAL_TIME_WATCH_CHECK_INTERVAL" Target="REAL_TIME_WATCH_CHECK_INTERVAL" Default="30" Mode="" Description="Check interval in seconds" Type="Variable" Display="advanced" Required="false" Mask="false">30</Config>
+  <Config Name="REAL_TIME_WATCH_AUTO_CACHE_ON_WATCH" Target="REAL_TIME_WATCH_AUTO_CACHE_ON_WATCH" Default="true" Mode="" Description="Auto cache on watch" Type="Variable" Display="advanced" Required="false" Mask="false">true</Config>
+  <Config Name="REAL_TIME_WATCH_CACHE_ON_COMPLETE" Target="REAL_TIME_WATCH_CACHE_ON_COMPLETE" Default="true" Mode="" Description="Cache on complete" Type="Variable" Display="advanced" Required="false" Mask="false">true</Config>
+  <Config Name="REAL_TIME_WATCH_RESPECT_EXISTING_RULES" Target="REAL_TIME_WATCH_RESPECT_EXISTING_RULES" Default="true" Mode="" Description="Respect existing rules" Type="Variable" Display="advanced" Required="false" Mask="false">true</Config>
+  <Config Name="REAL_TIME_WATCH_MAX_CONCURRENT_WATCHES" Target="REAL_TIME_WATCH_MAX_CONCURRENT_WATCHES" Default="10" Mode="" Description="Max concurrent watches" Type="Variable" Display="advanced" Required="false" Mask="false">10</Config>
+  <Config Name="REAL_TIME_WATCH_REMOVE_FROM_CACHE_AFTER_HOURS" Target="REAL_TIME_WATCH_REMOVE_FROM_CACHE_AFTER_HOURS" Default="24" Mode="" Description="Remove from cache after hours" Type="Variable" Display="advanced" Required="false" Mask="false">24</Config>
+  <Config Name="REAL_TIME_WATCH_RESPECT_OTHER_USERS_WATCHLISTS" Target="REAL_TIME_WATCH_RESPECT_OTHER_USERS_WATCHLISTS" Default="true" Mode="" Description="Respect other users watchlists" Type="Variable" Display="advanced" Required="false" Mask="false">true</Config>
+  <Config Name="REAL_TIME_WATCH_EXCLUDE_INACTIVE_USERS_DAYS" Target="REAL_TIME_WATCH_EXCLUDE_INACTIVE_USERS_DAYS" Default="30" Mode="" Description="Exclude inactive users days" Type="Variable" Display="advanced" Required="false" Mask="false">30</Config>
+  <Config Name="TRAKT_ENABLED" Target="TRAKT_ENABLED" Default="false" Mode="" Description="Enable Trakt.tv integration" Type="Variable" Display="advanced" Required="false" Mask="false">false</Config>
+  <Config Name="TRAKT_CLIENT_ID" Target="TRAKT_CLIENT_ID" Default="" Mode="" Description="Trakt.tv client ID" Type="Variable" Display="advanced" Required="false" Mask="false"/>
+  <Config Name="TRAKT_CLIENT_SECRET" Target="TRAKT_CLIENT_SECRET" Default="" Mode="" Description="Trakt.tv client secret" Type="Variable" Display="advanced" Required="false" Mask="true"/>
+  <Config Name="TRAKT_TRENDING_MOVIES_COUNT" Target="TRAKT_TRENDING_MOVIES_COUNT" Default="10" Mode="" Description="Number of trending movies to cache" Type="Variable" Display="advanced" Required="false" Mask="false">10</Config>
+  <Config Name="TRAKT_CHECK_INTERVAL" Target="TRAKT_CHECK_INTERVAL" Default="3600" Mode="" Description="Check interval in seconds" Type="Variable" Display="advanced" Required="false" Mask="false">3600</Config>
+  <Config Name="WEBHOOK_URL" Target="WEBHOOK_URL" Default="" Mode="" Description="Webhook URL for notifications" Type="Variable" Display="advanced" Required="false" Mask="false"/>
+  <Config Name="NOTIFICATION_TYPE" Target="NOTIFICATION_TYPE" Default="webhook" Mode="" Description="Notification type" Type="Variable" Display="advanced" Required="false" Mask="false">webhook</Config>
+  <TailscaleStateDir/>
 </Container>

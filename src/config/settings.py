@@ -81,6 +81,9 @@ class MediaConfig:
     use_symlinks_for_cache: bool
     # New: Hybrid mode - Move + Symlink
     move_with_symlinks: bool
+    # Cache expiry settings (with defaults)
+    watchlist_cache_expiry: int = 6
+    watched_cache_expiry: int = 48
 
 @dataclass
 class PathsConfig:
@@ -202,23 +205,41 @@ class Config:
         except Exception as e:
             self.logger.error(f"Failed to save persistent config: {e}")
 
-    def _get_setting_value(self, env_key: str, default: str, persistent_key: str = None) -> str:
-        """Get setting value with priority: environment variable > persistent config > default"""
-        # First try environment variable
-        env_value = os.getenv(env_key)
-        if env_value:
-            return env_value
+    def _get_setting_value(self, env_key: str, default: str, persistent_key: str = None, prefer_persistent: bool = False) -> str:
+        """Get setting value with configurable priority"""
         
-        # Then try persistent config
-        if persistent_key:
+        if prefer_persistent and persistent_key:
+            # For user-configurable settings: persistent config > environment variable > default
             persistent_config = self._load_persistent_config()
-            # Handle nested keys (e.g., 'plex_url' -> persistent_config['plex']['url'])
+            
+            # Handle nested keys (e.g., 'plex.url' -> persistent_config['plex']['url'])
             if '.' in persistent_key:
                 section, key = persistent_key.split('.', 1)
                 if section in persistent_config and key in persistent_config[section]:
                     return str(persistent_config[section][key])
             elif persistent_key in persistent_config:
                 return str(persistent_config[persistent_key])
+            
+            # Fall back to environment variable if not in persistent config
+            env_value = os.getenv(env_key)
+            if env_value:
+                return env_value
+        else:
+            # Default behavior: environment variable > persistent config > default
+            env_value = os.getenv(env_key)
+            if env_value:
+                return env_value
+            
+            # Then try persistent config
+            if persistent_key:
+                persistent_config = self._load_persistent_config()
+                # Handle nested keys
+                if '.' in persistent_key:
+                    section, key = persistent_key.split('.', 1)
+                    if section in persistent_config and key in persistent_config[section]:
+                        return str(persistent_config[section][key])
+                elif persistent_key in persistent_config:
+                    return str(persistent_config[persistent_key])
         
         # Finally use default
         return default
@@ -250,10 +271,10 @@ class Config:
 
     def _load_plex_config(self) -> PlexConfig:
         return PlexConfig(
-            url=self._get_setting_value('PLEX_URL', '', 'plex.url'),
-            token=self._get_setting_value('PLEX_TOKEN', '', 'plex.token'),
-            username=self._get_setting_value('PLEX_USERNAME', '', 'plex.username'),
-            password=self._get_setting_value('PLEX_PASSWORD', '', 'plex.password')
+            url=self._get_setting_value('PLEX_URL', '', 'plex.url', prefer_persistent=True),
+            token=self._get_setting_value('PLEX_TOKEN', '', 'plex.token', prefer_persistent=True),
+            username=self._get_setting_value('PLEX_USERNAME', '', 'plex.username', prefer_persistent=True),
+            password=self._get_setting_value('PLEX_PASSWORD', '', 'plex.password', prefer_persistent=True)
         )
 
     def _load_cache_config(self) -> CacheConfig:
@@ -388,21 +409,37 @@ class Config:
         )
 
     def _load_media_config(self) -> MediaConfig:
+        persistent_config = self._load_persistent_config()
+        media_config = persistent_config.get('media', {})
+        
+        # Load from persistent config first, fall back to environment variables
+        def get_bool(key, env_key, default='false'):
+            value = media_config.get(key)
+            if value is not None:
+                return bool(value) if isinstance(value, bool) else str(value).lower() == 'true'
+            return os.getenv(env_key, default).lower() == 'true'
+        
+        def get_int(key, env_key, default):
+            value = media_config.get(key)
+            if value is not None:
+                return int(value)
+            return int(os.getenv(env_key, str(default)))
+        
         return MediaConfig(
-            exit_if_active_session=os.getenv('EXIT_IF_ACTIVE_SESSION', 'false').lower() == 'true',
-            watched_move=os.getenv('WATCHED_MOVE', 'true').lower() == 'true',
-            users_toggle=os.getenv('USERS_TOGGLE', 'true').lower() == 'true',
-            watchlist_toggle=os.getenv('WATCHLIST_TOGGLE', 'true').lower() == 'true',
-            days_to_monitor=int(os.getenv('DAYS_TO_MONITOR', '99')),
-            number_episodes=int(os.getenv('NUMBER_EPISODES', '5')),
-            watchlist_episodes=int(os.getenv('WATCHLIST_EPISODES', '1')),
+            exit_if_active_session=get_bool('exit_if_active_session', 'EXIT_IF_ACTIVE_SESSION', 'false'),
+            watched_move=get_bool('watched_move', 'WATCHED_MOVE', 'true'),
+            users_toggle=get_bool('users_toggle', 'USERS_TOGGLE', 'true'),
+            watchlist_toggle=get_bool('watchlist_toggle', 'WATCHLIST_TOGGLE', 'true'),
+            days_to_monitor=get_int('days_to_monitor', 'DAYS_TO_MONITOR', 99),
+            number_episodes=get_int('number_episodes', 'NUMBER_EPISODES', 5),
+            watchlist_episodes=get_int('watchlist_episodes', 'WATCHLIST_EPISODES', 1),
             # New: Copy vs Move behavior
-            copy_to_cache=os.getenv('COPY_TO_CACHE', 'false').lower() == 'true',
-            delete_from_cache_when_done=os.getenv('DELETE_FROM_CACHE_WHEN_DONE', 'true').lower() == 'true',
+            copy_to_cache=get_bool('copy_to_cache', 'COPY_TO_CACHE', 'false'),
+            delete_from_cache_when_done=get_bool('delete_from_cache_when_done', 'DELETE_FROM_CACHE_WHEN_DONE', 'true'),
             # New: Cache access method
-            use_symlinks_for_cache=os.getenv('USE_SYMLINKS_FOR_CACHE', 'true').lower() == 'true',
+            use_symlinks_for_cache=get_bool('use_symlinks_for_cache', 'USE_SYMLINKS_FOR_CACHE', 'true'),
             # New: Hybrid mode - Move + Symlink
-            move_with_symlinks=os.getenv('MOVE_WITH_SYMLINKS', 'false').lower() == 'true'
+            move_with_symlinks=get_bool('move_with_symlinks', 'MOVE_WITH_SYMLINKS', 'false')
         )
 
     def _load_paths_config(self) -> PathsConfig:
@@ -424,12 +461,20 @@ class Config:
         )
 
     def _load_test_mode_config(self) -> TestModeConfig:
-        enabled = os.getenv('TEST_MODE', 'false').lower() == 'true'
+        persistent_config = self._load_persistent_config()
+        test_mode_config = persistent_config.get('test_mode', {})
+        
+        # Load from persistent config first, fall back to environment variables
+        enabled = test_mode_config.get('enabled', os.getenv('TEST_MODE', 'false').lower() == 'true')
+        show_file_sizes = test_mode_config.get('show_file_sizes', os.getenv('TEST_SHOW_FILE_SIZES', 'true').lower() == 'true')
+        show_total_size = test_mode_config.get('show_total_size', os.getenv('TEST_SHOW_TOTAL_SIZE', 'true').lower() == 'true')
+        dry_run = test_mode_config.get('dry_run', True)  # Test mode should always be safe - no file movement
+        
         return TestModeConfig(
             enabled=enabled,
-            show_file_sizes=os.getenv('TEST_SHOW_FILE_SIZES', 'true').lower() == 'true',
-            show_total_size=os.getenv('TEST_SHOW_TOTAL_SIZE', 'true').lower() == 'true',
-            dry_run=True  # Test mode should always be safe - no file movement
+            show_file_sizes=show_file_sizes,
+            show_total_size=show_total_size,
+            dry_run=dry_run
         )
 
     def _load_performance_config(self) -> PerformanceConfig:

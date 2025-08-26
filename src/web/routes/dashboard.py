@@ -354,9 +354,9 @@ DASHBOARD_HTML_TEMPLATE = """
                 const logsData = await fetchWithErrorHandling('/api/logs');
                 const logContainer = document.getElementById('logContainer');
                 
-                if (logsData.logs && logsData.logs.length > 0) {
+                if (logsData.data && logsData.data.logs && logsData.data.logs.length > 0) {
                     let html = '';
-                    logsData.logs.slice(-50).forEach(log => {
+                    logsData.data.logs.slice(-50).forEach(log => {
                         const levelClass = `log-${log.level}`;
                         html += `<div class="log-entry ${levelClass}">${log.message}</div>`;
                     });

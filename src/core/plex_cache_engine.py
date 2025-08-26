@@ -406,27 +406,54 @@ class CacherrEngine:
     
     def get_status(self) -> dict:
         """Get current status information"""
-        status_data = {
-            'status': 'running' if self.stats.start_time and not self.stats.end_time else 'idle',
-            'last_execution': {
-                'start_time': self.stats.start_time.isoformat() if self.stats.start_time else None,
-                'end_time': self.stats.end_time.isoformat() if self.stats.end_time else None,
-                'execution_time': self.stats.execution_time,
-                'files_moved_to_cache': self.stats.files_moved_to_cache,
-                'files_moved_to_array': self.stats.files_moved_to_array,
-                'total_size_moved': self.stats.total_size_moved
-            },
-            'pending_operations': {
-                'files_to_cache': len(self.media_to_cache),
-                'files_to_array': len(self.media_to_array)
-            },
-            'real_time_watcher': {
+        try:
+            self.logger.debug("Starting get_status")
+            
+            status_data = {
+                'status': 'running' if self.stats.start_time and not self.stats.end_time else 'idle',
+                'last_execution': {
+                    'start_time': self.stats.start_time.isoformat() if self.stats.start_time else None,
+                    'end_time': self.stats.end_time.isoformat() if self.stats.end_time else None,
+                    'execution_time': self.stats.execution_time,
+                    'files_moved_to_cache': self.stats.files_moved_to_cache,
+                    'files_moved_to_array': self.stats.files_moved_to_array,
+                    'total_size_moved': self.stats.total_size_moved
+                },
+                'pending_operations': {
+                    'files_to_cache': len(self.media_to_cache),
+                    'files_to_array': len(self.media_to_array)
+                }
+            }
+            
+            self.logger.debug("Basic status created, adding real_time_watcher")
+            
+            # Add real-time watcher info with detailed error handling
+            try:
+                watcher_active = self.is_real_time_watching()
+                self.logger.debug(f"watcher_active: {watcher_active}")
+            except Exception as e:
+                self.logger.error(f"Error in is_real_time_watching: {e}")
+                watcher_active = False
+            
+            try:
+                watcher_stats = self.get_watcher_stats()
+                self.logger.debug(f"watcher_stats: {watcher_stats}")
+            except Exception as e:
+                self.logger.error(f"Error in get_watcher_stats: {e}")
+                watcher_stats = {}
+            
+            status_data['real_time_watcher'] = {
                 'enabled': self.config.real_time_watch.enabled,
-                'active': self.is_real_time_watching(),
-                'stats': self.get_watcher_stats()
-            },
-            'configuration': self.config.to_dict()
-        }
+                'active': watcher_active,
+                'stats': watcher_stats
+            }
+            
+            self.logger.debug("Adding configuration")
+            status_data['configuration'] = self.config.to_dict()
+            
+        except Exception as e:
+            self.logger.error(f"Error in get_status: {e}", exc_info=True)
+            raise
         
         # Add test mode results if available
         if self.test_results:
@@ -468,7 +495,12 @@ class CacherrEngine:
     
     def is_real_time_watching(self) -> bool:
         """Check if real-time watching is active"""
-        return self.plex_watcher.is_watching()
+        if self.plex_watcher is None:
+            return False
+        try:
+            return self.plex_watcher.is_watching()
+        except AttributeError as e:
+            return False
     
     def get_watcher_stats(self) -> Dict:
         """Get real-time watcher statistics"""

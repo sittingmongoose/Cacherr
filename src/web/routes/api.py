@@ -399,6 +399,9 @@ def api_update_settings():
                 section = getattr(config, key)
                 for subkey, subvalue in value.items():
                     if hasattr(section, subkey):
+                        # Don't save empty strings for any configuration - preserve existing values
+                        if subvalue == '' or subvalue is None:
+                            continue
                         if config.update_persistent_config(key, subkey, subvalue):
                             updated_vars[f"{key}.{subkey}"] = subvalue
             else:
@@ -695,6 +698,118 @@ def api_scheduler_stop():
         response = APIResponse(
             success=False,
             error=f"Failed to stop scheduler: {str(e)}"
+        )
+        return jsonify(response.dict()), 500
+
+
+# Plex Validation
+@api_bp.route('/validate-plex', methods=['POST'])
+@handle_api_error
+def api_validate_plex():
+    """
+    Validate Plex server connection and token.
+    
+    Tests connectivity to the specified Plex server using provided
+    credentials. Verifies both server availability and token validity.
+    
+    Returns:
+        JSON response with validation results
+    """
+    try:
+        data = request.get_json()
+        if not data:
+            response = APIResponse(
+                success=False,
+                error="No validation data provided"
+            )
+            return jsonify(response.dict()), 400
+        
+        plex_url = data.get('url', '').strip()
+        plex_token = data.get('token', '').strip()
+        use_stored_token = data.get('use_stored_token', False)
+        
+        if not plex_url:
+            response = APIResponse(
+                success=False,
+                error="Plex URL is required"
+            )
+            return jsonify(response.dict()), 400
+        
+        # Handle token - either provided or use stored one
+        if use_stored_token:
+            # Get stored token from configuration
+            config = get_config()
+            if not config:
+                response = APIResponse(
+                    success=False,
+                    error="Configuration not available"
+                )
+                return jsonify(response.dict()), 500
+            
+            plex_token = config.plex.token
+            if not plex_token:
+                response = APIResponse(
+                    success=False,
+                    error="No stored Plex token found"
+                )
+                return jsonify(response.dict()), 400
+        elif not plex_token:
+            response = APIResponse(
+                success=False,
+                error="Plex token is required"
+            )
+            return jsonify(response.dict()), 400
+        
+        # Import PlexAPI for validation
+        from plexapi.server import PlexServer
+        import requests
+        
+        # Clean up URL format
+        if not plex_url.startswith(('http://', 'https://')):
+            plex_url = f'http://{plex_url}'
+        
+        # Test connection with timeout
+        try:
+            plex = PlexServer(plex_url, plex_token, timeout=10)
+            # Try to get server info to verify connection
+            server_name = plex.friendlyName
+            version = plex.version
+            
+            response = APIResponse(
+                success=True,
+                message=f"Connected to {server_name} (v{version})"
+            )
+            return jsonify(response.dict()), 200
+            
+        except Exception as plex_error:
+            error_msg = str(plex_error)
+            if "401" in error_msg or "Unauthorized" in error_msg:
+                error_msg = "Invalid token - check your Plex token"
+            elif "timeout" in error_msg.lower() or "connection" in error_msg.lower():
+                error_msg = "Connection timeout - check URL and network"
+            elif "resolve" in error_msg.lower() or "name" in error_msg.lower():
+                error_msg = "Cannot resolve hostname - check Plex URL"
+            else:
+                error_msg = f"Connection failed: {error_msg}"
+                
+            response = APIResponse(
+                success=False,
+                error=error_msg
+            )
+            return jsonify(response.dict()), 400
+            
+    except ImportError:
+        response = APIResponse(
+            success=False,
+            error="PlexAPI library not available"
+        )
+        return jsonify(response.dict()), 500
+        
+    except Exception as e:
+        logger.error(f"Plex validation error: {str(e)}")
+        response = APIResponse(
+            success=False,
+            error=f"Validation failed: {str(e)}"
         )
         return jsonify(response.dict()), 500
 

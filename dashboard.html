@@ -334,7 +334,6 @@
                 <div class="form-group">
                     <button class="btn btn-secondary" onclick="loadSettings()">Load Current Settings</button>
                     <button class="btn btn-success" onclick="saveSettings()">Save Settings</button>
-                    <button class="btn btn-warning" onclick="validateSettings()">Validate Settings</button>
                     <button class="btn btn-danger" onclick="resetSettings()">Reset to Defaults</button>
                 </div>
                 
@@ -348,7 +347,11 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label">Plex Token:</label>
-                        <input type="password" class="form-input" id="plex_token" name="plex[token]" placeholder="your_plex_token">
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <input type="password" class="form-input" id="plex_token" name="plex[token]" placeholder="your_plex_token" style="flex: 1;">
+                            <button type="button" id="validatePlexBtn" class="btn btn-secondary" onclick="validatePlexConnection()">Validate</button>
+                        </div>
+                        <div id="plexValidationResult" style="margin-top: 8px;"></div>
                     </div>
                     
                     <h4>Path Configuration</h4>
@@ -708,55 +711,69 @@
                 .then(response => response.json())
                 .then(data => {
                     // Populate form fields
-                    document.getElementById('plex_url').value = data.plex?.url || '';
-                    document.getElementById('plex_token').value = data.plex?.token || '';
+                    document.getElementById('plex_url').value = data.data.plex?.url || '';
+                    // Handle token display - show masked value if token exists in backend
+                    const tokenFromAPI = data.data.plex?.token || '';
+                    const tokenField = document.getElementById('plex_token');
+                    if (tokenFromAPI === '***') {
+                        // Backend has a token but it's masked for security - show placeholder
+                        tokenField.value = '••••••••••••••••••••';
+                        tokenField.setAttribute('data-has-backend-token', 'true');
+                    } else if (tokenFromAPI) {
+                        // Actual token value (shouldn't happen in normal API responses)
+                        tokenField.value = tokenFromAPI;
+                        tokenField.removeAttribute('data-has-backend-token');
+                    } else {
+                        // No token configured
+                        tokenField.removeAttribute('data-has-backend-token');
+                    }
                     
-                    document.getElementById('plex_source').value = data.paths?.plex_source || '';
-                    document.getElementById('cache_destination').value = data.paths?.cache_destination || '';
+                    document.getElementById('plex_source').value = data.data.paths?.plex_source || '';
+                    document.getElementById('cache_destination').value = data.data.paths?.cache_destination || '';
 
                     
-                    document.getElementById('number_episodes').value = data.media?.number_episodes || 5;
-                    document.getElementById('days_to_monitor').value = data.media?.days_to_monitor || 99;
-                    document.getElementById('watchlist_toggle').checked = data.media?.watchlist_toggle || false;
-                    document.getElementById('watchlist_episodes').value = data.media?.watchlist_episodes || 1;
-                    document.getElementById('watchlist_cache_expiry').value = data.media?.watchlist_cache_expiry || 6;
-                    document.getElementById('watched_move').checked = data.media?.watched_move || false;
-                    document.getElementById('watched_cache_expiry').value = data.media?.watched_cache_expiry || 48;
-                    document.getElementById('users_toggle').checked = data.media?.users_toggle || false;
-                    document.getElementById('exit_if_active_session').checked = data.media?.exit_if_active_session || false;
-                    document.getElementById('copy_to_cache').checked = data.media?.copy_to_cache || false;
-                    document.getElementById('delete_from_cache_when_done').checked = data.media?.delete_from_cache_when_done || false;
-                    document.getElementById('use_symlinks_for_cache').checked = data.media?.use_symlinks_for_cache || false;
-                    document.getElementById('move_with_symlinks').checked = data.media?.move_with_symlinks || false;
+                    document.getElementById('number_episodes').value = data.data.media?.number_episodes || 5;
+                    document.getElementById('days_to_monitor').value = data.data.media?.days_to_monitor || 99;
+                    document.getElementById('watchlist_toggle').checked = data.data.media?.watchlist_toggle || false;
+                    document.getElementById('watchlist_episodes').value = data.data.media?.watchlist_episodes || 1;
+                    document.getElementById('watchlist_cache_expiry').value = data.data.media?.watchlist_cache_expiry || 6;
+                    document.getElementById('watched_move').checked = data.data.media?.watched_move || false;
+                    document.getElementById('watched_cache_expiry').value = data.data.media?.watched_cache_expiry || 48;
+                    document.getElementById('users_toggle').checked = data.data.media?.users_toggle || false;
+                    document.getElementById('exit_if_active_session').checked = data.data.media?.exit_if_active_session || false;
+                    document.getElementById('copy_to_cache').checked = data.data.media?.copy_to_cache || false;
+                    document.getElementById('delete_from_cache_when_done').checked = data.data.media?.delete_from_cache_when_done || false;
+                    document.getElementById('use_symlinks_for_cache').checked = data.data.media?.use_symlinks_for_cache || false;
+                    document.getElementById('move_with_symlinks').checked = data.data.media?.move_with_symlinks || false;
                     
-                    document.getElementById('max_concurrent_moves_cache').value = data.performance?.max_concurrent_moves_cache || 5;
-                    document.getElementById('max_concurrent_moves_array').value = data.performance?.max_concurrent_moves_array || 2;
-                    document.getElementById('max_concurrent_local_transfers').value = data.performance?.max_concurrent_local_transfers || 5;
-                    document.getElementById('max_concurrent_network_transfers').value = data.performance?.max_concurrent_network_transfers || 2;
+                    document.getElementById('max_concurrent_moves_cache').value = data.data.performance?.max_concurrent_moves_cache || 5;
+                    document.getElementById('max_concurrent_moves_array').value = data.data.performance?.max_concurrent_moves_array || 2;
+                    document.getElementById('max_concurrent_local_transfers').value = data.data.performance?.max_concurrent_local_transfers || 5;
+                    document.getElementById('max_concurrent_network_transfers').value = data.data.performance?.max_concurrent_network_transfers || 2;
                     
-                    document.getElementById('test_mode').checked = data.test_mode?.enabled || false;
-                    document.getElementById('test_show_file_sizes').checked = data.test_mode?.show_file_sizes || false;
-                    document.getElementById('test_show_total_size').checked = data.test_mode?.show_total_size || false;
+                    document.getElementById('test_mode').checked = data.data.test_mode?.enabled || false;
+                    document.getElementById('test_show_file_sizes').checked = data.data.test_mode?.show_file_sizes || false;
+                    document.getElementById('test_show_total_size').checked = data.data.test_mode?.show_total_size || false;
             
                     
-                    document.getElementById('real_time_watch_enabled').checked = data.real_time_watch?.enabled || false;
-                    document.getElementById('real_time_watch_check_interval').value = data.real_time_watch?.check_interval || 30;
-                    document.getElementById('real_time_watch_auto_cache_on_watch').checked = data.real_time_watch?.auto_cache_on_watch || false;
-                    document.getElementById('real_time_watch_cache_on_complete').checked = data.real_time_watch?.cache_on_complete || false;
-                    document.getElementById('real_time_watch_respect_existing_rules').checked = data.real_time_watch?.respect_existing_rules || false;
-                    document.getElementById('real_time_watch_max_concurrent_watches').value = data.real_time_watch?.max_concurrent_watches || 5;
-                    document.getElementById('real_time_watch_remove_from_cache_after_hours').value = data.real_time_watch?.remove_from_cache_after_hours || 0;
-                    document.getElementById('real_time_watch_respect_other_users_watchlists').checked = data.real_time_watch?.respect_other_users_watchlists || false;
-                    document.getElementById('real_time_watch_exclude_inactive_users_days').value = data.real_time_watch?.exclude_inactive_users_days || 0;
+                    document.getElementById('real_time_watch_enabled').checked = data.data.real_time_watch?.enabled || false;
+                    document.getElementById('real_time_watch_check_interval').value = data.data.real_time_watch?.check_interval || 30;
+                    document.getElementById('real_time_watch_auto_cache_on_watch').checked = data.data.real_time_watch?.auto_cache_on_watch || false;
+                    document.getElementById('real_time_watch_cache_on_complete').checked = data.data.real_time_watch?.cache_on_complete || false;
+                    document.getElementById('real_time_watch_respect_existing_rules').checked = data.data.real_time_watch?.respect_existing_rules || false;
+                    document.getElementById('real_time_watch_max_concurrent_watches').value = data.data.real_time_watch?.max_concurrent_watches || 5;
+                    document.getElementById('real_time_watch_remove_from_cache_after_hours').value = data.data.real_time_watch?.remove_from_cache_after_hours || 0;
+                    document.getElementById('real_time_watch_respect_other_users_watchlists').checked = data.data.real_time_watch?.respect_other_users_watchlists || false;
+                    document.getElementById('real_time_watch_exclude_inactive_users_days').value = data.data.real_time_watch?.exclude_inactive_users_days || 0;
                     
-                    document.getElementById('trakt_enabled').checked = data.trakt?.enabled || false;
-                    document.getElementById('trakt_client_id').value = data.trakt?.client_id || '';
-                    document.getElementById('trakt_client_secret').value = data.trakt?.client_secret || '';
-                    document.getElementById('trakt_trending_movies_count').value = data.trakt?.trending_movies_count || 10;
-                    document.getElementById('trakt_check_interval').value = data.trakt?.check_interval || 3600;
+                    document.getElementById('trakt_enabled').checked = data.data.trakt?.enabled || false;
+                    document.getElementById('trakt_client_id').value = data.data.trakt?.client_id || '';
+                    document.getElementById('trakt_client_secret').value = data.data.trakt?.client_secret || '';
+                    document.getElementById('trakt_trending_movies_count').value = data.data.trakt?.trending_movies_count || 10;
+                    document.getElementById('trakt_check_interval').value = data.data.trakt?.check_interval || 3600;
                     
-                    document.getElementById('log_level').value = data.logging?.level || 'INFO';
-                    document.getElementById('debug').checked = data.debug || false;
+                    document.getElementById('log_level').value = data.data.logging?.level || 'INFO';
+                    document.getElementById('debug').checked = data.data.debug || false;
                 })
                 .catch(error => {
                     console.error('Error loading settings:', error);
@@ -774,8 +791,46 @@
                 console.log(`${key}: ${value}`);
             }
             
-            // Convert form data to settings object
+            // Handle all checkboxes explicitly (unchecked checkboxes don't appear in FormData)
+            const form = document.getElementById('settingsForm');
+            const checkboxes = form.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(checkbox => {
+                const name = checkbox.name;
+                const isChecked = checkbox.checked;
+                
+                if (name.includes('[') && name.includes(']')) {
+                    const match = name.match(/^([^\[]+)\[([^\]]+)\]$/);
+                    if (match) {
+                        const section = match[1];
+                        const setting = match[2];
+                        
+                        if (!settings[section]) {
+                            settings[section] = {};
+                        }
+                        settings[section][setting] = isChecked;
+                    }
+                } else if (name.includes('_')) {
+                    const parts = name.split('_');
+                    const section = parts[0];
+                    const setting = parts.slice(1).join('_');
+                    
+                    if (!settings[section]) {
+                        settings[section] = {};
+                    }
+                    settings[section][setting] = isChecked;
+                } else {
+                    settings[name] = isChecked;
+                }
+            });
+            
+            // Convert form data to settings object (for non-checkbox fields)
             for (const [key, value] of formData.entries()) {
+                // Skip checkboxes - they're handled explicitly above
+                const inputElement = form.querySelector(`[name="${key}"]`);
+                if (inputElement && inputElement.type === 'checkbox') {
+                    continue;
+                }
+                
                 // Handle bracket notation (e.g., plex[url] -> plex.url)
                 if (key.includes('[') && key.includes(']')) {
                     const match = key.match(/^([^\[]+)\[([^\]]+)\]$/);
@@ -787,13 +842,7 @@
                             settings[section] = {};
                         }
                         
-                        if (value === 'on') {
-                            settings[section][setting] = true;
-                        } else if (value === 'off') {
-                            settings[section][setting] = false;
-                        } else {
-                            settings[section][setting] = value;
-                        }
+                        settings[section][setting] = value;
                     }
                 } else if (key.includes('_')) {
                     const parts = key.split('_');
@@ -804,13 +853,7 @@
                         settings[section] = {};
                     }
                     
-                    if (value === 'on') {
-                        settings[section][setting] = true;
-                    } else if (value === 'off') {
-                        settings[section][setting] = false;
-                    } else {
-                        settings[section][setting] = value;
-                    }
+                    settings[section][setting] = value;
                 } else {
                     settings[key] = value;
                 }
@@ -1039,6 +1082,67 @@
                 });
         }
         
+        function validatePlexConnection() {
+            const plexUrl = document.getElementById('plex_url').value.trim();
+            const plexTokenField = document.getElementById('plex_token');
+            const plexToken = plexTokenField.value.trim();
+            const resultDiv = document.getElementById('plexValidationResult');
+            const validateBtn = document.getElementById('validatePlexBtn');
+            
+            if (!plexUrl) {
+                resultDiv.innerHTML = '<div style="color: #e74c3c; font-size: 0.9em;">⚠️ Please enter Plex URL</div>';
+                return;
+            }
+            
+            // Check if token is the masked placeholder and we have a backend token
+            const hasBackendToken = plexTokenField.hasAttribute('data-has-backend-token');
+            const isMaskedToken = plexToken === '••••••••••••••••••••';
+            
+            if (!plexToken || (isMaskedToken && !hasBackendToken)) {
+                resultDiv.innerHTML = '<div style="color: #e74c3c; font-size: 0.9em;">⚠️ Please enter Plex Token</div>';
+                return;
+            }
+            
+            // Show loading state
+            validateBtn.disabled = true;
+            validateBtn.textContent = 'Validating...';
+            resultDiv.innerHTML = '<div style="color: #3498db; font-size: 0.9em;">🔄 Validating Plex connection...</div>';
+            
+            // Prepare validation request
+            const validationData = { url: plexUrl };
+            
+            if (isMaskedToken && hasBackendToken) {
+                // Use stored backend token
+                validationData.use_stored_token = true;
+            } else {
+                // Use provided token
+                validationData.token = plexToken;
+            }
+            
+            fetch('/api/validate-plex', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(validationData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                validateBtn.disabled = false;
+                validateBtn.textContent = 'Validate';
+                
+                if (data.success) {
+                    resultDiv.innerHTML = `<div style="color: #27ae60; font-size: 0.9em;">✅ ${data.message}</div>`;
+                } else {
+                    resultDiv.innerHTML = `<div style="color: #e74c3c; font-size: 0.9em;">❌ ${data.error}</div>`;
+                }
+            })
+            .catch(error => {
+                validateBtn.disabled = false;
+                validateBtn.textContent = 'Validate';
+                console.error('Plex validation error:', error);
+                resultDiv.innerHTML = '<div style="color: #e74c3c; font-size: 0.9em;">❌ Connection failed - check console for details</div>';
+            });
+        }
+        
         function startScheduler() {
             fetch('/api/scheduler/start', { method: 'POST' })
                 .then(response => response.json())
@@ -1240,13 +1344,13 @@
                         return;
                     }
                     
-                    if (!data.logs || data.logs.length === 0) {
+                    if (!data.data.logs || data.data.logs.length === 0) {
                         logContainer.innerHTML = '<div class="log-entry log-info">No logs available</div>';
                         return;
                     }
                     
                     let html = '';
-                    data.logs.forEach(log => {
+                    data.data.logs.forEach(log => {
                         const logClass = `log-${log.level}`;
                         html += `<div class="log-entry ${logClass}">${log.message}</div>`;
                     });
