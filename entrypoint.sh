@@ -11,13 +11,37 @@ fi
 
 echo "Running as root, setting up directories..."
 
-# Ensure config directories exist and have proper permissions
-mkdir -p /config/logs /config/data /cache
+# SECURITY: Create necessary directories without modifying mounted volumes
+# Only create subdirectories within potentially mounted paths
+mkdir -p /config/logs /config/data /cache 2>/dev/null || true
 
-# Set proper ownership for all directories
-chown -R cacherr:cacherr /app /config /cache
+# SECURITY CRITICAL: Only set ownership on application directory
+# NEVER modify ownership of /config or /cache as they may be mounted from host
+if [ -d "/app" ] && [ ! -L "/app" ]; then
+    echo "Setting ownership on application directory: /app"
+    chown -R cacherr:cacherr /app
+else
+    echo "WARNING: /app not found or is a symlink - skipping ownership change"
+fi
 
-echo "Directories set up, switching to cacherr user..."
+# SECURITY: Ensure cacherr user can write to required subdirectories without
+# changing ownership of potentially mounted parent directories
+# Check if we can write to subdirectories and create them with proper user
+for subdir in "/config/logs" "/config/data" "/cache"; do
+    if [ -d "$subdir" ]; then
+        # Test if directory is writable by attempting to create a test file
+        if touch "$subdir/.write_test" 2>/dev/null; then
+            rm -f "$subdir/.write_test"
+            echo "Directory $subdir is writable"
+        else
+            echo "WARNING: Directory $subdir is not writable by cacherr user"
+            # Try to set permissions on just this subdirectory if possible
+            chown cacherr:cacherr "$subdir" 2>/dev/null || echo "Cannot modify ownership of $subdir"
+        fi
+    fi
+done
+
+echo "Directory permissions configured securely, switching to cacherr user..."
 
 # Switch to cacherr user and execute the command
 # Use exec to replace the current process

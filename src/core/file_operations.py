@@ -510,13 +510,14 @@ class FileOperations:
                     except (OSError, PermissionError) as fallback_e:
                         self.logger.warning(f"Failed to create Plex-visible link {plex_path}: hardlink={e}, symlink={fallback_e}")
             
-            # Preserve permissions if on Linux
+            # Preserve media file permissions for Plex accessibility
             if os.name == 'posix':
                 try:
-                    # Set reasonable permissions
-                    dest.chmod(0o644)
+                    # Use 0o664 (rw-rw-r--) to ensure Plex group access
+                    # This maintains readability for Plex while allowing group write access
+                    dest.chmod(0o664)
                 except OSError:
-                    pass  # Ignore permission errors
+                    pass  # Ignore permission errors - container environment may restrict
             
             return True, file_size
             
@@ -540,12 +541,13 @@ class FileOperations:
             # Create symlink from original location to cache
             os.symlink(str(dest), str(src))
             
-            # Set reasonable permissions if on Linux
+            # Set media-appropriate permissions if on Linux
             if os.name == 'posix':
                 try:
-                    dest.chmod(0o644)
+                    # Use 0o664 (rw-rw-r--) to ensure Plex group access
+                    dest.chmod(0o664)
                 except OSError:
-                    pass  # Ignore permission errors
+                    pass  # Ignore permission errors - container environment may restrict
             
             return True, file_size
             
@@ -589,12 +591,13 @@ class FileOperations:
                     except (OSError, PermissionError) as fallback_e:
                         self.logger.warning(f"Failed to create Plex-visible link {plex_path}: hardlink={e}, symlink={fallback_e}")
             
-            # Set reasonable permissions if on Linux
+            # Set media-appropriate permissions if on Linux
             if os.name == 'posix':
                 try:
-                    dest.chmod(0o644)
+                    # Use 0o664 (rw-rw-r--) to ensure Plex group access
+                    dest.chmod(0o664)
                 except OSError:
-                    pass  # Ignore permission errors
+                    pass  # Ignore permission errors - container environment may restrict
             
             return True, file_size
             

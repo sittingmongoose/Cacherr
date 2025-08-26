@@ -36,17 +36,18 @@ COPY main.py .
 COPY dashboard.html .
 COPY entrypoint.sh .
 
-# Create necessary directories with proper ownership
-RUN mkdir -p /config/logs /config/data /cache && \
-    chown -R cacherr:cacherr /app && \
-    chown -R cacherr:cacherr /config && \
-    chown -R cacherr:cacherr /cache
+# SECURITY: Create directories with minimal permissions - NO ownership changes
+# Mount-aware permission handling is done safely in entrypoint.sh at runtime
+RUN mkdir -p /config/logs /config/data /cache
 
-# Set proper permissions
-RUN chmod -R 755 /app && \
-    chmod -R 755 /config && \
-    chmod -R 755 /cache && \
-    chmod +x entrypoint.sh
+# SECURITY CRITICAL: ONLY modify ownership/permissions on application code directory
+# NEVER modify /config or /cache here as they are commonly mounted from host system
+RUN chown -R cacherr:cacherr /app && \
+    chmod -R 755 /app && \
+    chmod +x /app/entrypoint.sh
+
+# SECURITY NOTE: /config and /cache ownership handled by entrypoint.sh
+# The entrypoint uses mount detection to avoid modifying host-mounted directories
 
 # Keep as root for entrypoint script to work properly
 # USER cacherr
