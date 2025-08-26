@@ -57,7 +57,7 @@ The PlexCacheUltra project has successfully completed all 8 phases of architectu
 - **Content Security**: MAX_CONTENT_LENGTH properly configured
 
 #### D. Network Security ✅ SECURE
-- **Port Exposure**: Single port (5443) exposed with health check
+- **Port Exposure**: Single port (5445) exposed with health check
 - **API Endpoints**: All endpoints have proper error handling
 - **Authentication**: Relies on Plex authentication (appropriate for use case)
 

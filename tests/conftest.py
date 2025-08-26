@@ -76,7 +76,7 @@ def mock_config() -> Config:
     config.DRY_RUN = True  # Always use dry run in tests
     config.PLEX_URL = "http://localhost:32400"
     config.PLEX_TOKEN = "test_token"
-    config.WEBHOOK_URL = "http://localhost:8080/webhook"
+    config.WEBHOOK_URL = "http://localhost:5445/webhook"
     config.ENABLE_NOTIFICATIONS = False
     config.ENABLE_REAL_TIME_WATCHER = False
     return config

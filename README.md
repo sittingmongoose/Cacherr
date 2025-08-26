@@ -107,7 +107,7 @@ docker-compose up -d
 
 ### 4. Access the Web Dashboard
 
-Open your browser and navigate to: `http://your-server:5443`
+Open your browser and navigate to: `http://your-server:5445`
 
 ## 🔧 Configuration
 
@@ -228,7 +228,7 @@ docker-compose up -d
 docker run -d \
   --name cacherr \
   --restart unless-stopped \
-  -p 5444:5443 \
+  -p 5444:5445 \
   -e PLEX_URL=https://plex.yourdomain.com \
   -e PLEX_TOKEN=your_token \
   -v /mnt/cache/apps/cacherr:/cache \
@@ -250,7 +250,7 @@ For Unraid users, the container is now optimized with safe defaults. Simply:
    - `/mnt/user/plex` → `/plexsource`
    - `/mnt/user/appdata/cacherr/config` → `/config`
 
-2. **Set Port Mapping:** `5444:5443`
+2. **Set Port Mapping:** `5444:5445`
 
 3. **Set WebUI:** `http://[IP]:5444`
 
@@ -352,9 +352,9 @@ The web dashboard provides a comprehensive interface with three main tabs:
 **Problem:** Web GUI redirects to malformed URLs like `@https://192.168.50.119:1444/5444`
 
 **Solution:** 
-1. Set Host Port to `5444` (not 5443)
+1. Set Host Port to `5444` (not 5445)
 2. Set WebUI to `http://[IP]:5444`
-3. Container Port remains `5443`
+3. Container Port remains `5445`
 
 #### Container Won't Start
 **Problem:** Container exits immediately with permission errors

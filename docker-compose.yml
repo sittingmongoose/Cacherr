@@ -9,7 +9,7 @@ services:
     container_name: cacherr-unraid
     restart: unless-stopped
     ports:
-      - "5444:5443"
+      - "5444:5445"
     environment:
       # Plex Configuration
       - PLEX_URL=${PLEX_URL}

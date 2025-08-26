@@ -53,11 +53,11 @@ RUN chown -R cacherr:cacherr /app && \
 # USER cacherr
 
 # Expose default web port
-EXPOSE 5443
+EXPOSE 5445
 
 # Health check (run as cacherr user)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:5443/health || exit 1
+    CMD curl -f http://localhost:5445/health || exit 1
 
 # Default command
 ENTRYPOINT ["/bin/bash", "./entrypoint.sh"]

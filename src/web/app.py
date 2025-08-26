@@ -27,7 +27,7 @@ Example:
     # Configure container with services...
     
     app = create_app(container)
-    app.run(host='0.0.0.0', port=8080)
+    app.run(host='0.0.0.0', port=5445)
     ```
     
     Testing usage:
@@ -60,7 +60,7 @@ class FlaskAppConfig(BaseModel):
     testing: bool = Field(default=False, description="Enable testing mode")
     debug: bool = Field(default=False, description="Enable debug mode")
     host: str = Field(default="0.0.0.0", description="Host to bind to")
-    port: int = Field(default=8080, description="Port to bind to")
+    port: int = Field(default=5445, description="Port to bind to")
     enable_cors: bool = Field(default=True, description="Enable CORS support")
     cors_origins: list = Field(default_factory=lambda: ["*"], description="CORS allowed origins")
     max_content_length: int = Field(default=16 * 1024 * 1024, description="Max request content length")

@@ -33,7 +33,7 @@ MOUNT COMPATIBILITY: Uses identical mount paths as Plex container to prevent med
 &#xD;
 SAFE CONFIGURATION: Default paths use dedicated directories to prevent system damage.</Overview>
   <Category>MediaServer:Other</Category>
-  <WebUI>http://[IP]:5443</WebUI>
+  <WebUI>http://[IP]:5445</WebUI>
   <TemplateURL/>
   <Icon>https://raw.githubusercontent.com/sittingmongoose/cacherr/main/cacherr-icon.png</Icon>
   <ExtraParams>--platform linux/amd64 --security-opt no-new-privileges:true</ExtraParams>
@@ -45,7 +45,7 @@ SAFE CONFIGURATION: Default paths use dedicated directories to prevent system da
   <Requires>Plex Media Server</Requires>
   <Config Name="PLEX_URL" Target="PLEX_URL" Default="" Mode="" Description="Your Plex server URL - configure via WebGUI" Type="Variable" Display="always" Required="false" Mask="false"/>
   <Config Name="PLEX_TOKEN" Target="PLEX_TOKEN" Default="" Mode="" Description="Your Plex authentication token - configure via WebGUI" Type="Variable" Display="always" Required="false" Mask="true"/>
-  <Config Name="Web Port" Target="5443" Default="5443" Mode="tcp" Description="Web interface port" Type="Port" Display="always" Required="true" Mask="false">5443</Config>
+  <Config Name="Web Port" Target="5445" Default="5445" Mode="tcp" Description="Web interface port" Type="Port" Display="always" Required="true" Mask="false">5445</Config>
   <Config Name="Plex Media Link" Target="/plexmedia" Default="" Mode="ro" Description="Plex-compatible path for primary media (READ-ONLY to prevent system damage)" Type="Path" Display="always" Required="true" Mask="false"/>
   <Config Name="Cache Directory" Target="/cache" Default="/mnt/user/appdata/cacherr-cache/" Mode="rw" Description="Dedicated cache directory - DO NOT use system directories" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/cacherr-cache/</Config>
   <Config Name="Config Directory" Target="/config" Default="/mnt/user/appdata/cacherr/" Mode="rw" Description="Dedicated config directory - DO NOT use system directories" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/cacherr/</Config>

@@ -110,7 +110,7 @@ def example_factory_based_registration():
             config_values = {
                 "PLEX_URL": "http://localhost:32400",
                 "PLEX_TOKEN": "mock_token_12345",
-                "WEBHOOK_URL": "http://localhost:8080/webhook"
+                "WEBHOOK_URL": "http://localhost:5445/webhook"
             }
             return config_values.get(key, default)
         

@@ -38,7 +38,7 @@ Example:
     ```python
     app_context = create_application(
         config_overrides={
-            'web': {'port': 8080, 'debug': True},
+            'web': {'port': 5445, 'debug': True},
             'scheduler': {'enable_auto_start': True}
         }
     )
@@ -46,6 +46,7 @@ Example:
 """
 
 import logging
+import os
 import sys
 import threading
 from pathlib import Path
@@ -628,7 +629,7 @@ def create_development_application() -> ApplicationContext:
     return create_application({
         'web': {
             'debug': True,
-            'port': 8080,
+            'port': int(os.getenv('WEB_PORT', os.getenv('PORT', '5445'))),
             'testing': False
         },
         'scheduler': {
@@ -649,7 +650,7 @@ def create_production_application() -> ApplicationContext:
     return create_application({
         'web': {
             'debug': False,
-            'port': 8080,
+            'port': int(os.getenv('WEB_PORT', os.getenv('PORT', '5445'))),
             'testing': False
         },
         'scheduler': {
