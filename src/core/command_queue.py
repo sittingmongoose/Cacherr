@@ -753,7 +753,11 @@ class CommandExecutionManager(ICommandExecutor):
         self._shutdown = True
         
         if wait:
-            self._executor.shutdown(wait=True, timeout=timeout)
+            try:
+                self._executor.shutdown(wait=True, timeout=timeout)
+            except TypeError:
+                # Fallback for Python < 3.9 which doesn't support timeout parameter
+                self._executor.shutdown(wait=True)
         else:
             self._executor.shutdown(wait=False)
         

@@ -410,7 +410,11 @@ class TaskScheduler:
             
             # Shutdown thread pool
             if self.thread_pool:
-                self.thread_pool.shutdown(wait=True, timeout=timeout_seconds)
+                try:
+                    self.thread_pool.shutdown(wait=True, timeout=timeout_seconds)
+                except TypeError:
+                    # Fallback for Python < 3.9 which doesn't support timeout parameter
+                    self.thread_pool.shutdown(wait=True)
             
             with self.state_lock:
                 self.state = SchedulerState.STOPPED
