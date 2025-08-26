@@ -13,7 +13,7 @@ echo "Running as root, setting up directories..."
 
 # SECURITY: Create necessary directories without modifying mounted volumes
 # Only create subdirectories within potentially mounted paths
-mkdir -p /config/logs /config/data /cache 2>/dev/null || true
+mkdir -p /config/logs /config/data /config/temp /cache 2>/dev/null || true
 
 # SECURITY CRITICAL: Only set ownership on application directory
 # NEVER modify ownership of /config or /cache as they may be mounted from host
@@ -27,7 +27,7 @@ fi
 # SECURITY: Ensure cacherr user can write to required subdirectories without
 # changing ownership of potentially mounted parent directories
 # Check if we can write to subdirectories and create them with proper user
-for subdir in "/config/logs" "/config/data" "/cache"; do
+for subdir in "/config/logs" "/config/data" "/config/temp" "/cache"; do
     if [ -d "$subdir" ]; then
         # Test if directory is writable by attempting to create a test file
         if touch "$subdir/.write_test" 2>/dev/null; then
@@ -37,6 +37,7 @@ for subdir in "/config/logs" "/config/data" "/cache"; do
             echo "WARNING: Directory $subdir is not writable by cacherr user"
             # Try to set permissions on just this subdirectory if possible
             chown cacherr:cacherr "$subdir" 2>/dev/null || echo "Cannot modify ownership of $subdir"
+            chmod 755 "$subdir" 2>/dev/null || echo "Cannot modify permissions of $subdir"
         fi
     fi
 done
