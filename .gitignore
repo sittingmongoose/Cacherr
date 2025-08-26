@@ -146,7 +146,15 @@ Thumbs.db
 logs/
 *.log
 
-# Config
-config/
+# Config - ignore sensitive files but allow source code
+.env
 .env.local
 .env.production
+*.env
+config.ini
+config.json
+secrets.json
+
+# But allow source code configuration
+!src/config/
+!src/config/*.py
