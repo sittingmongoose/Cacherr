@@ -58,6 +58,55 @@ class NotificationEvent(BaseModel):
     details: Optional[Dict[str, Any]] = None
 
 
+class OperationResult(BaseModel):
+    """Represents a single file operation result."""
+    id: str
+    operation_id: str
+    file_path: str
+    filename: str
+    source_path: str
+    destination_path: Optional[str] = None
+    operation_type: str  # cache, array, delete, copy, move
+    status: str  # pending, processing, completed, failed, skipped
+    reason: str  # watchlist, ondeck, watched, trakt, continue_watching, manual
+    triggered_by_user: Optional[str] = None
+    file_size_bytes: int
+    started_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+    error_message: Optional[str] = None
+    parent_operation_id: Optional[str] = None  # For batch operations
+
+
+class BatchOperation(BaseModel):
+    """Represents a batch operation containing multiple file operations."""
+    id: str
+    operation_type: str  # cache_batch, array_batch, cleanup_batch
+    status: str  # pending, running, completed, failed, cancelled
+    test_mode: bool
+    triggered_by: str  # scheduler, manual, watcher
+    triggered_by_user: Optional[str] = None
+    reason: str  # scheduled, user_request, auto_cleanup, trakt_sync
+    started_at: datetime
+    completed_at: Optional[datetime] = None
+    total_files: int
+    files_processed: int = 0
+    files_successful: int = 0
+    files_failed: int = 0
+    total_size_bytes: int
+    bytes_processed: int = 0
+    error_message: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None  # Additional context
+
+
+class UserOperationContext(BaseModel):
+    """Context for user-triggered operations."""
+    user_id: Optional[str] = None
+    plex_username: Optional[str] = None
+    session_id: Optional[str] = None
+    trigger_source: str  # web_ui, api, scheduler, watcher
+    client_info: Optional[Dict[str, Any]] = None
+
+
 class MediaService(ABC):
     """
     Interface for Plex media operations.
@@ -462,6 +511,174 @@ class NotificationService(ABC):
         
         Returns:
             True if webhook configuration is valid, False otherwise
+        """
+        pass
+
+
+class ResultsService(ABC):
+    """
+    Interface for operation results tracking and management.
+    
+    Manages the lifecycle of operations, tracks file-level results,
+    provides historical data, and supports multi-user attribution.
+    Integrates with WebSocket for real-time updates.
+    
+    Raises:
+        ResultsError: When results operations fail
+        StorageError: When persistence operations fail
+    """
+    
+    @abstractmethod
+    def create_batch_operation(self, operation_type: str, test_mode: bool = False,
+                             triggered_by: str = "manual", user_context: Optional[UserOperationContext] = None,
+                             reason: str = "user_request", metadata: Optional[Dict[str, Any]] = None) -> BatchOperation:
+        """
+        Create a new batch operation.
+        
+        Args:
+            operation_type: Type of batch operation
+            test_mode: Whether this is a test mode operation
+            triggered_by: Who/what triggered the operation
+            user_context: User context if triggered by a user
+            reason: Reason for the operation
+            metadata: Additional operation metadata
+            
+        Returns:
+            BatchOperation instance
+        """
+        pass
+    
+    @abstractmethod
+    def add_file_operation(self, batch_id: str, file_path: str, operation_type: str,
+                          reason: str, source_path: str, destination_path: Optional[str] = None,
+                          file_size_bytes: int = 0, user_id: Optional[str] = None) -> OperationResult:
+        """
+        Add a file operation to a batch.
+        
+        Args:
+            batch_id: ID of the parent batch operation
+            file_path: Path to the file being operated on
+            operation_type: Type of operation
+            reason: Reason for the operation
+            source_path: Source file path
+            destination_path: Destination file path (if applicable)
+            file_size_bytes: Size of the file
+            user_id: User who triggered the operation
+            
+        Returns:
+            OperationResult instance
+        """
+        pass
+    
+    @abstractmethod
+    def update_operation_status(self, operation_id: str, status: str,
+                               error_message: Optional[str] = None, 
+                               completed_at: Optional[datetime] = None) -> bool:
+        """
+        Update the status of an operation.
+        
+        Args:
+            operation_id: ID of the operation to update
+            status: New status
+            error_message: Error message if operation failed
+            completed_at: Completion timestamp
+            
+        Returns:
+            True if update successful
+        """
+        pass
+    
+    @abstractmethod
+    def update_batch_progress(self, batch_id: str, files_processed: int,
+                            files_successful: int, files_failed: int,
+                            bytes_processed: int) -> bool:
+        """
+        Update batch operation progress.
+        
+        Args:
+            batch_id: ID of the batch operation
+            files_processed: Number of files processed
+            files_successful: Number of successful operations
+            files_failed: Number of failed operations
+            bytes_processed: Bytes processed
+            
+        Returns:
+            True if update successful
+        """
+        pass
+    
+    @abstractmethod
+    def get_active_operations(self, user_id: Optional[str] = None) -> List[BatchOperation]:
+        """
+        Get currently active operations.
+        
+        Args:
+            user_id: Optional user filter
+            
+        Returns:
+            List of active batch operations
+        """
+        pass
+    
+    @abstractmethod
+    def get_operation_history(self, limit: int = 50, offset: int = 0,
+                            user_id: Optional[str] = None,
+                            operation_type: Optional[str] = None,
+                            start_date: Optional[datetime] = None,
+                            end_date: Optional[datetime] = None) -> Tuple[List[BatchOperation], int]:
+        """
+        Get operation history with pagination and filtering.
+        
+        Args:
+            limit: Number of operations to return
+            offset: Number of operations to skip
+            user_id: Optional user filter
+            operation_type: Optional operation type filter
+            start_date: Optional start date filter
+            end_date: Optional end date filter
+            
+        Returns:
+            Tuple of (operations list, total count)
+        """
+        pass
+    
+    @abstractmethod
+    def get_operation_details(self, operation_id: str) -> Tuple[BatchOperation, List[OperationResult]]:
+        """
+        Get detailed information about a specific operation.
+        
+        Args:
+            operation_id: ID of the operation
+            
+        Returns:
+            Tuple of (batch operation, file operations list)
+        """
+        pass
+    
+    @abstractmethod
+    def get_user_statistics(self, user_id: str, days: int = 30) -> Dict[str, Any]:
+        """
+        Get statistics for a specific user.
+        
+        Args:
+            user_id: User ID
+            days: Number of days to include in statistics
+            
+        Returns:
+            Dictionary with user statistics
+        """
+        pass
+    
+    @abstractmethod
+    def cleanup_old_results(self, days_to_keep: int = 90) -> int:
+        """
+        Clean up old operation results.
+        
+        Args:
+            days_to_keep: Number of days of results to keep
+            
+        Returns:
+            Number of operations cleaned up
         """
         pass
 

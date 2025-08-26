@@ -35,9 +35,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ className }) => {
   const { isRunning, runCacheOperation, startScheduler, stopScheduler } = useOperations()
   const wsStatus = useWebSocketStatus()
 
-  // Extract data from global state
-  const currentSystemStatus = state.systemStatus
-  const currentHealthStatus = state.healthStatus
+  // Extract data from global state and API hooks
+  const currentSystemStatus = systemStatus.data || state.systemStatus
+  const currentHealthStatus = healthStatus.data || state.healthStatus
   const error = state.errors.systemStatus || state.errors.healthStatus || state.errors.operations
 
   // Initialize WebSocket connection

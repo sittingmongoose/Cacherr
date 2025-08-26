@@ -291,28 +291,36 @@ class Config:
         )
 
     def _load_real_time_watch_config(self) -> RealTimeWatchConfig:
-        # Support both old and new env var names
-        cache_when_watching = os.getenv('REAL_TIME_WATCH_CACHE_WHEN_WATCHING', 'false').lower() == 'true'
-        auto_cache_on_watch = os.getenv('REAL_TIME_WATCH_AUTO_CACHE_ON_WATCH', 'false').lower() == 'true'
-        cache_on_complete = os.getenv('REAL_TIME_WATCH_CACHE_ON_COMPLETE', 'true').lower() == 'true'
-        respect_existing_rules = os.getenv('REAL_TIME_WATCH_RESPECT_EXISTING_RULES', 'true').lower() == 'true'
-
-        # safe int parsing
-        def _to_int(value: str, default: int) -> int:
-            try:
+        persistent_config = self._load_persistent_config()
+        rtw_config = persistent_config.get('real_time_watch', {})
+        
+        # Load from persistent config first, fall back to environment variables
+        def get_bool(key, env_key, default='false'):
+            value = rtw_config.get(key)
+            if value is not None:
+                return bool(value) if isinstance(value, bool) else str(value).lower() == 'true'
+            return os.getenv(env_key, default).lower() == 'true'
+        
+        def get_int(key, env_key, default):
+            value = rtw_config.get(key)
+            if value is not None:
                 return int(value)
-            except Exception:
-                return default
+            return int(os.getenv(env_key, str(default)))
+        
+        # Support both old and new env var names for backwards compatibility
+        cache_when_watching = get_bool('cache_when_watching', 'REAL_TIME_WATCH_CACHE_WHEN_WATCHING', 'false')
+        auto_cache_on_watch = get_bool('auto_cache_on_watch', 'REAL_TIME_WATCH_AUTO_CACHE_ON_WATCH', 'false')
+        
         return RealTimeWatchConfig(
-            enabled=os.getenv('REAL_TIME_WATCH_ENABLED', 'false').lower() == 'true',
-            check_interval=_to_int(os.getenv('REAL_TIME_WATCH_CHECK_INTERVAL', '30'), 30),
+            enabled=get_bool('enabled', 'REAL_TIME_WATCH_ENABLED', 'false'),
+            check_interval=get_int('check_interval', 'REAL_TIME_WATCH_CHECK_INTERVAL', 30),
             cache_when_watching=auto_cache_on_watch,
             auto_cache_on_watch=auto_cache_on_watch,
-            cache_on_complete=cache_on_complete,
-            respect_existing_rules=respect_existing_rules,
-            remove_from_cache_after_hours=_to_int(os.getenv('REAL_TIME_WATCH_REMOVE_FROM_CACHE_AFTER_HOURS', '24'), 24),
-            respect_other_users_watchlists=os.getenv('REAL_TIME_WATCH_RESPECT_OTHER_USERS_WATCHLISTS', 'true').lower() == 'true',
-            exclude_inactive_users_days=_to_int(os.getenv('REAL_TIME_WATCH_EXCLUDE_INACTIVE_USERS_DAYS', '30'), 30)
+            cache_on_complete=get_bool('cache_on_complete', 'REAL_TIME_WATCH_CACHE_ON_COMPLETE', 'true'),
+            respect_existing_rules=get_bool('respect_existing_rules', 'REAL_TIME_WATCH_RESPECT_EXISTING_RULES', 'true'),
+            remove_from_cache_after_hours=get_int('remove_from_cache_after_hours', 'REAL_TIME_WATCH_REMOVE_FROM_CACHE_AFTER_HOURS', 24),
+            respect_other_users_watchlists=get_bool('respect_other_users_watchlists', 'REAL_TIME_WATCH_RESPECT_OTHER_USERS_WATCHLISTS', 'true'),
+            exclude_inactive_users_days=get_int('exclude_inactive_users_days', 'REAL_TIME_WATCH_EXCLUDE_INACTIVE_USERS_DAYS', 30)
         )
 
     def _load_trakt_config(self) -> TraktConfig:

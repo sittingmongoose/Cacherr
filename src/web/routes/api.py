@@ -65,6 +65,7 @@ from pydantic import BaseModel, Field, ValidationError
 
 from ...core.interfaces import CacheService, MediaService, FileService, NotificationService
 from ...core.plex_cache_engine import CacherrEngine
+from ...core.plex_watcher import PlexWatcher
 from ...config.settings import Config
 
 
@@ -417,6 +418,16 @@ def api_update_settings():
                 logger.info("Plex settings updated - engine reinitialization may be required")
             except Exception as e:
                 logger.warning(f"Failed to reinitialize engine with new Plex credentials: {e}")
+        
+        # Reload watchers if real-time watching or Trakt settings were updated
+        if 'real_time_watch' in filtered_data or 'trakt' in filtered_data:
+            try:
+                engine = get_engine()
+                if engine:
+                    engine.reload_watchers()
+                    logger.info("Watchers reloaded due to configuration changes")
+            except Exception as e:
+                logger.warning(f"Failed to reload watchers after configuration update: {e}")
         
         response = APIResponse(
             success=True,
@@ -884,45 +895,420 @@ def api_logs():
         return jsonify(response.dict()), 500
 
 
-# Real-time Watcher Endpoints (Placeholder implementations)
+# Real-time Watcher Endpoints
 @api_bp.route('/watcher/start', methods=['POST'])
 @handle_api_error
 def api_watcher_start():
-    """Start real-time Plex watching (placeholder)."""
-    # TODO: Implement watcher start logic
-    response = APIResponse(
-        success=True,
-        message="Watcher start requested (implementation pending)"
-    )
-    return jsonify(response.dict())
+    """Start real-time Plex watching."""
+    try:
+        engine = get_engine()
+        if not engine:
+            response = APIResponse(
+                success=False,
+                error="Engine not initialized"
+            )
+            return jsonify(response.dict()), 500
+        
+        if not engine.config.real_time_watch.enabled:
+            response = APIResponse(
+                success=False,
+                error="Real-time watching is disabled in configuration. Please enable it in settings first."
+            )
+            return jsonify(response.dict()), 400
+        
+        success = engine.start_real_time_watching()
+        if success:
+            response = APIResponse(
+                success=True,
+                message="Real-time Plex watching started successfully"
+            )
+            return jsonify(response.dict())
+        else:
+            response = APIResponse(
+                success=False,
+                error="Failed to start real-time watching"
+            )
+            return jsonify(response.dict()), 500
+    
+    except Exception as e:
+        logger.error(f"Error starting real-time watcher: {e}")
+        response = APIResponse(
+            success=False,
+            error=f"Failed to start real-time watching: {str(e)}"
+        )
+        return jsonify(response.dict()), 500
 
 
 @api_bp.route('/watcher/stop', methods=['POST'])
 @handle_api_error
 def api_watcher_stop():
-    """Stop real-time Plex watching (placeholder)."""
-    # TODO: Implement watcher stop logic
-    response = APIResponse(
-        success=True,
-        message="Watcher stop requested (implementation pending)"
-    )
-    return jsonify(response.dict())
+    """Stop real-time Plex watching."""
+    try:
+        engine = get_engine()
+        if not engine:
+            response = APIResponse(
+                success=False,
+                error="Engine not initialized"
+            )
+            return jsonify(response.dict()), 500
+        
+        success = engine.stop_real_time_watching()
+        if success:
+            response = APIResponse(
+                success=True,
+                message="Real-time Plex watching stopped successfully"
+            )
+            return jsonify(response.dict())
+        else:
+            response = APIResponse(
+                success=False,
+                error="Failed to stop real-time watching"
+            )
+            return jsonify(response.dict()), 500
+    
+    except Exception as e:
+        logger.error(f"Error stopping real-time watcher: {e}")
+        response = APIResponse(
+            success=False,
+            error=f"Failed to stop real-time watching: {str(e)}"
+        )
+        return jsonify(response.dict()), 500
 
 
 @api_bp.route('/watcher/status')
 @handle_api_error
 def api_watcher_status():
-    """Get real-time watcher status (placeholder)."""
-    # TODO: Implement watcher status logic
-    response = APIResponse(
-        success=True,
-        data={
-            "is_watching": False,
-            "stats": {},
-            "message": "Watcher status implementation pending"
-        }
-    )
-    return jsonify(response.dict())
+    """Get real-time watcher status."""
+    try:
+        engine = get_engine()
+        if not engine:
+            response = APIResponse(
+                success=False,
+                error="Engine not initialized"
+            )
+            return jsonify(response.dict()), 500
+        
+        is_watching = engine.is_real_time_watching()
+        stats = engine.get_watcher_stats()
+        
+        response = APIResponse(
+            success=True,
+            data={
+                "is_watching": is_watching,
+                "enabled": engine.config.real_time_watch.enabled,
+                "stats": stats,
+                "config": {
+                    "check_interval": engine.config.real_time_watch.check_interval,
+                    "auto_cache_on_watch": engine.config.real_time_watch.auto_cache_on_watch,
+                    "cache_on_complete": engine.config.real_time_watch.cache_on_complete,
+                    "remove_from_cache_after_hours": engine.config.real_time_watch.remove_from_cache_after_hours,
+                    "respect_other_users_watchlists": engine.config.real_time_watch.respect_other_users_watchlists,
+                    "exclude_inactive_users_days": engine.config.real_time_watch.exclude_inactive_users_days
+                }
+            }
+        )
+        return jsonify(response.dict())
+    
+    except Exception as e:
+        logger.error(f"Error getting watcher status: {e}")
+        response = APIResponse(
+            success=False,
+            error=f"Failed to get watcher status: {str(e)}"
+        )
+        return jsonify(response.dict()), 500
+
+
+@api_bp.route('/watcher/clear-history', methods=['POST'])
+@handle_api_error
+def api_watcher_clear_history():
+    """Clear real-time watcher history."""
+    try:
+        engine = get_engine()
+        if not engine:
+            response = APIResponse(
+                success=False,
+                error="Engine not initialized"
+            )
+            return jsonify(response.dict()), 500
+        
+        if not engine.plex_watcher:
+            response = APIResponse(
+                success=False,
+                error="Real-time watcher is not initialized"
+            )
+            return jsonify(response.dict()), 400
+        
+        engine.clear_watch_history()
+        response = APIResponse(
+            success=True,
+            message="Watch history cleared successfully"
+        )
+        return jsonify(response.dict())
+    
+    except Exception as e:
+        logger.error(f"Error clearing watch history: {e}")
+        response = APIResponse(
+            success=False,
+            error=f"Failed to clear watch history: {str(e)}"
+        )
+        return jsonify(response.dict()), 500
+
+
+# Results Management Endpoints
+@api_bp.route('/results/operations', methods=['GET'])
+@handle_api_error
+def api_get_operations():
+    """
+    Get operation history with filtering and pagination.
+    
+    Query parameters:
+    - limit: Number of operations to return (default: 50)
+    - offset: Number of operations to skip (default: 0)
+    - user_id: Filter by user ID
+    - operation_type: Filter by operation type
+    - start_date: Filter by start date (ISO format)
+    - end_date: Filter by end date (ISO format)
+    - active_only: Only return active operations (default: false)
+    """
+    try:
+        # Get query parameters
+        limit = int(request.args.get('limit', 50))
+        offset = int(request.args.get('offset', 0))
+        user_id = request.args.get('user_id')
+        operation_type = request.args.get('operation_type')
+        active_only = request.args.get('active_only', 'false').lower() == 'true'
+        
+        start_date = None
+        if request.args.get('start_date'):
+            start_date = datetime.fromisoformat(request.args.get('start_date'))
+        
+        end_date = None
+        if request.args.get('end_date'):
+            end_date = datetime.fromisoformat(request.args.get('end_date'))
+        
+        # Get results service (would come from DI container in real implementation)
+        results_service = getattr(g, 'results_service', None)
+        if not results_service:
+            response = APIResponse(
+                success=False,
+                error="Results service not available"
+            )
+            return jsonify(response.dict()), 500
+        
+        if active_only:
+            operations = results_service.get_active_operations(user_id)
+            total_count = len(operations)
+        else:
+            operations, total_count = results_service.get_operation_history(
+                limit=limit, offset=offset, user_id=user_id,
+                operation_type=operation_type, start_date=start_date, end_date=end_date
+            )
+        
+        # Convert to dict format
+        operations_data = []
+        for op in operations:
+            op_dict = op.dict()
+            # Convert datetime objects to ISO strings
+            if op_dict.get('started_at'):
+                op_dict['started_at'] = op.started_at.isoformat()
+            if op_dict.get('completed_at'):
+                op_dict['completed_at'] = op.completed_at.isoformat()
+            operations_data.append(op_dict)
+        
+        response = APIResponse(
+            success=True,
+            data={
+                'operations': operations_data,
+                'pagination': {
+                    'limit': limit,
+                    'offset': offset,
+                    'total_count': total_count,
+                    'has_more': offset + len(operations) < total_count
+                }
+            }
+        )
+        return jsonify(response.dict())
+        
+    except ValueError as e:
+        response = APIResponse(
+            success=False,
+            error=f"Invalid query parameter: {e}"
+        )
+        return jsonify(response.dict()), 400
+
+
+@api_bp.route('/results/operations/<operation_id>', methods=['GET'])
+@handle_api_error
+def api_get_operation_details(operation_id: str):
+    """Get detailed information about a specific operation."""
+    try:
+        results_service = getattr(g, 'results_service', None)
+        if not results_service:
+            response = APIResponse(
+                success=False,
+                error="Results service not available"
+            )
+            return jsonify(response.dict()), 500
+        
+        batch_op, file_ops = results_service.get_operation_details(operation_id)
+        
+        # Convert to dict format
+        batch_dict = batch_op.dict()
+        if batch_dict.get('started_at'):
+            batch_dict['started_at'] = batch_op.started_at.isoformat()
+        if batch_dict.get('completed_at'):
+            batch_dict['completed_at'] = batch_op.completed_at.isoformat()
+        
+        file_ops_data = []
+        for file_op in file_ops:
+            file_dict = file_op.dict()
+            if file_dict.get('started_at'):
+                file_dict['started_at'] = file_op.started_at.isoformat()
+            if file_dict.get('completed_at'):
+                file_dict['completed_at'] = file_op.completed_at.isoformat()
+            file_ops_data.append(file_dict)
+        
+        response = APIResponse(
+            success=True,
+            data={
+                'batch_operation': batch_dict,
+                'file_operations': file_ops_data
+            }
+        )
+        return jsonify(response.dict())
+        
+    except ValueError as e:
+        response = APIResponse(
+            success=False,
+            error=str(e)
+        )
+        return jsonify(response.dict()), 404
+
+
+@api_bp.route('/results/users/<user_id>/stats', methods=['GET'])
+@handle_api_error
+def api_get_user_stats(user_id: str):
+    """Get statistics for a specific user."""
+    try:
+        days = int(request.args.get('days', 30))
+        
+        results_service = getattr(g, 'results_service', None)
+        if not results_service:
+            response = APIResponse(
+                success=False,
+                error="Results service not available"
+            )
+            return jsonify(response.dict()), 500
+        
+        stats = results_service.get_user_statistics(user_id, days)
+        
+        response = APIResponse(
+            success=True,
+            data=stats
+        )
+        return jsonify(response.dict())
+        
+    except ValueError as e:
+        response = APIResponse(
+            success=False,
+            error=f"Invalid days parameter: {e}"
+        )
+        return jsonify(response.dict()), 400
+
+
+@api_bp.route('/results/cleanup', methods=['POST'])
+@handle_api_error
+def api_cleanup_results():
+    """Clean up old operation results."""
+    try:
+        data = request.get_json() or {}
+        days_to_keep = int(data.get('days_to_keep', 90))
+        
+        results_service = getattr(g, 'results_service', None)
+        if not results_service:
+            response = APIResponse(
+                success=False,
+                error="Results service not available"
+            )
+            return jsonify(response.dict()), 500
+        
+        cleaned_count = results_service.cleanup_old_results(days_to_keep)
+        
+        response = APIResponse(
+            success=True,
+            message=f"Cleaned up {cleaned_count} old operations",
+            data={
+                'operations_cleaned': cleaned_count,
+                'days_kept': days_to_keep
+            }
+        )
+        return jsonify(response.dict())
+        
+    except ValueError as e:
+        response = APIResponse(
+            success=False,
+            error=f"Invalid days_to_keep parameter: {e}"
+        )
+        return jsonify(response.dict()), 400
+
+
+@api_bp.route('/results/export/<operation_id>', methods=['GET'])
+@handle_api_error
+def api_export_operation(operation_id: str):
+    """Export operation results as downloadable file."""
+    try:
+        results_service = getattr(g, 'results_service', None)
+        if not results_service:
+            response = APIResponse(
+                success=False,
+                error="Results service not available"
+            )
+            return jsonify(response.dict()), 500
+        
+        batch_op, file_ops = results_service.get_operation_details(operation_id)
+        
+        # Generate export data
+        export_data = f"PlexCacheUltra Operation Export\n"
+        export_data += f"Generated: {datetime.now().isoformat()}\n\n"
+        export_data += f"Operation ID: {batch_op.id}\n"
+        export_data += f"Type: {batch_op.operation_type}\n"
+        export_data += f"Status: {batch_op.status}\n"
+        export_data += f"Test Mode: {'Yes' if batch_op.test_mode else 'No'}\n"
+        export_data += f"Triggered By: {batch_op.triggered_by}\n"
+        if batch_op.triggered_by_user:
+            export_data += f"User: {batch_op.triggered_by_user}\n"
+        export_data += f"Reason: {batch_op.reason}\n"
+        export_data += f"Started: {batch_op.started_at}\n"
+        if batch_op.completed_at:
+            export_data += f"Completed: {batch_op.completed_at}\n"
+        export_data += f"Files: {batch_op.files_processed}/{batch_op.total_files}\n"
+        export_data += f"Success/Failed: {batch_op.files_successful}/{batch_op.files_failed}\n"
+        export_data += f"Size: {batch_op.bytes_processed}/{batch_op.total_size_bytes} bytes\n\n"
+        
+        export_data += "File Operations:\n"
+        for file_op in file_ops:
+            export_data += f"- {file_op.filename} ({file_op.status})\n"
+            export_data += f"  Path: {file_op.file_path}\n"
+            export_data += f"  Operation: {file_op.operation_type}\n"
+            export_data += f"  Reason: {file_op.reason}\n"
+            export_data += f"  Size: {file_op.file_size_bytes} bytes\n"
+            if file_op.error_message:
+                export_data += f"  Error: {file_op.error_message}\n"
+            export_data += "\n"
+        
+        # Return as downloadable text file
+        from flask import make_response
+        response = make_response(export_data)
+        response.headers['Content-Type'] = 'text/plain'
+        response.headers['Content-Disposition'] = f'attachment; filename="operation_{operation_id}.txt"'
+        return response
+        
+    except ValueError as e:
+        response = APIResponse(
+            success=False,
+            error=str(e)
+        )
+        return jsonify(response.dict()), 404
 
 
 # Trakt.tv Integration Endpoints (Placeholder implementations)

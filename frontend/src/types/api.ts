@@ -367,6 +367,117 @@ export interface APIError {
   timestamp: string
 }
 
+// Results and Operations Types
+export interface BatchOperation {
+  id: string
+  operation_type: string
+  status: 'pending' | 'running' | 'completed' | 'failed' | 'cancelled' | 'completed_with_errors'
+  test_mode: boolean
+  triggered_by: string
+  triggered_by_user?: string
+  reason: string
+  started_at: string
+  completed_at?: string
+  total_files: number
+  files_processed: number
+  files_successful: number
+  files_failed: number
+  total_size_bytes: number
+  bytes_processed: number
+  error_message?: string
+  metadata?: Record<string, unknown>
+}
+
+export interface FileOperation {
+  id: string
+  operation_id: string
+  file_path: string
+  filename: string
+  source_path: string
+  destination_path?: string
+  operation_type: string
+  status: 'pending' | 'processing' | 'completed' | 'failed' | 'skipped'
+  reason: string
+  triggered_by_user?: string
+  file_size_bytes: number
+  started_at?: string
+  completed_at?: string
+  error_message?: string
+  parent_operation_id: string
+}
+
+export interface OperationDetails {
+  batch_operation: BatchOperation
+  file_operations: FileOperation[]
+}
+
+export interface UserStatistics {
+  user_id: string
+  total_operations: number
+  total_files_successful: number
+  total_files_failed: number
+  total_bytes_processed: number
+  successful_operations: number
+  failed_operations: number
+  period_days: number
+  start_date: string
+}
+
+export interface OperationsResponse {
+  operations: BatchOperation[]
+  pagination: {
+    limit: number
+    offset: number
+    total_count: number
+    has_more: boolean
+  }
+}
+
+// Results Tab Filter Types
+export interface ResultsFilter {
+  user_id?: string
+  operation_type?: string
+  status?: BatchOperation['status'][]
+  start_date?: string
+  end_date?: string
+  search?: string
+  active_only?: boolean
+}
+
+// Results WebSocket Message Types
+export interface OperationProgressUpdateMessage extends WebSocketMessage {
+  type: 'operation_progress'
+  data: {
+    operation_id: string
+    operation_type: string
+    status: BatchOperation['status']
+    test_mode: boolean
+    progress: number
+    files_processed: number
+    files_successful: number
+    files_failed: number
+    total_files: number
+    bytes_processed: number
+    total_bytes: number
+    started_at?: string
+    completed_at?: string
+    triggered_by: string
+    triggered_by_user?: string
+    reason: string
+    error_message?: string
+  }
+}
+
+export interface FileOperationUpdateMessage extends WebSocketMessage {
+  type: 'operation_file_update'
+  data: {
+    operation_id: string
+    status: FileOperation['status']
+    error_message?: string
+    completed_at?: string
+  }
+}
+
 // Export all types for convenient importing
 export type {
   // Re-export commonly used types
@@ -376,4 +487,6 @@ export type {
   LogEntry as Log,
   TestResults as Tests,
   HealthStatus as Health,
+  BatchOperation as Operation,
+  FileOperation as FileOp,
 }

@@ -104,8 +104,22 @@ const PageLoader: React.FC = () => (
   <FullPageLoader text="Loading..." />
 )
 
-// Route components (for future expansion)
-const DashboardPage: React.FC = () => <Dashboard />
+// Lazy load components for better performance
+const Dashboard = React.lazy(() => import('@/components/Dashboard'))
+const Results = React.lazy(() => import('@/components/Results'))
+
+// Route components wrapper
+const DashboardPage: React.FC = () => (
+  <React.Suspense fallback={<PageLoader />}>
+    <Dashboard />
+  </React.Suspense>
+)
+
+const ResultsPage: React.FC = () => (
+  <React.Suspense fallback={<PageLoader />}>
+    <Results />
+  </React.Suspense>
+)
 
 // Settings page placeholder (for future implementation)
 const SettingsPage: React.FC = () => (
@@ -169,6 +183,9 @@ const App: React.FC = () => {
               
               {/* Dashboard explicit route */}
               <Route path="/dashboard" element={<Navigate to="/" replace />} />
+              
+              {/* Results tab */}
+              <Route path="/results" element={<ResultsPage />} />
               
               {/* Settings route (placeholder) */}
               <Route path="/settings" element={<SettingsPage />} />

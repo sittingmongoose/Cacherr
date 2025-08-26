@@ -94,7 +94,7 @@ function useAPI<T>(
         setIsLoading(false)
       }
     }
-  }, [apiCall, onSuccess, onError])
+  }, [apiCall]) // Remove onSuccess and onError from dependencies to stabilize
 
   // Initial fetch
   useEffect(() => {
@@ -103,17 +103,26 @@ function useAPI<T>(
     }
   }, [immediate, fetchData])
 
-  // Auto-refresh
+  // Auto-refresh with stable timer
   useEffect(() => {
     if (autoRefresh && refreshInterval > 0) {
-      intervalRef.current = setInterval(fetchData, refreshInterval)
+      const intervalId = setInterval(() => {
+        fetchData()
+      }, refreshInterval)
+      
+      intervalRef.current = intervalId
+      
       return () => {
-        if (intervalRef.current) {
-          clearInterval(intervalRef.current)
-        }
+        clearInterval(intervalId)
+      }
+    } else {
+      // Clear interval if autoRefresh is disabled
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+        intervalRef.current = undefined
       }
     }
-  }, [autoRefresh, refreshInterval, fetchData])
+  }, [autoRefresh, refreshInterval]) // Remove fetchData from dependencies
 
   // Cleanup
   useEffect(() => {

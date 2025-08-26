@@ -84,10 +84,22 @@ class CacherrEngine:
         if config.real_time_watch.enabled:
             self.plex_watcher = PlexWatcher(config, self.plex_operations, self.file_operations)
             self.logger.info("Real-time Plex watcher initialized")
+            # Auto-start the watcher if enabled
+            try:
+                self.plex_watcher.start_watching()
+                self.logger.info("Real-time Plex watcher auto-started")
+            except Exception as e:
+                self.logger.error(f"Failed to auto-start real-time watcher: {e}")
         
         if config.trakt.enabled:
             self.trakt_watcher = TraktWatcher(config, self)
             self.logger.info("Trakt.tv watcher initialized")
+            # Auto-start Trakt watcher if enabled
+            try:
+                self.trakt_watcher.start_watching()
+                self.logger.info("Trakt.tv watcher auto-started")
+            except Exception as e:
+                self.logger.error(f"Failed to auto-start Trakt watcher: {e}")
         
         # Cache files
         self.cache_dir = Path("/app/cache")
@@ -608,6 +620,45 @@ class CacherrEngine:
             self.trakt_watcher.clear_history()
             return True
         return False
+    
+    def reload_watchers(self):
+        """Reload watchers based on current configuration"""
+        try:
+            # Stop existing watchers
+            if self.plex_watcher:
+                self.plex_watcher.stop_watching()
+                self.plex_watcher = None
+            
+            if self.trakt_watcher:
+                self.trakt_watcher.stop_watching()
+                self.trakt_watcher = None
+            
+            # Reinitialize watchers based on updated config
+            if self.config.real_time_watch.enabled:
+                self.plex_watcher = PlexWatcher(self.config, self.plex_operations, self.file_operations)
+                self.logger.info("Real-time Plex watcher reinitialized")
+                # Auto-start the watcher
+                try:
+                    self.plex_watcher.start_watching()
+                    self.logger.info("Real-time Plex watcher restarted")
+                except Exception as e:
+                    self.logger.error(f"Failed to restart real-time watcher: {e}")
+            
+            if self.config.trakt.enabled:
+                self.trakt_watcher = TraktWatcher(self.config, self)
+                self.logger.info("Trakt.tv watcher reinitialized")
+                # Auto-start Trakt watcher
+                try:
+                    self.trakt_watcher.start_watching()
+                    self.logger.info("Trakt.tv watcher restarted")
+                except Exception as e:
+                    self.logger.error(f"Failed to restart Trakt watcher: {e}")
+                    
+            self.logger.info("Watchers reloaded successfully")
+            
+        except Exception as e:
+            self.logger.error(f"Error reloading watchers: {e}")
+            raise
     
     def scan_and_cache_media(self, test_mode: bool = None) -> Dict:
         """Scan source paths and cache media files"""
