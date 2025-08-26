@@ -29,15 +29,16 @@ fi
 # Check if we can write to subdirectories and create them with proper user
 for subdir in "/config/logs" "/config/data" "/config/temp" "/cache"; do
     if [ -d "$subdir" ]; then
-        # Test if directory is writable by attempting to create a test file
-        if touch "$subdir/.write_test" 2>/dev/null; then
-            rm -f "$subdir/.write_test"
+        # Try to set permissions on just this subdirectory if possible
+        chown cacherr:cacherr "$subdir" 2>/dev/null || echo "Cannot modify ownership of $subdir"
+        chmod 755 "$subdir" 2>/dev/null || echo "Cannot modify permissions of $subdir"
+        
+        # Test if directory is writable by attempting to create a test file as cacherr user
+        if su cacherr -c "touch '$subdir/.write_test'" 2>/dev/null; then
+            su cacherr -c "rm -f '$subdir/.write_test'" 2>/dev/null
             echo "Directory $subdir is writable"
         else
             echo "WARNING: Directory $subdir is not writable by cacherr user"
-            # Try to set permissions on just this subdirectory if possible
-            chown cacherr:cacherr "$subdir" 2>/dev/null || echo "Cannot modify ownership of $subdir"
-            chmod 755 "$subdir" 2>/dev/null || echo "Cannot modify permissions of $subdir"
         fi
     fi
 done
