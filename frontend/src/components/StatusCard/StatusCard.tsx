@@ -159,7 +159,7 @@ export const StatusCard: React.FC<StatusCardProps> = ({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {formatRelativeTime(status.last_execution.execution_time)}
+                  {status.last_execution.execution_time ? formatRelativeTime(status.last_execution.execution_time) : 'Unknown time'}
                 </p>
                 {status.last_execution.duration_seconds && (
                   <p className="text-xs text-gray-500 dark:text-gray-500">

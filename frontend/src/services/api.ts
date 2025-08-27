@@ -97,8 +97,30 @@ class HTTPClient {
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}))
+          
+          // Provide more specific error messages based on status code
+          let errorMessage = errorData.error || `HTTP ${response.status}`
+          
+          switch (response.status) {
+            case 500:
+              errorMessage = errorData.error || 'Internal server error. The backend service may be experiencing issues.'
+              break
+            case 503:
+              errorMessage = 'Service temporarily unavailable. The backend is starting up or restarting.'
+              break
+            case 502:
+              errorMessage = 'Backend service is not responding. Please check if the server is running.'
+              break
+            case 404:
+              errorMessage = 'API endpoint not found. The requested resource does not exist.'
+              break
+            case 400:
+              errorMessage = errorData.error || 'Invalid request. Please check your input.'
+              break
+          }
+          
           throw new APIError(
-            errorData.error || `HTTP ${response.status}`,
+            errorMessage,
             response.status,
             errorData.error_code,
             errorData

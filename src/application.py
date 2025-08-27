@@ -449,23 +449,50 @@ class ApplicationContext:
             # Register CachedFilesService for tracking cached files
             try:
                 from .core.cached_files_service import CachedFilesService
-                # Use a standard database path in the config directory
-                db_path = "/config/cached_files.db"
-                # Create the config directory if it doesn't exist
                 import os
-                config_dir = "/config"
-                if not os.path.exists(config_dir):
-                    os.makedirs(config_dir, exist_ok=True)
+                from pathlib import Path
                 
-                # Create and register the CachedFilesService instance
-                cached_files_service = CachedFilesService(database_path=db_path)
-                self.container.register_instance(CachedFilesService, cached_files_service)
-                self.logger.info("CachedFilesService registered successfully")
+                # Try multiple database paths in order of preference
+                db_paths = [
+                    "/config/data/cached_files.db",  # Preferred: in data subdirectory
+                    "/config/cached_files.db",       # Secondary: in config root
+                    "/tmp/cached_files.db"           # Fallback: temp directory
+                ]
+                
+                db_path = None
+                last_error = None
+                
+                for path in db_paths:
+                    try:
+                        # Ensure parent directory exists
+                        parent_dir = Path(path).parent
+                        parent_dir.mkdir(parents=True, exist_ok=True)
+                        
+                        # Test write access by attempting to create the service
+                        test_service = CachedFilesService(database_path=path)
+                        db_path = path
+                        cached_files_service = test_service
+                        break
+                        
+                    except Exception as e:
+                        last_error = e
+                        self.logger.debug(f"Database path {path} failed: {e}")
+                        continue
+                
+                if db_path:
+                    self.container.register_instance(CachedFilesService, cached_files_service)
+                    self.logger.info(f"CachedFilesService registered successfully using database: {db_path}")
+                else:
+                    raise Exception(f"Failed to initialize database at any location. Last error: {last_error}")
+                    
             except ImportError as e:
                 self.logger.warning(f"Failed to import CachedFilesService: {e}")
+                self.startup_errors.append(f"CachedFilesService import failed: {e}")
             except Exception as e:
                 self.logger.error(f"Failed to register CachedFilesService: {e}")
                 self.startup_errors.append(f"CachedFilesService registration failed: {e}")
+                # Don't fail startup for this service - it's not critical
+                self.logger.warning("Continuing startup without CachedFilesService")
             
             self.logger.info("Service registration completed")
             

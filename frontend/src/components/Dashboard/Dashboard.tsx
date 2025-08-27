@@ -32,6 +32,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ className }) => {
   const { state } = useAppContext()
   const { systemStatus, healthStatus, logs, refreshAll, isLoading } = useRealTimeData()
   const { ui, setTheme, setAutoRefresh } = useUIState()
+  const { dispatch } = useAppContext()
   const { isRunning, runCacheOperation, startScheduler, stopScheduler } = useOperations()
   const wsStatus = useWebSocketStatus()
 
@@ -225,7 +226,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ className }) => {
                 {error}
               </p>
               <button
-                onClick={() => setError(null)}
+                onClick={() => dispatch({ type: 'CLEAR_ERRORS' })}
                 className="text-error-600 hover:text-error-800 text-sm underline mt-2 dark:text-error-400 dark:hover:text-error-200"
               >
                 Dismiss

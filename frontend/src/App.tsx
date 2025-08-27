@@ -49,10 +49,27 @@ class ErrorBoundary extends React.Component<
       errorInfo,
     })
     
+    // Enhanced error logging with more context
+    const errorContext = {
+      error: error.message,
+      stack: error.stack,
+      componentStack: errorInfo.componentStack,
+      timestamp: new Date().toISOString(),
+      userAgent: navigator.userAgent,
+      url: window.location.href,
+    }
+    
     // Log error to console in development
     if (process.env.NODE_ENV === 'development') {
-      console.error('Error caught by boundary:', error, errorInfo)
+      console.group('🚨 React Error Boundary')
+      console.error('Error:', error)
+      console.error('Component Stack:', errorInfo.componentStack)
+      console.error('Full Context:', errorContext)
+      console.groupEnd()
     }
+    
+    // In production, you could send this to an error reporting service
+    // Example: sendErrorToService(errorContext)
   }
 
   render() {

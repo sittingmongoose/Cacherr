@@ -84,7 +84,7 @@ const StatCard: React.FC<StatCardProps> = ({
                   <LoadingSpinner size="sm" />
                 ) : (
                   <p className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
-                    {typeof value === 'number' ? formatNumber(value) : value}
+                    {typeof value === 'number' ? formatNumber(value) : (value || 'N/A')}
                   </p>
                 )}
                 {trend && trendValue && !isLoading && (

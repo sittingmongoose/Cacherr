@@ -24,9 +24,24 @@ else
     echo "WARNING: /app not found or is a symlink - skipping ownership change"
 fi
 
-# SECURITY: Ensure cacherr user can write to required subdirectories without
-# changing ownership of potentially mounted parent directories
-# Check if we can write to subdirectories and create them with proper user
+# SECURITY: Ensure cacherr user can write to required directories and the config root
+# Check if we can write to directories and create them with proper user permissions
+# First check and set permissions for /config root directory for database files
+if [ -d "/config" ]; then
+    # Try to ensure cacherr can write to /config for database files
+    chown cacherr:cacherr /config 2>/dev/null || echo "Cannot modify ownership of /config - checking if writable"
+    chmod 755 /config 2>/dev/null || echo "Cannot modify permissions of /config"
+    
+    # Test if directory is writable by attempting to create a test file as cacherr user
+    if su cacherr -c "touch '/config/.write_test'" 2>/dev/null; then
+        su cacherr -c "rm -f '/config/.write_test'" 2>/dev/null
+        echo "Directory /config is writable"
+    else
+        echo "WARNING: Directory /config is not writable by cacherr user - database creation may fail"
+    fi
+fi
+
+# Check subdirectories
 for subdir in "/config/logs" "/config/data" "/config/temp" "/cache"; do
     if [ -d "$subdir" ]; then
         # Try to set permissions on just this subdirectory if possible
