@@ -655,7 +655,7 @@ class CommandMonitor:
                         "command_type": metrics.command_type,
                         "message": alert["message"],
                         "severity": alert["severity"],
-                        "metrics": metrics.dict()
+                        "metrics": metrics.model_dump()
                     })
                 except Exception as e:
                     logger.error(f"Alert callback failed: {str(e)}")

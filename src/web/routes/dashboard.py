@@ -542,7 +542,7 @@ def dashboard_config():
         )
         
         return {
-            "config": config.dict(),
+            "config": config.model_dump(),
             "flask_config": {
                 "debug": current_app.config.get('DEBUG', False),
                 "testing": current_app.config.get('TESTING', False)

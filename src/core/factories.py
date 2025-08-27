@@ -37,7 +37,7 @@ from typing import Type, TypeVar, Generic, Optional, Dict, Any, Callable, List
 from pathlib import Path
 from datetime import datetime
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 from .interfaces import (
     MediaService, FileService, NotificationService, CacheService,
@@ -107,7 +107,8 @@ class FactoryConfiguration(BaseModel):
     enable_creation_logging: bool = True
     fallback_to_default: bool = False
     
-    @validator('creation_timeout_seconds', 'retry_count', 'retry_delay_seconds')
+    @field_validator('creation_timeout_seconds', 'retry_count', 'retry_delay_seconds')
+    @classmethod
     def validate_positive_values(cls, v):
         if v < 0:
             raise ValueError("Value must be non-negative")

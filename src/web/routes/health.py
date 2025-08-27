@@ -240,7 +240,7 @@ def health_check():
             uptime_seconds=uptime_seconds
         )
         
-        return jsonify(response.dict()), 200
+        return jsonify(response.model_dump()), 200
         
     except Exception as e:
         logger.error(f"Health check failed: {e}")
@@ -328,7 +328,7 @@ def detailed_health_check():
         )
         
         status_code = 200 if overall_status == "healthy" else 503
-        return jsonify(response.dict()), status_code
+        return jsonify(response.model_dump()), status_code
         
     except Exception as e:
         logger.error(f"Detailed health check failed: {e}")

@@ -168,7 +168,7 @@ class MoveToCache(BaseUndoableCommand):
                     bytes_processed=analysis.total_size,
                     data={
                         "dry_run": True,
-                        "analysis": analysis.dict(),
+                        "analysis": analysis.model_dump(),
                         "operation_type": "move_to_cache"
                     }
                 )
@@ -418,7 +418,7 @@ class MoveToArray(BaseUndoableCommand):
                     bytes_processed=analysis.total_size,
                     data={
                         "dry_run": True,
-                        "analysis": analysis.dict(),
+                        "analysis": analysis.model_dump(),
                         "operation_type": "move_to_array"
                     }
                 )
@@ -646,7 +646,7 @@ class CopyToCache(BaseCommand):
                     bytes_processed=analysis.total_size,
                     data={
                         "dry_run": True,
-                        "analysis": analysis.dict(),
+                        "analysis": analysis.model_dump(),
                         "operation_type": "copy_to_cache"
                     }
                 )
@@ -764,7 +764,7 @@ class DeleteFromCache(BaseUndoableCommand):
                     bytes_processed=analysis.total_size,
                     data={
                         "dry_run": True,
-                        "analysis": analysis.dict(),
+                        "analysis": analysis.model_dump(),
                         "operation_type": "delete_from_cache"
                     }
                 )
@@ -928,7 +928,7 @@ class TestCacheOperation(BaseCommand):
                 files_affected=analysis.files,
                 bytes_processed=analysis.total_size,
                 data={
-                    "analysis": analysis.dict(),
+                    "analysis": analysis.model_dump(),
                     "operation_type": self.operation_type,
                     "test_mode": True
                 }
@@ -1018,7 +1018,7 @@ class AnalyzeCacheImpact(BaseCommand):
                 files_affected=impact_analysis.files,
                 bytes_processed=impact_analysis.total_size,
                 data={
-                    "impact_analysis": impact_analysis.dict(),
+                    "impact_analysis": impact_analysis.model_dump(),
                     "cache_statistics": cache_stats,
                     "recommendations": recommendations,
                     "operation_type": self.operation_type
@@ -1155,7 +1155,7 @@ class CleanupCache(BaseCommand):
                 errors=cleanup_result.errors,
                 warnings=cleanup_result.warnings,
                 data={
-                    "cleanup_result": cleanup_result.dict(),
+                    "cleanup_result": cleanup_result.model_dump(),
                     "max_age_hours": self.max_age_hours,
                     "remove_watched": self.remove_watched
                 }

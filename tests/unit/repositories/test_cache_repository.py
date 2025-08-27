@@ -129,7 +129,7 @@ class TestCacheData:
             statistics={"total_files": 1, "total_size": 1000000}
         )
         
-        json_str = data.json()
+        json_str = data.model_dump_json()
         assert "/test.mkv" in json_str
         assert "total_files" in json_str
         

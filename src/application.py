@@ -54,7 +54,7 @@ from typing import Dict, Any, Optional, List, Callable
 from datetime import datetime
 from contextlib import contextmanager
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field
 from flask import Flask
 
 from .config.settings import Config

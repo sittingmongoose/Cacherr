@@ -55,7 +55,7 @@ from datetime import datetime
 import logging
 from functools import wraps
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 # Type definitions for better type safety
 T = TypeVar('T')
@@ -100,9 +100,11 @@ class ServiceRegistration(BaseModel):
     class Config:
         arbitrary_types_allowed = True
         
-    @validator('factory', 'implementation_type')
-    def validate_factory_or_implementation(cls, v, values):
+    @field_validator('factory', 'implementation_type')
+    @classmethod
+    def validate_factory_or_implementation(cls, v, info):
         """Ensure either factory or implementation_type is provided."""
+        values = info.data
         if 'factory' in values and values['factory'] is not None:
             return v
         if 'implementation_type' in values and values['implementation_type'] is not None:

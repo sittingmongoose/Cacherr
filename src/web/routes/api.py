@@ -153,14 +153,14 @@ def handle_api_error(func):
                 success=False,
                 error="Validation error: " + str(e)
             )
-            return jsonify(response.dict()), 400
+            return jsonify(response.model_dump()), 400
         except Exception as e:
             logger.error(f"Unexpected error in {func.__name__}: {e}", exc_info=True)
             response = APIResponse(
                 success=False,
                 error=f"Internal server error: {str(e)}"
             )
-            return jsonify(response.dict()), 500
+            return jsonify(response.model_dump()), 500
     
     wrapper.__name__ = func.__name__
     return wrapper
@@ -190,7 +190,7 @@ def api_status():
             success=False,
             error="Cache engine not initialized"
         )
-        return jsonify(response.dict()), 500
+        return jsonify(response.model_dump()), 500
     
     try:
         status_data = engine.get_status()
@@ -199,7 +199,7 @@ def api_status():
             success=True,
             data=status_data
         )
-        return jsonify(response.dict())
+        return jsonify(response.model_dump())
         
     except Exception as e:
         logger.error(f"Failed to get system status: {e}")
@@ -207,7 +207,7 @@ def api_status():
             success=False,
             error=f"Failed to get system status: {str(e)}"
         )
-        return jsonify(response.dict()), 500
+        return jsonify(response.model_dump()), 500
 
 
 @api_bp.route('/run', methods=['POST'])
@@ -231,7 +231,7 @@ def api_run():
             success=False,
             error="Cache engine not initialized"
         )
-        return jsonify(response.dict()), 500
+        return jsonify(response.model_dump()), 500
     
     try:
         # Parse request data
@@ -259,7 +259,7 @@ def api_run():
             }
         )
         
-        return jsonify(response.dict())
+        return jsonify(response.model_dump())
         
     except Exception as e:
         logger.error(f"Cache operation failed: {e}")
@@ -267,7 +267,7 @@ def api_run():
             success=False,
             error=f"Operation failed: {str(e)}"
         )
-        return jsonify(response.dict()), 500
+        return jsonify(response.model_dump()), 500
 
 
 @api_bp.route('/test-results')
@@ -288,7 +288,7 @@ def api_test_results():
             success=False,
             error="Cache engine not initialized"
         )
-        return jsonify(response.dict()), 500
+        return jsonify(response.model_dump()), 500
     
     try:
         test_results = engine.get_test_results()
@@ -297,7 +297,7 @@ def api_test_results():
             success=True,
             data=test_results
         )
-        return jsonify(response.dict())
+        return jsonify(response.model_dump())
         
     except Exception as e:
         logger.error(f"Failed to get test results: {e}")
@@ -305,7 +305,7 @@ def api_test_results():
             success=False,
             error=f"Failed to get test results: {str(e)}"
         )
-        return jsonify(response.dict()), 500
+        return jsonify(response.model_dump()), 500
 
 
 # Configuration Management
@@ -327,7 +327,7 @@ def api_get_settings():
             success=False,
             error="Configuration not initialized"
         )
-        return jsonify(response.dict()), 500
+        return jsonify(response.model_dump()), 500
     
     try:
         config_dict = config.to_dict()
@@ -336,7 +336,7 @@ def api_get_settings():
             success=True,
             data=config_dict
         )
-        return jsonify(response.dict())
+        return jsonify(response.model_dump())
         
     except Exception as e:
         logger.error(f"Failed to get settings: {e}")
@@ -344,7 +344,7 @@ def api_get_settings():
             success=False,
             error=f"Failed to get settings: {str(e)}"
         )
-        return jsonify(response.dict()), 500
+        return jsonify(response.model_dump()), 500
 
 
 @api_bp.route('/settings', methods=['POST'])
@@ -365,7 +365,7 @@ def api_update_settings():
             success=False,
             error="Configuration not initialized"
         )
-        return jsonify(response.dict()), 500
+        return jsonify(response.model_dump()), 500
     
     try:
         data = request.get_json()
@@ -374,7 +374,7 @@ def api_update_settings():
                 success=False,
                 error="No settings data provided"
             )
-            return jsonify(response.dict()), 400
+            return jsonify(response.model_dump()), 400
         
         # Filter out restricted settings (environment-only configurations)
         filtered_data = {}
@@ -406,7 +406,7 @@ def api_update_settings():
                 success=True,
                 message="No valid settings to update"
             )
-            return jsonify(response.dict())
+            return jsonify(response.model_dump())
         
         # Use new Pydantic-based save_updates method
         config.save_updates(filtered_data)
@@ -441,7 +441,7 @@ def api_update_settings():
                 "validation_summary": config.get_summary()
             }
         )
-        return jsonify(response.dict())
+        return jsonify(response.model_dump())
         
     except ValueError as e:
         # Pydantic validation error
@@ -450,7 +450,7 @@ def api_update_settings():
             success=False,
             error=f"Invalid settings: {str(e)}"
         )
-        return jsonify(response.dict()), 400
+        return jsonify(response.model_dump()), 400
         
     except Exception as e:
         logger.error(f"Failed to update settings: {e}")
@@ -458,7 +458,7 @@ def api_update_settings():
             success=False,
             error=f"Failed to update settings: {str(e)}"
         )
-        return jsonify(response.dict()), 500
+        return jsonify(response.model_dump()), 500
 
 
 @api_bp.route('/settings/validate', methods=['POST'])
@@ -482,7 +482,7 @@ def api_validate_settings():
             success=False,
             error="Configuration not initialized"
         )
-        return jsonify(response.dict()), 500
+        return jsonify(response.model_dump()), 500
     
     try:
         data = request.get_json()
@@ -513,7 +513,7 @@ def api_validate_settings():
             success=True,
             data=validation_results
         )
-        return jsonify(response.dict())
+        return jsonify(response.model_dump())
         
     except Exception as e:
         logger.error(f"Settings validation failed: {e}")
@@ -521,7 +521,7 @@ def api_validate_settings():
             success=False,
             error=f"Validation failed: {str(e)}"
         )
-        return jsonify(response.dict()), 500
+        return jsonify(response.model_dump()), 500
 
 
 @api_bp.route('/settings/reset', methods=['POST'])
@@ -542,7 +542,7 @@ def api_reset_settings():
             success=False,
             error="Configuration not initialized"
         )
-        return jsonify(response.dict()), 500
+        return jsonify(response.model_dump()), 500
     
     try:
         # Reset to Pydantic model defaults
@@ -603,7 +603,7 @@ def api_reset_settings():
                 "validation_summary": config.get_summary()
             }
         )
-        return jsonify(response.dict())
+        return jsonify(response.model_dump())
         
     except Exception as e:
         logger.error(f"Failed to reset settings: {e}")
@@ -611,7 +611,7 @@ def api_reset_settings():
             success=False,
             error=f"Failed to reset settings: {str(e)}"
         )
-        return jsonify(response.dict()), 500
+        return jsonify(response.model_dump()), 500
 
 
 # Scheduler Management
@@ -635,7 +635,7 @@ def api_scheduler_start():
             success=True,
             message="Scheduler start requested (implementation pending)"
         )
-        return jsonify(response.dict())
+        return jsonify(response.model_dump())
         
     except Exception as e:
         logger.error(f"Failed to start scheduler: {e}")
@@ -643,7 +643,7 @@ def api_scheduler_start():
             success=False,
             error=f"Failed to start scheduler: {str(e)}"
         )
-        return jsonify(response.dict()), 500
+        return jsonify(response.model_dump()), 500
 
 
 @api_bp.route('/scheduler/stop', methods=['POST'])
@@ -666,7 +666,7 @@ def api_scheduler_stop():
             success=True,
             message="Scheduler stop requested (implementation pending)"
         )
-        return jsonify(response.dict())
+        return jsonify(response.model_dump())
         
     except Exception as e:
         logger.error(f"Failed to stop scheduler: {e}")
@@ -674,7 +674,7 @@ def api_scheduler_stop():
             success=False,
             error=f"Failed to stop scheduler: {str(e)}"
         )
-        return jsonify(response.dict()), 500
+        return jsonify(response.model_dump()), 500
 
 
 # Plex Validation
@@ -697,7 +697,7 @@ def api_validate_plex():
                 success=False,
                 error="No validation data provided"
             )
-            return jsonify(response.dict()), 400
+            return jsonify(response.model_dump()), 400
         
         plex_url = data.get('url', '').strip()
         plex_token = data.get('token', '').strip()
@@ -708,7 +708,7 @@ def api_validate_plex():
                 success=False,
                 error="Plex URL is required"
             )
-            return jsonify(response.dict()), 400
+            return jsonify(response.model_dump()), 400
         
         # Handle token - either provided or use stored one
         if use_stored_token:
@@ -719,7 +719,7 @@ def api_validate_plex():
                     success=False,
                     error="Configuration not available"
                 )
-                return jsonify(response.dict()), 500
+                return jsonify(response.model_dump()), 500
             
             plex_token = config.plex.token
             if not plex_token:
@@ -727,13 +727,13 @@ def api_validate_plex():
                     success=False,
                     error="No stored Plex token found"
                 )
-                return jsonify(response.dict()), 400
+                return jsonify(response.model_dump()), 400
         elif not plex_token:
             response = APIResponse(
                 success=False,
                 error="Plex token is required"
             )
-            return jsonify(response.dict()), 400
+            return jsonify(response.model_dump()), 400
         
         # Import PlexAPI for validation
         from plexapi.server import PlexServer
@@ -754,7 +754,7 @@ def api_validate_plex():
                 success=True,
                 message=f"Connected to {server_name} (v{version})"
             )
-            return jsonify(response.dict()), 200
+            return jsonify(response.model_dump()), 200
             
         except Exception as plex_error:
             error_msg = str(plex_error)
@@ -771,14 +771,14 @@ def api_validate_plex():
                 success=False,
                 error=error_msg
             )
-            return jsonify(response.dict()), 400
+            return jsonify(response.model_dump()), 400
             
     except ImportError:
         response = APIResponse(
             success=False,
             error="PlexAPI library not available"
         )
-        return jsonify(response.dict()), 500
+        return jsonify(response.model_dump()), 500
         
     except Exception as e:
         logger.error(f"Plex validation error: {str(e)}")
@@ -786,7 +786,7 @@ def api_validate_plex():
             success=False,
             error=f"Validation failed: {str(e)}"
         )
-        return jsonify(response.dict()), 500
+        return jsonify(response.model_dump()), 500
 
 
 # Logs and Monitoring
@@ -812,7 +812,7 @@ def api_logs():
                     "message": "No log file found"
                 }
             )
-            return jsonify(response.dict())
+            return jsonify(response.model_dump())
         
         # Read last 100 lines of the log file
         with open(log_file, 'r', encoding='utf-8') as f:
@@ -848,7 +848,7 @@ def api_logs():
                 "total_entries": len(log_entries)
             }
         )
-        return jsonify(response.dict())
+        return jsonify(response.model_dump())
         
     except Exception as e:
         logger.error(f"Failed to get logs: {e}")
@@ -856,7 +856,7 @@ def api_logs():
             success=False,
             error=f"Failed to get logs: {str(e)}"
         )
-        return jsonify(response.dict()), 500
+        return jsonify(response.model_dump()), 500
 
 
 # Real-time Watcher Endpoints
@@ -871,14 +871,14 @@ def api_watcher_start():
                 success=False,
                 error="Engine not initialized"
             )
-            return jsonify(response.dict()), 500
+            return jsonify(response.model_dump()), 500
         
         if not engine.config.real_time_watch.enabled:
             response = APIResponse(
                 success=False,
                 error="Real-time watching is disabled in configuration. Please enable it in settings first."
             )
-            return jsonify(response.dict()), 400
+            return jsonify(response.model_dump()), 400
         
         success = engine.start_real_time_watching()
         if success:
@@ -886,13 +886,13 @@ def api_watcher_start():
                 success=True,
                 message="Real-time Plex watching started successfully"
             )
-            return jsonify(response.dict())
+            return jsonify(response.model_dump())
         else:
             response = APIResponse(
                 success=False,
                 error="Failed to start real-time watching"
             )
-            return jsonify(response.dict()), 500
+            return jsonify(response.model_dump()), 500
     
     except Exception as e:
         logger.error(f"Error starting real-time watcher: {e}")
@@ -900,7 +900,7 @@ def api_watcher_start():
             success=False,
             error=f"Failed to start real-time watching: {str(e)}"
         )
-        return jsonify(response.dict()), 500
+        return jsonify(response.model_dump()), 500
 
 
 @api_bp.route('/watcher/stop', methods=['POST'])
@@ -914,7 +914,7 @@ def api_watcher_stop():
                 success=False,
                 error="Engine not initialized"
             )
-            return jsonify(response.dict()), 500
+            return jsonify(response.model_dump()), 500
         
         success = engine.stop_real_time_watching()
         if success:
@@ -922,13 +922,13 @@ def api_watcher_stop():
                 success=True,
                 message="Real-time Plex watching stopped successfully"
             )
-            return jsonify(response.dict())
+            return jsonify(response.model_dump())
         else:
             response = APIResponse(
                 success=False,
                 error="Failed to stop real-time watching"
             )
-            return jsonify(response.dict()), 500
+            return jsonify(response.model_dump()), 500
     
     except Exception as e:
         logger.error(f"Error stopping real-time watcher: {e}")
@@ -936,7 +936,7 @@ def api_watcher_stop():
             success=False,
             error=f"Failed to stop real-time watching: {str(e)}"
         )
-        return jsonify(response.dict()), 500
+        return jsonify(response.model_dump()), 500
 
 
 @api_bp.route('/watcher/status')
@@ -958,7 +958,7 @@ def api_watcher_status():
                 success=False,
                 error="Engine not initialized"
             )
-            return jsonify(response.dict()), 500
+            return jsonify(response.model_dump()), 500
         
         # Get type-safe status from Pydantic model
         if engine.plex_watcher:
@@ -1001,7 +1001,7 @@ def api_watcher_status():
                 }
             }
         )
-        return jsonify(response.dict())
+        return jsonify(response.model_dump())
     
     except Exception as e:
         logger.error(f"Error getting watcher status: {e}")
@@ -1009,7 +1009,7 @@ def api_watcher_status():
             success=False,
             error=f"Failed to get watcher status: {str(e)}"
         )
-        return jsonify(response.dict()), 500
+        return jsonify(response.model_dump()), 500
 
 
 @api_bp.route('/watcher/clear-history', methods=['POST'])
@@ -1023,21 +1023,21 @@ def api_watcher_clear_history():
                 success=False,
                 error="Engine not initialized"
             )
-            return jsonify(response.dict()), 500
+            return jsonify(response.model_dump()), 500
         
         if not engine.plex_watcher:
             response = APIResponse(
                 success=False,
                 error="Real-time watcher is not initialized"
             )
-            return jsonify(response.dict()), 400
+            return jsonify(response.model_dump()), 400
         
         engine.clear_watch_history()
         response = APIResponse(
             success=True,
             message="Watch history cleared successfully"
         )
-        return jsonify(response.dict())
+        return jsonify(response.model_dump())
     
     except Exception as e:
         logger.error(f"Error clearing watch history: {e}")
@@ -1045,7 +1045,7 @@ def api_watcher_clear_history():
             success=False,
             error=f"Failed to clear watch history: {str(e)}"
         )
-        return jsonify(response.dict()), 500
+        return jsonify(response.model_dump()), 500
 
 
 # Results Management Endpoints
@@ -1087,7 +1087,7 @@ def api_get_operations():
                 success=False,
                 error="Results service not available"
             )
-            return jsonify(response.dict()), 500
+            return jsonify(response.model_dump()), 500
         
         if active_only:
             operations = results_service.get_active_operations(user_id)
@@ -1101,7 +1101,7 @@ def api_get_operations():
         # Convert to dict format
         operations_data = []
         for op in operations:
-            op_dict = op.dict()
+            op_dict = op.model_dump()
             # Convert datetime objects to ISO strings
             if op_dict.get('started_at'):
                 op_dict['started_at'] = op.started_at.isoformat()
@@ -1121,14 +1121,14 @@ def api_get_operations():
                 }
             }
         )
-        return jsonify(response.dict())
+        return jsonify(response.model_dump())
         
     except ValueError as e:
         response = APIResponse(
             success=False,
             error=f"Invalid query parameter: {e}"
         )
-        return jsonify(response.dict()), 400
+        return jsonify(response.model_dump()), 400
 
 
 @api_bp.route('/results/operations/<operation_id>', methods=['GET'])
@@ -1142,12 +1142,12 @@ def api_get_operation_details(operation_id: str):
                 success=False,
                 error="Results service not available"
             )
-            return jsonify(response.dict()), 500
+            return jsonify(response.model_dump()), 500
         
         batch_op, file_ops = results_service.get_operation_details(operation_id)
         
         # Convert to dict format
-        batch_dict = batch_op.dict()
+        batch_dict = batch_op.model_dump()
         if batch_dict.get('started_at'):
             batch_dict['started_at'] = batch_op.started_at.isoformat()
         if batch_dict.get('completed_at'):
@@ -1155,7 +1155,7 @@ def api_get_operation_details(operation_id: str):
         
         file_ops_data = []
         for file_op in file_ops:
-            file_dict = file_op.dict()
+            file_dict = file_op.model_dump()
             if file_dict.get('started_at'):
                 file_dict['started_at'] = file_op.started_at.isoformat()
             if file_dict.get('completed_at'):
@@ -1169,14 +1169,14 @@ def api_get_operation_details(operation_id: str):
                 'file_operations': file_ops_data
             }
         )
-        return jsonify(response.dict())
+        return jsonify(response.model_dump())
         
     except ValueError as e:
         response = APIResponse(
             success=False,
             error=str(e)
         )
-        return jsonify(response.dict()), 404
+        return jsonify(response.model_dump()), 404
 
 
 @api_bp.route('/results/users/<user_id>/stats', methods=['GET'])
@@ -1192,7 +1192,7 @@ def api_get_user_stats(user_id: str):
                 success=False,
                 error="Results service not available"
             )
-            return jsonify(response.dict()), 500
+            return jsonify(response.model_dump()), 500
         
         stats = results_service.get_user_statistics(user_id, days)
         
@@ -1200,14 +1200,14 @@ def api_get_user_stats(user_id: str):
             success=True,
             data=stats
         )
-        return jsonify(response.dict())
+        return jsonify(response.model_dump())
         
     except ValueError as e:
         response = APIResponse(
             success=False,
             error=f"Invalid days parameter: {e}"
         )
-        return jsonify(response.dict()), 400
+        return jsonify(response.model_dump()), 400
 
 
 @api_bp.route('/results/cleanup', methods=['POST'])
@@ -1224,7 +1224,7 @@ def api_cleanup_results():
                 success=False,
                 error="Results service not available"
             )
-            return jsonify(response.dict()), 500
+            return jsonify(response.model_dump()), 500
         
         cleaned_count = results_service.cleanup_old_results(days_to_keep)
         
@@ -1236,14 +1236,14 @@ def api_cleanup_results():
                 'days_kept': days_to_keep
             }
         )
-        return jsonify(response.dict())
+        return jsonify(response.model_dump())
         
     except ValueError as e:
         response = APIResponse(
             success=False,
             error=f"Invalid days_to_keep parameter: {e}"
         )
-        return jsonify(response.dict()), 400
+        return jsonify(response.model_dump()), 400
 
 
 @api_bp.route('/results/export/<operation_id>', methods=['GET'])
@@ -1257,7 +1257,7 @@ def api_export_operation(operation_id: str):
                 success=False,
                 error="Results service not available"
             )
-            return jsonify(response.dict()), 500
+            return jsonify(response.model_dump()), 500
         
         batch_op, file_ops = results_service.get_operation_details(operation_id)
         
@@ -1302,7 +1302,7 @@ def api_export_operation(operation_id: str):
             success=False,
             error=str(e)
         )
-        return jsonify(response.dict()), 404
+        return jsonify(response.model_dump()), 404
 
 
 # Trakt.tv Integration Endpoints (Placeholder implementations)
@@ -1319,7 +1319,7 @@ def api_trakt_status():
             "message": "Trakt status implementation pending"
         }
     )
-    return jsonify(response.dict())
+    return jsonify(response.model_dump())
 
 
 @api_bp.route('/trakt/start', methods=['POST'])
@@ -1331,7 +1331,7 @@ def api_trakt_start():
         success=True,
         message="Trakt watcher start requested (implementation pending)"
     )
-    return jsonify(response.dict())
+    return jsonify(response.model_dump())
 
 
 @api_bp.route('/trakt/stop', methods=['POST'])
@@ -1343,4 +1343,4 @@ def api_trakt_stop():
         success=True,
         message="Trakt watcher stop requested (implementation pending)"
     )
-    return jsonify(response.dict())
+    return jsonify(response.model_dump())

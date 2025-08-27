@@ -20,7 +20,7 @@ from enum import Enum
 from pathlib import Path
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 
 class CommandStatus(Enum):
@@ -71,7 +71,8 @@ class CommandResult(BaseModel):
     timestamp: datetime = Field(default_factory=datetime.utcnow, description="Completion timestamp")
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
 
-    @validator('bytes_processed')
+    @field_validator('bytes_processed')
+    @classmethod
     def validate_bytes_processed(cls, v):
         """Ensure bytes_processed is non-negative."""
         if v < 0:
@@ -109,14 +110,16 @@ class CommandMetadata(BaseModel):
     timeout_seconds: Optional[int] = Field(default=None, description="Execution timeout")
     dependencies: List[UUID] = Field(default_factory=list, description="Dependency command IDs")
     
-    @validator('retry_count', 'max_retries')
+    @field_validator('retry_count', 'max_retries')
+    @classmethod
     def validate_retry_counts(cls, v):
         """Ensure retry counts are non-negative."""
         if v < 0:
             raise ValueError("Retry counts must be non-negative")
         return v
 
-    @validator('timeout_seconds')
+    @field_validator('timeout_seconds')
+    @classmethod
     def validate_timeout(cls, v):
         """Ensure timeout is positive if specified."""
         if v is not None and v <= 0:

@@ -21,13 +21,13 @@ from enum import Enum
 
 from pydantic import (
     BaseModel, 
-    BaseSettings, 
     Field, 
     ConfigDict, 
     field_validator,
     model_validator,
     computed_field
 )
+from pydantic_settings import BaseSettings
 from pydantic.types import PositiveInt, NonNegativeInt
 
 

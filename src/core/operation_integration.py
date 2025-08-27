@@ -55,7 +55,7 @@ class OperationCommandAdapter:
             data={
                 "files_processed": cache_result.files_processed,
                 "operation_type": cache_result.operation_type,
-                "legacy_result": cache_result.dict()
+                "legacy_result": cache_result.model_dump()
             }
         )
     
@@ -76,7 +76,7 @@ class OperationCommandAdapter:
             files_affected=test_analysis.files.copy(),
             bytes_processed=test_analysis.total_size,
             data={
-                "analysis": test_analysis.dict(),
+                "analysis": test_analysis.model_dump(),
                 "test_mode": True,
                 "operation_type": test_analysis.operation_type
             }

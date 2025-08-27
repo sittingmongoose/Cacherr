@@ -135,7 +135,7 @@ class CommandHistory(ICommandHistory):
                 command_id=command.metadata.command_id,
                 command_type=command.metadata.command_type,
                 execution_time=result.timestamp,
-                execution_result=result.dict(),
+                execution_result=result.model_dump(),
                 context_snapshot=self._create_context_snapshot(command),
                 user_id=None,  # Could be extracted from context
                 session_id=None,  # Could be extracted from context
@@ -206,7 +206,7 @@ class CommandHistory(ICommandHistory):
             end_index = None if limit is None else offset + limit
             selected_entries = filtered_history[offset:end_index]
             
-            return [entry.dict() for entry in selected_entries]
+            return [entry.model_dump() for entry in selected_entries]
     
     def can_undo(self) -> bool:
         """Check if there are commands that can be undone."""
@@ -353,7 +353,7 @@ class CommandHistory(ICommandHistory):
         """
         with self._lock:
             entry = self._history_by_id.get(command_id)
-            return entry.dict() if entry else None
+            return entry.model_dump() if entry else None
     
     def get_undo_stack_info(self) -> List[Dict[str, Any]]:
         """
@@ -580,7 +580,7 @@ class PersistentCommandHistory(CommandHistory):
                     "version": "1.0",
                     "saved_at": datetime.utcnow().isoformat(),
                     "total_entries": len(self._history),
-                    "entries": [entry.dict() for entry in self._history]
+                    "entries": [entry.model_dump() for entry in self._history]
                 }
                 
                 # Write to temporary file first

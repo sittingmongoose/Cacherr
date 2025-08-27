@@ -49,7 +49,7 @@ from datetime import datetime, timedelta
 from dataclasses import dataclass, field
 import logging
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
 

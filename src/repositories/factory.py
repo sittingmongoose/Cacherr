@@ -20,7 +20,7 @@ from pathlib import Path
 import logging
 from enum import Enum
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 from ..core.repositories import CacheRepository, ConfigRepository, MetricsRepository
 from ..config.interfaces import PathConfiguration
@@ -92,14 +92,16 @@ class RepositoryConfig(BaseModel):
         description="Metrics repository specific settings"
     )
     
-    @validator('data_file')
+    @field_validator('data_file')
+    @classmethod
     def validate_data_file(cls, v):
         """Validate that data file path is not empty."""
         if not v or not v.strip():
             raise ValueError("data_file cannot be empty")
         return v.strip()
     
-    @validator('backup_retention_days')
+    @field_validator('backup_retention_days')
+    @classmethod
     def validate_retention_days(cls, v):
         """Validate backup retention period."""
         if v < 1:

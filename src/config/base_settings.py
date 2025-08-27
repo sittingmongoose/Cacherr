@@ -16,7 +16,8 @@ import os
 from typing import Optional, List, Dict, Any
 from pathlib import Path
 
-from pydantic import BaseSettings, Field, SecretStr, field_validator, ConfigDict
+from pydantic import Field, SecretStr, field_validator, ConfigDict
+from pydantic_settings import BaseSettings
 from pydantic.types import PositiveInt
 
 from .pydantic_models import (

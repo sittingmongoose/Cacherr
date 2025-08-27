@@ -353,10 +353,10 @@ class BaseUndoableCommand(BaseCommand, IUndoableCommand):
             execution_result: Result of the original execution
         """
         self._undo_information = {
-            "execution_result": execution_result.dict(),
+            "execution_result": execution_result.model_dump(),
             "execution_time": self._end_time.isoformat() if self._end_time else None,
             "affected_resources": self.get_affected_resources(),
-            "command_metadata": self.metadata.dict()
+            "command_metadata": self.metadata.model_dump()
         }
         
         # Store command-specific undo information
@@ -587,7 +587,7 @@ class CompositeCacheCommand(BaseCommand):
             errors=all_errors,
             warnings=all_warnings,
             data={
-                "child_results": [r.dict() for r in results],
+                "child_results": [r.model_dump() for r in results],
                 "success_rate": success_rate,
                 "successful_commands": successful_commands,
                 "total_commands": total_commands

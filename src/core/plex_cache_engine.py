@@ -247,7 +247,7 @@ class CacherrEngine:
             cache_analysis = self.file_operations.analyze_files_for_test_mode(
                 self.media_to_cache, "cache"
             )
-            self.test_results['cache_operation'] = cache_analysis.dict()
+            self.test_results['cache_operation'] = cache_analysis.model_dump()
             self.logger.info(f"Test mode: {cache_analysis.file_count} files would be moved to cache")
             self.logger.info(f"Test mode: Total size would be {cache_analysis.total_size_readable}")
         
@@ -256,7 +256,7 @@ class CacherrEngine:
             array_analysis = self.file_operations.analyze_files_for_test_mode(
                 self.media_to_array, "array"
             )
-            self.test_results['array_operation'] = array_analysis.dict()
+            self.test_results['array_operation'] = array_analysis.model_dump()
             self.logger.info(f"Test mode: {array_analysis.file_count} files would be moved to array")
             self.logger.info(f"Test mode: Total size would be {array_analysis.total_size_readable}")
     

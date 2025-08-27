@@ -326,7 +326,7 @@ class CommandQueue(ICommandQueue):
                 last_activity_time=self._last_activity_time
             )
             
-            return status.dict()
+            return status.model_dump()
     
     def get_queued_commands(self, limit: Optional[int] = None) -> List[ICommand]:
         """

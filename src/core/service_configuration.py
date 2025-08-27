@@ -53,7 +53,7 @@ from enum import Enum
 import importlib
 import inspect
 
-from pydantic import BaseModel, Field, validator, ValidationError
+from pydantic import BaseModel, Field, field_validator, ValidationError
 
 from .container import DIContainer, ServiceLifetime, IServiceProvider
 from .factories import (
@@ -109,14 +109,17 @@ class ServiceRegistrationInfo(BaseModel):
     class Config:
         use_enum_values = True
     
-    @validator('service_type')
+    @field_validator('service_type')
+    @classmethod
     def validate_service_type(cls, v):
         if not v or not isinstance(v, str):
             raise ValueError("service_type must be a non-empty string")
         return v
     
-    @validator('implementation_type', 'factory_type')
-    def validate_implementation_strategy(cls, v, values):
+    @field_validator('implementation_type', 'factory_type')
+    @classmethod
+    def validate_implementation_strategy(cls, v, info):
+        values = info.data
         strategy = values.get('implementation_strategy')
         implementation_type = values.get('implementation_type')
         factory_type = values.get('factory_type')
@@ -171,8 +174,10 @@ class ServiceConfiguration(BaseModel):
     factory_registry_config: Dict[str, Any] = Field(default_factory=dict)
     container_config: Dict[str, Any] = Field(default_factory=dict)
     
-    @validator('environments')
-    def validate_default_environment_exists(cls, v, values):
+    @field_validator('environments')
+    @classmethod
+    def validate_default_environment_exists(cls, v, info):
+        values = info.data
         default_env = values.get('default_environment')
         if default_env and default_env not in v:
             raise ValueError(f"Default environment '{default_env}' not found in environments")

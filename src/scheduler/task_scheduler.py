@@ -66,7 +66,7 @@ from dataclasses import dataclass, field
 import traceback
 from concurrent.futures import ThreadPoolExecutor, Future
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from croniter import croniter
 
 from ..core.container import DIContainer, IServiceProvider
@@ -176,9 +176,11 @@ class ScheduledTask(BaseModel):
     class Config:
         arbitrary_types_allowed = True
         
-    @validator('cron_expression')
-    def validate_cron_expression(cls, v, values):
+    @field_validator('cron_expression')
+    @classmethod
+    def validate_cron_expression(cls, v, info):
         """Validate cron expression if provided."""
+        values = info.data
         if v and values.get('task_type') == TaskType.CRON:
             try:
                 # Test if cron expression is valid
@@ -635,7 +637,7 @@ class TaskScheduler:
             "running_tasks": len(set(running_tasks)),
             "running_task_names": list(set(running_tasks)),
             "total_executions": len(self.executions),
-            "config": self.config.dict()
+            "config": self.config.model_dump()
         }
     
     def _scheduler_loop(self) -> None:
