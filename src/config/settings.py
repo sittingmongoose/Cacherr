@@ -112,38 +112,44 @@ class Config:
             self.logger.error(f"Configuration validation failed: {e}")
             raise ValueError(f"Invalid configuration: {e}") from e
     
-    def _build_real_time_watch_config(self) -> Dict[str, Any]:
+    def _build_real_time_watch_config(self) -> 'RealTimeWatchConfiguration':
         """Build real-time watch configuration."""
-        return {
-            'enabled': self.settings.real_time_watch_enabled,
-            'check_interval': self.settings.real_time_watch_check_interval,
-            'auto_cache_on_watch': self.settings.real_time_watch_auto_cache_on_watch,
-            'cache_on_complete': self.settings.real_time_watch_cache_on_complete,
-            'respect_existing_rules': self.settings.real_time_watch_respect_existing_rules,
-            'max_concurrent_watches': self.settings.real_time_watch_max_concurrent_watches,
-            'remove_from_cache_after_hours': self.settings.real_time_watch_remove_from_cache_after_hours,
-            'respect_other_users_watchlists': self.settings.real_time_watch_respect_other_users_watchlists,
-            'exclude_inactive_users_days': self.settings.real_time_watch_exclude_inactive_users_days,
-        }
+        from .interfaces import RealTimeWatchConfiguration
+        
+        return RealTimeWatchConfiguration(
+            enabled=self.settings.real_time_watch_enabled,
+            check_interval=self.settings.real_time_watch_check_interval,
+            auto_cache_on_watch=self.settings.real_time_watch_auto_cache_on_watch,
+            cache_on_complete=self.settings.real_time_watch_cache_on_complete,
+            respect_existing_rules=self.settings.real_time_watch_respect_existing_rules,
+            max_concurrent_watches=self.settings.real_time_watch_max_concurrent_watches,
+            remove_from_cache_after_hours=self.settings.real_time_watch_remove_from_cache_after_hours,
+            respect_other_users_watchlists=self.settings.real_time_watch_respect_other_users_watchlists,
+            exclude_inactive_users_days=self.settings.real_time_watch_exclude_inactive_users_days,
+        )
     
-    def _build_trakt_config(self) -> Dict[str, Any]:
+    def _build_trakt_config(self) -> 'TraktConfiguration':
         """Build Trakt.tv configuration."""
-        return {
-            'enabled': self.settings.trakt_enabled,
-            'client_id': self.settings.trakt_client_id,
-            'client_secret': self.settings.trakt_client_secret.get_secret_value() if self.settings.trakt_client_secret else None,
-            'trending_movies_count': self.settings.trakt_trending_movies_count,
-            'check_interval': self.settings.trakt_check_interval,
-        }
+        from .interfaces import TraktConfiguration
+        
+        return TraktConfiguration(
+            enabled=self.settings.trakt_enabled,
+            client_id=self.settings.trakt_client_id,
+            client_secret=self.settings.trakt_client_secret.get_secret_value() if self.settings.trakt_client_secret else None,
+            trending_movies_count=self.settings.trakt_trending_movies_count,
+            check_interval=self.settings.trakt_check_interval,
+        )
     
-    def _build_web_config(self) -> Dict[str, Any]:
+    def _build_web_config(self) -> 'WebConfiguration':
         """Build web server configuration."""
-        return {
-            'host': self.settings.web_host,
-            'port': self.settings.web_port,
-            'debug': self.settings.debug,
-            'enable_scheduler': self.settings.enable_scheduler,
-        }
+        from .interfaces import WebConfiguration
+        
+        return WebConfiguration(
+            host=self.settings.web_host,
+            port=self.settings.web_port,
+            debug=self.settings.debug,
+            enable_scheduler=self.settings.enable_scheduler,
+        )
     
     def _build_test_mode_config(self) -> Dict[str, Any]:
         """Build test mode configuration."""
@@ -221,7 +227,44 @@ class Config:
             if section in ['real_time_watch', 'trakt', 'web', 'test_mode', 'notifications']:
                 if hasattr(self, section):
                     current_config = getattr(self, section)
-                    if isinstance(current_config, dict):
+                    if hasattr(current_config, 'model_dump'):  # Pydantic model
+                        try:
+                            # Exclude computed fields if any
+                            exclude_fields = set()
+                            if section == 'real_time_watch':
+                                # No computed fields for RealTimeWatchConfiguration
+                                pass
+                            elif section == 'trakt':
+                                # No computed fields for TraktConfiguration
+                                pass
+                            elif section == 'web':
+                                # No computed fields for WebConfiguration
+                                pass
+                            elif section == 'notifications':
+                                # No computed fields for NotificationConfiguration
+                                pass
+                            
+                            config_data = current_config.model_dump(exclude=exclude_fields)
+                            config_data.update(section_overrides)
+                            
+                            # Recreate the appropriate model
+                            if section == 'real_time_watch':
+                                from .interfaces import RealTimeWatchConfiguration
+                                setattr(self, section, RealTimeWatchConfiguration(**config_data))
+                            elif section == 'trakt':
+                                from .interfaces import TraktConfiguration
+                                setattr(self, section, TraktConfiguration(**config_data))
+                            elif section == 'web':
+                                from .interfaces import WebConfiguration
+                                setattr(self, section, WebConfiguration(**config_data))
+                            elif section == 'notifications':
+                                from .interfaces import NotificationConfiguration
+                                setattr(self, section, NotificationConfiguration(**config_data))
+                            
+                            self.logger.debug(f"Applied {section} configuration overrides")
+                        except ValidationError as e:
+                            self.logger.warning(f"Invalid {section} override: {e}")
+                    elif isinstance(current_config, dict):  # Legacy dict support
                         current_config.update(section_overrides)
     
     @monitor_performance
@@ -280,6 +323,32 @@ class Config:
                 PerformanceConfig(**perf_data)  # Validate without assigning
             except ValidationError as e:
                 raise ValueError(f"Invalid performance configuration: {e}") from e
+        
+        # Validate other configuration updates
+        for section, section_updates in updates.items():
+            if section in ['real_time_watch', 'trakt', 'web', 'notifications']:
+                if hasattr(self, section):
+                    current_config = getattr(self, section)
+                    if hasattr(current_config, 'model_dump'):  # Pydantic model
+                        try:
+                            config_data = current_config.model_dump()
+                            config_data.update(section_updates)
+                            
+                            # Validate with appropriate model
+                            if section == 'real_time_watch':
+                                from .interfaces import RealTimeWatchConfiguration
+                                RealTimeWatchConfiguration(**config_data)
+                            elif section == 'trakt':
+                                from .interfaces import TraktConfiguration
+                                TraktConfiguration(**config_data)
+                            elif section == 'web':
+                                from .interfaces import WebConfiguration
+                                WebConfiguration(**config_data)
+                            elif section == 'notifications':
+                                from .interfaces import NotificationConfiguration
+                                NotificationConfiguration(**config_data)
+                        except ValidationError as e:
+                            raise ValueError(f"Invalid {section} configuration: {e}") from e
     
     def _save_to_file(self, updates: Dict[str, Any]) -> None:
         """
@@ -322,11 +391,11 @@ class Config:
             'paths': self.paths.model_dump(),
             'performance': self.performance.model_dump(exclude={'total_max_concurrent'}),
             'logging': self.logging.model_dump(),
-            'real_time_watch': self.real_time_watch,
-            'trakt': self.trakt,
-            'web': self.web,
+            'real_time_watch': self.real_time_watch.model_dump() if hasattr(self.real_time_watch, 'model_dump') else self.real_time_watch,
+            'trakt': self.trakt.model_dump() if hasattr(self.trakt, 'model_dump') else self.trakt,
+            'web': self.web.model_dump() if hasattr(self.web, 'model_dump') else self.web,
             'test_mode': self.test_mode,
-            'notifications': self.notifications,
+            'notifications': self.notifications.model_dump() if hasattr(self.notifications, 'model_dump') else self.notifications,
             'cache': self.cache,  # Legacy compatibility
             'debug': self.settings.debug,
         }

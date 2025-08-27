@@ -67,6 +67,36 @@ class TestModeConfiguration(BaseModel):
     test_data_path: Optional[str] = Field(None, description="Path to test data")
 
 
+class RealTimeWatchConfiguration(BaseModel):
+    """Pydantic model for real-time watch configuration."""
+    enabled: bool = Field(default=False, description="Enable real-time Plex watching")
+    check_interval: int = Field(default=30, description="Check interval in seconds")
+    auto_cache_on_watch: bool = Field(default=True, description="Automatically cache media when watching starts")
+    cache_on_complete: bool = Field(default=True, description="Cache media when watching completes")
+    respect_existing_rules: bool = Field(default=True, description="Respect existing caching rules")
+    max_concurrent_watches: int = Field(default=5, description="Maximum concurrent watches to process")
+    remove_from_cache_after_hours: int = Field(default=24, description="Hours before removing media from cache (0 = never)")
+    respect_other_users_watchlists: bool = Field(default=True, description="Respect other users' watchlists")
+    exclude_inactive_users_days: int = Field(default=30, description="Days of inactivity before excluding users (0 = no exclusion)")
+
+
+class TraktConfiguration(BaseModel):
+    """Pydantic model for Trakt.tv configuration."""
+    enabled: bool = Field(default=False, description="Enable Trakt.tv integration")
+    client_id: Optional[str] = Field(None, description="Trakt.tv API client ID")
+    client_secret: Optional[str] = Field(None, description="Trakt.tv API client secret")
+    trending_movies_count: int = Field(default=10, description="Number of trending movies to fetch")
+    check_interval: int = Field(default=3600, description="Check interval in seconds")
+
+
+class WebConfiguration(BaseModel):
+    """Pydantic model for web server configuration."""
+    host: str = Field(default="0.0.0.0", description="Web server host")
+    port: int = Field(default=5445, description="Web server port")
+    debug: bool = Field(default=False, description="Enable debug mode")
+    enable_scheduler: bool = Field(default=True, description="Enable task scheduler")
+
+
 class ConfigProvider(ABC):
     """
     Interface for configuration value providers.
