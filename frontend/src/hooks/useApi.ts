@@ -699,4 +699,5 @@ export function useCachedFilesRealTime(filter: CachedFilesFilter = {}) {
   }
 }
 
+export { useAPI }
 export default useAPI
