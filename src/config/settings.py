@@ -313,9 +313,9 @@ class Config:
         """
         return {
             'plex': self.plex.model_dump(),
-            'media': self.media.model_dump(),
+            'media': self.media.model_dump(exclude={'cache_mode_description'}),
             'paths': self.paths.model_dump(),
-            'performance': self.performance.model_dump(),
+            'performance': self.performance.model_dump(exclude={'total_max_concurrent'}),
             'logging': self.logging.model_dump(),
             'real_time_watch': self.real_time_watch,
             'trakt': self.trakt,
@@ -351,8 +351,18 @@ class Config:
         
         for section_name, config_obj in sections:
             try:
-                # Re-validate using Pydantic
-                config_obj.model_validate(config_obj.model_dump())
+                # Re-validate using Pydantic, excluding computed fields
+                if section_name == 'media':
+                    # Exclude computed fields for MediaConfig
+                    dump_data = config_obj.model_dump(exclude={'cache_mode_description'})
+                elif section_name == 'performance':
+                    # Exclude computed fields for PerformanceConfig
+                    dump_data = config_obj.model_dump(exclude={'total_max_concurrent'})
+                else:
+                    # No computed fields to exclude for other configs
+                    dump_data = config_obj.model_dump()
+                
+                config_obj.model_validate(dump_data)
                 results['sections'][section_name] = {
                     'valid': True,
                     'errors': [],
