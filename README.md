@@ -7,6 +7,7 @@ A Docker-optimized Plex media caching system designed specifically for Unraid en
 - **Docker-First Design**: Built from the ground up for containerized deployment
 - **Unraid Optimized**: Specifically designed for Unraid's cache/array architecture
 - **Smart Caching**: Automatically caches onDeck and watchlist media
+- **Atomic Operations**: Zero-interruption real-time caching that never disrupts playback
 - **Intelligent Movement**: Moves watched content back to array drives
 - **Web Dashboard**: Beautiful web interface for monitoring and control
 - **Scheduled Operations**: Configurable automatic execution
@@ -20,8 +21,9 @@ A Docker-optimized Plex media caching system designed specifically for Unraid en
 - **🆕 Test Mode**: Preview operations without moving files, showing sizes and totals
 - **🆕 Real-Time Plex Watching**: Monitor Plex activity in real-time for dynamic caching decisions
 - **🆕 Trakt.tv Integration**: Automatically cache trending movies from Trakt.tv
-- **🆕 Copy vs Move Modes**: Choose between moving files or copying to cache
-- **🆕 Symlink Integration**: Make Plex automatically use cached files
+- **🆕 Copy vs Move Modes**: Choose between moving files or copying to cache with atomic operations
+- **🆕 Atomic Operations**: Zero-interruption file operations that never disrupt Plex playback
+- **🆕 Symlink Integration**: Seamless atomic redirection to cached files
 
 ### Trakt.tv Integration
 
@@ -415,6 +417,7 @@ REAL_TIME_WATCH_EXCLUDE_INACTIVE_USERS_DAYS=30    # Exclude after 30 days inacti
 ```
 
 **Key Features:**
+- **Atomic Operations**: Zero-interruption caching using atomic file operations that never disrupt active playback
 - **Automatic Caching**: Cache media when users start watching or complete watching
 - **Smart Cache Management**: Automatically remove media from cache after a configurable time period
 - **Watchlist Respect**: Keep media in cache if other users have it in their watchlists

@@ -976,7 +976,15 @@ def api_watcher_stop():
 @api_bp.route('/watcher/status')
 @handle_api_error
 def api_watcher_status():
-    """Get real-time watcher status."""
+    """
+    Get real-time watcher status with atomic operation details.
+    
+    Returns comprehensive status including:
+    - Current watching state
+    - Atomic cache operation statistics  
+    - Configuration details
+    - Safety information about non-interrupting operations
+    """
     try:
         engine = get_engine()
         if not engine:
@@ -986,15 +994,37 @@ def api_watcher_status():
             )
             return jsonify(response.dict()), 500
         
-        is_watching = engine.is_real_time_watching()
-        stats = engine.get_watcher_stats()
+        # Get type-safe status from Pydantic model
+        if engine.plex_watcher:
+            watcher_status = engine.plex_watcher.get_status()
+            watch_history = engine.plex_watcher.get_watch_history()
+        else:
+            # Fallback when watcher not initialized
+            from ..core.plex_watcher import RealTimeWatchingStatus
+            watcher_status = RealTimeWatchingStatus()
+            watch_history = {}
         
         response = APIResponse(
             success=True,
             data={
-                "is_watching": is_watching,
+                "status": watcher_status.model_dump(),
                 "enabled": engine.config.real_time_watch.enabled,
-                "stats": stats,
+                "watch_history": watch_history,
+                "atomic_operations": {
+                    "description": "Real-time caching uses atomic operations that never interrupt Plex playback",
+                    "process": [
+                        "1. Copy file to cache (never move during playback)",
+                        "2. Create temporary symlink in same directory", 
+                        "3. Atomically replace original with symlink to cache",
+                        "4. Plex seamlessly switches to reading from fast cache"
+                    ],
+                    "safety_guarantees": [
+                        "No playback interruption",
+                        "Atomic file operations (POSIX compliant)",
+                        "Preserves file permissions and metadata",
+                        "Transparent to Plex server"
+                    ]
+                },
                 "config": {
                     "check_interval": engine.config.real_time_watch.check_interval,
                     "auto_cache_on_watch": engine.config.real_time_watch.auto_cache_on_watch,

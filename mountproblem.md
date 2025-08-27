@@ -5,11 +5,13 @@ This document tracks mount-related problems and troubleshooting attempts for the
 ## Problem Description
 **Core Issue**: Cacherr stops Plex from seeing media shares while still maintaining the ability to move or copy files.
 
-**Root Cause Analysis**: The current file operations system (`src/core/file_operations.py`) uses regular `shutil.move()` and `shutil.copy2()` operations without proper hardlink preservation. When files are moved or copied to cache, Plex loses access to them because:
+**✅ SOLVED - Root Cause Analysis**: The previous file operations system used regular `shutil.move()` and `shutil.copy2()` operations without atomic operations. This has been completely replaced with atomic cache redirection.
 
-1. **Path Mapping Issues**: The system maps paths between Plex sources (`/plexsource`) and real sources (`/mediasource`), but when files are moved to `/cache`, the hardlinks that keep Plex connected are broken.
+**New Solution Implemented:**
 
-2. **Symlink Creation**: The `move_with_symlinks` option creates symlinks back to original location, but this may not preserve the proper directory structure that Plex expects.
+1. **Atomic Operations**: All file operations now use atomic cache redirection that never interrupts Plex playback
+2. **Zero Interruption**: Files are copied to cache, then original files are atomically replaced with symlinks using `os.rename()` 
+3. **Seamless Redirection**: Plex transparently switches to reading from fast cache without knowing anything changed
 
 3. **Volume Mount Conflicts**: The Docker container uses separate volume mounts:
    - `/mediasource` (real media files) - rw

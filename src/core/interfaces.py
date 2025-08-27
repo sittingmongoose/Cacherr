@@ -345,27 +345,24 @@ class FileService(ABC):
     
     @abstractmethod
     def move_files(self, files: List[str], source_dir: str, dest_dir: str,
-                   max_concurrent: Optional[int] = None, dry_run: bool = False,
-                   copy_mode: bool = False, create_symlinks: bool = False,
-                   move_with_symlinks: bool = False) -> Tuple[int, int]:
+                   config: Optional['FileOperationConfig'] = None) -> 'CacheOperationResult':
         """
-        Move or copy files with concurrent operations.
+        Move or copy files using atomic operations that never interrupt Plex playback.
         
-        Performs file operations with configurable concurrency and operation
-        modes. Supports move, copy, symlink creation, and hybrid move+symlink.
+        All operations use atomic cache redirection to ensure seamless Plex streaming:
+        - Files are copied/moved to destination
+        - Original files are atomically replaced with symlinks to cache
+        - Plex seamlessly switches to reading from fast cache storage
+        - Zero interruption to active playback sessions
         
         Args:
             files: List of files to process
             source_dir: Source directory path
-            dest_dir: Destination directory path
-            max_concurrent: Maximum concurrent operations (None for auto-detect)
-            dry_run: If True, don't actually move files
-            copy_mode: If True, copy instead of move
-            create_symlinks: If True, create symlinks instead of moving
-            move_with_symlinks: If True, move and create symlinks back
+            dest_dir: Destination directory path  
+            config: FileOperationConfig with operation settings
             
         Returns:
-            Tuple of (files_processed, total_bytes_moved)
+            CacheOperationResult with detailed operation results
             
         Raises:
             FileOperationError: When file operations fail

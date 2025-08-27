@@ -289,12 +289,11 @@ class CacherrEngine:
             self.logger.error("Insufficient space in cache destination directory")
             return
         
-        # Create file operation configuration
+        # Create file operation configuration with atomic operations
         file_config = FileOperationConfig(
             max_concurrent=self.config.performance.max_concurrent_moves_cache,
             dry_run=self.config.test_mode.dry_run,
-            copy_mode=self.config.media.copy_to_cache,
-            create_symlinks=True  # Always use symlinks/hardlinks for Plex compatibility
+            copy_mode=self.config.media.copy_to_cache  # Atomic operations used automatically
         )
         
         # Use the configured real source path (now matches Plex mount)
@@ -346,7 +345,7 @@ class CacherrEngine:
         # Execute moves from cache to array or delete from cache
         cache_dest = self.config.paths.cache_destination or '/cache'
         if self.config.media.copy_to_cache and self.config.media.delete_from_cache_when_done:
-            # Delete from cache instead of moving back
+            # Copy mode with delete option: Delete from cache instead of moving back
             moved_count, total_size = self.file_operations.delete_files(
                 files_to_array,
                 self.config.performance.max_concurrent_moves_array
@@ -362,12 +361,11 @@ class CacherrEngine:
                 'warnings': []
             })()
         else:
-            # Create file operation configuration for move back to array
+            # Move mode OR copy mode without delete: Move files back to array using atomic operations
             file_config = FileOperationConfig(
                 max_concurrent=self.config.performance.max_concurrent_moves_array,
                 dry_run=self.config.test_mode.dry_run,
-                copy_mode=False,  # Always move back, don't copy
-                create_symlinks=False  # Don't use symlinks for array moves
+                copy_mode=False  # Always move back, don't copy (atomic move back to array)
             )
             
             # Move back to array  

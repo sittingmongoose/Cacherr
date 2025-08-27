@@ -265,13 +265,13 @@
                         <strong>Active Sessions:</strong> <span id="activeSessions">0</span>
                     </div>
                     <div class="stat-item">
-                        <strong>Total Watches:</strong> <span id="totalWatches">0</span>
+                        <strong>Atomic Operations:</strong> <span id="atomicOperations">0</span>
                     </div>
                     <div class="stat-item">
                         <strong>Media Cached:</strong> <span id="mediaCached">0</span>
                     </div>
                     <div class="stat-item">
-                        <strong>Media Removed:</strong> <span id="mediaRemoved">0</span>
+                        <strong>Last Operation:</strong> <span id="lastOperation">Never</span>
                     </div>
                     <div class="stat-item">
                         <strong>Scheduled Removals:</strong> <span id="scheduledRemovals">0</span>
@@ -437,15 +437,19 @@
                                     Copy to Cache
                                 </label>
                                 <small class="form-help">Copy files to cache (preserves originals). Uses symlinks/hardlinks so Plex uses cached versions.</small>
+                                
+                                <!-- Delete option only for copy mode -->
+                                <div id="copy_mode_options" style="margin-left: 20px; margin-top: 10px; display: none;">
+                                    <div class="form-group">
+                                        <label class="form-label">
+                                            <input type="checkbox" class="form-checkbox" id="delete_from_cache_when_done" name="media[delete_from_cache_when_done]" checked>
+                                            Delete from Cache When Done
+                                        </label>
+                                        <small class="form-help">Remove files from cache when no longer needed (only applies to copy mode)</small>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">
-                            <input type="checkbox" class="form-checkbox" id="delete_from_cache_when_done" name="media[delete_from_cache_when_done]" checked>
-                            Delete from Cache When Done
-                        </label>
-                        <small class="form-help">Remove files from cache when no longer needed (instead of moving back to array)</small>
                     </div>
                     <div class="form-group">
                         <small style="color: #28a745; font-style: italic;">🔗 <strong>Symlinks/hardlinks are always used</strong> to ensure Plex sees cached files without permission issues.</small>
@@ -453,22 +457,6 @@
                     
                     <!-- Hidden inputs to maintain compatibility -->
                     <input type="hidden" id="copy_to_cache" name="media[copy_to_cache]" value="false">
-                    
-                    <script>
-                        // Handle cache mode radio button changes
-                        document.addEventListener('DOMContentLoaded', function() {
-                            const moveModeRadio = document.getElementById('cache_mode_move');
-                            const copyModeRadio = document.getElementById('cache_mode_copy');
-                            const hiddenInput = document.getElementById('copy_to_cache');
-                            
-                            function updateCacheMode() {
-                                hiddenInput.value = copyModeRadio.checked ? 'true' : 'false';
-                            }
-                            
-                            moveModeRadio.addEventListener('change', updateCacheMode);
-                            copyModeRadio.addEventListener('change', updateCacheMode);
-                        });
-                    </script>
                     
                     <h4>Performance Settings</h4>
                     <div class="form-group">
@@ -519,6 +507,31 @@
                     </div>
                     
                     <h3>Real-Time Plex Watching</h3>
+                    
+                    <!-- Atomic Operations Safety Information -->
+                    <div style="margin-bottom: 20px; padding: 15px; background-color: #e8f5e8; border-radius: 8px; border-left: 4px solid #28a745;">
+                        <h5 style="color: #28a745; margin-bottom: 10px;">🔒 Safe Atomic Operations</h5>
+                        <p style="margin-bottom: 10px; font-size: 14px;">
+                            Real-time caching uses <strong>atomic operations</strong> that never interrupt Plex playback.
+                            Files are copied (not moved) to cache, then Plex is seamlessly redirected to the faster storage.
+                        </p>
+                        
+                        <details style="margin-top: 10px;">
+                            <summary style="cursor: pointer; font-weight: bold; color: #495057; font-size: 13px;">Technical Details</summary>
+                            <div style="margin-top: 8px; font-size: 12px; line-height: 1.4;">
+                                <strong>Process:</strong>
+                                <ol style="margin: 5px 0; padding-left: 20px;">
+                                    <li>Copy file to cache (preserves original during playback)</li>
+                                    <li>Create temporary symlink in same directory</li>
+                                    <li>Atomically replace original with symlink to cache</li>
+                                    <li>Plex transparently switches to reading from fast cache</li>
+                                </ol>
+                                
+                                <strong>Safety:</strong> POSIX-compliant atomic operations, no playback interruption, Docker/Unraid compatible
+                            </div>
+                        </details>
+                    </div>
+                    
                     <div class="form-group">
                         <label for="real_time_watch_enabled">Enable Real-Time Watching:</label>
                         <input type="checkbox" id="real_time_watch_enabled" name="real_time_watch[enabled]">
@@ -763,6 +776,9 @@
                     document.getElementById('cache_mode_copy').checked = copyToCache;
                     document.getElementById('cache_mode_move').checked = !copyToCache;
                     document.getElementById('copy_to_cache').value = copyToCache ? 'true' : 'false';
+                    
+                    // Show/hide copy mode options based on selection
+                    updateCacheModeOptions();
                     
                     document.getElementById('delete_from_cache_when_done').checked = data.data.media?.delete_from_cache_when_done || false;
                     
@@ -1234,13 +1250,27 @@
             fetch('/api/watcher/status')
                 .then(response => response.json())
                 .then(data => {
-                    // Update basic stats
-                    document.getElementById('watcherStatus').textContent = data.is_watching ? 'Active' : 'Inactive';
-                    document.getElementById('activeSessions').textContent = data.stats?.current_active_sessions || 0;
-                    document.getElementById('totalWatches').textContent = data.stats?.total_watches_detected || 0;
-                    document.getElementById('mediaCached').textContent = data.stats?.total_media_cached || 0;
-                    document.getElementById('mediaRemoved').textContent = data.stats?.total_media_removed || 0;
-                    document.getElementById('scheduledRemovals').textContent = data.stats?.scheduled_removals || 0;
+                    // Update basic stats using new API response format
+                    const status = data.data?.status || {};
+                    const watchHistory = data.data?.watch_history || {};
+                    
+                    document.getElementById('watcherStatus').textContent = status.is_running ? 'Active' : 'Inactive';
+                    document.getElementById('activeSessions').textContent = status.active_sessions || 0;
+                    document.getElementById('atomicOperations').textContent = status.total_operations || 0;
+                    document.getElementById('mediaCached').textContent = status.cached_media_count || 0;
+                    
+                    // Format last operation time
+                    if (status.last_operation_time) {
+                        const lastTime = new Date(status.last_operation_time * 1000);
+                        document.getElementById('lastOperation').textContent = lastTime.toLocaleString();
+                    } else {
+                        document.getElementById('lastOperation').textContent = 'Never';
+                    }
+                    
+                    // Legacy fallback for older API response format
+                    if (data.stats) {
+                        document.getElementById('scheduledRemovals').textContent = data.stats.scheduled_removals || 0;
+                    }
                     
                     // Update cache removal schedule
                     updateCacheRemovalSchedule(data.cache_removal_schedule);
@@ -1349,8 +1379,34 @@
             }
         }, 10000);
         
+        // Handle cache mode changes
+        function updateCacheModeOptions() {
+            const copyModeRadio = document.getElementById('cache_mode_copy');
+            const copyModeOptions = document.getElementById('copy_mode_options');
+            const hiddenInput = document.getElementById('copy_to_cache');
+            
+            if (copyModeRadio && copyModeOptions && hiddenInput) {
+                // Show/hide delete option based on copy mode selection
+                copyModeOptions.style.display = copyModeRadio.checked ? 'block' : 'none';
+                // Update hidden input for form submission
+                hiddenInput.value = copyModeRadio.checked ? 'true' : 'false';
+            }
+        }
+        
+        // Setup cache mode radio button handlers
+        function initializeCacheModeHandlers() {
+            const moveModeRadio = document.getElementById('cache_mode_move');
+            const copyModeRadio = document.getElementById('cache_mode_copy');
+            
+            if (moveModeRadio && copyModeRadio) {
+                moveModeRadio.addEventListener('change', updateCacheModeOptions);
+                copyModeRadio.addEventListener('change', updateCacheModeOptions);
+            }
+        }
+        
         // Initialize dashboard
         updateStatus();
+        initializeCacheModeHandlers();
 
         // Load logs when logs tab is shown
         function loadLogs() {

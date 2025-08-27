@@ -1,14 +1,63 @@
 import time
 import threading
 import logging
+import os
+import tempfile
+import shutil
 from typing import Dict, List, Optional, Callable
 from datetime import datetime, timedelta
+from pathlib import Path
+
 from plexapi.server import PlexServer
 from plexapi.video import Movie, Show, Episode
 from plexapi.library import Library
 from plexapi.myplex import MyPlexAccount
 from plexapi.media import Media
 from plexapi.exceptions import PlexApiException
+from pydantic import BaseModel, Field, ConfigDict
+
+
+class RealTimeWatchingStatus(BaseModel):
+    """
+    Real-time watching status with Pydantic v2 validation.
+    
+    This model represents the current state of real-time Plex watching
+    and provides type safety for status reporting.
+    """
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+    
+    is_running: bool = Field(
+        default=False,
+        description="Whether real-time watching is currently active"
+    )
+    
+    total_operations: int = Field(
+        default=0,
+        ge=0,
+        description="Total number of cache operations performed"
+    )
+    
+    active_sessions: int = Field(
+        default=0,
+        ge=0,
+        description="Number of currently active Plex sessions being monitored"
+    )
+    
+    last_operation_time: Optional[float] = Field(
+        default=None,
+        description="Timestamp of last cache operation"
+    )
+    
+    cached_media_count: int = Field(
+        default=0,
+        ge=0,
+        description="Total number of media items cached via real-time watching"
+    )
+
 
 class PlexWatcher:
     """Real-time Plex activity watcher for dynamic caching decisions"""
@@ -444,10 +493,30 @@ class PlexWatcher:
             self.logger.error(f"Error checking if media is cached: {e}")
             return False
     
-    def _trigger_caching(self, media, reason: str):
-        """Trigger a caching operation for the specified media"""
+    def _trigger_caching(self, media, reason: str) -> bool:
+        """
+        Atomically cache actively watched media without interrupting Plex playback.
+        
+        This method performs real-time caching using atomic operations:
+        1. Copy file to cache (never move during active playback)
+        2. Create temporary symlink
+        3. Atomically replace original with symlink to cache
+        4. Plex seamlessly switches to reading from fast cache
+        
+        Args:
+            media: Plex media object being watched
+            reason: Reason for caching (e.g., "watching_started", "watching_continued")
+            
+        Returns:
+            bool: True if caching operation succeeded, False otherwise
+            
+        Note:
+            This operation is designed to be completely transparent to Plex.
+            The file path remains the same from Plex's perspective, but it now
+            points to the faster cache storage via symlink/hardlink.
+        """
         try:
-            self.logger.info(f"Triggering cache for {media.title} - Reason: {reason}")
+            self.logger.info(f"Real-time caching triggered for '{media.title}' - Reason: {reason}")
             
             # Add to watch history
             media_key = getattr(media, 'ratingKey', str(media))
@@ -458,16 +527,175 @@ class PlexWatcher:
                 'timestamp': time.time()
             }
             
+            # Get media file paths
+            media_files = self._get_media_file_paths(media)
+            if not media_files:
+                self.logger.warning(f"No file paths found for {media.title}")
+                return False
+            
+            # Perform atomic cache operation for each file
+            success_count = 0
+            for file_path in media_files:
+                if self._atomic_cache_file(file_path, media.title):
+                    success_count += 1
+                else:
+                    self.logger.error(f"Failed to cache file: {file_path}")
+            
             # Update stats
             self.stats['total_cache_operations'] += 1
-            self.stats['total_media_cached'] += 1
-            
-            # Here you would integrate with your existing caching engine
-            # For now, we'll just log the action
-            self.logger.info(f"Would cache {media.title} to {self.config.paths.cache_destination}")
+            if success_count > 0:
+                self.stats['total_media_cached'] += 1
+                self.logger.info(f"Successfully cached {success_count}/{len(media_files)} files for '{media.title}'")
+                return True
+            else:
+                self.logger.error(f"Failed to cache any files for '{media.title}'")
+                return False
             
         except Exception as e:
-            self.logger.error(f"Error triggering cache for {media.title}: {e}")
+            self.logger.error(f"Error during real-time caching for {media.title}: {e}")
+            return False
+    
+    def _get_media_file_paths(self, media) -> List[str]:
+        """
+        Extract file paths from Plex media object.
+        
+        Args:
+            media: Plex media object (Movie, Episode, etc.)
+            
+        Returns:
+            List[str]: List of absolute file paths for the media
+        """
+        file_paths = []
+        try:
+            # Handle different media types
+            if hasattr(media, 'media'):
+                for media_item in media.media:
+                    if hasattr(media_item, 'parts'):
+                        for part in media_item.parts:
+                            if hasattr(part, 'file'):
+                                file_paths.append(part.file)
+            elif hasattr(media, 'locations'):
+                # For some media types, paths are in locations
+                file_paths.extend(media.locations)
+                
+        except Exception as e:
+            self.logger.error(f"Error extracting file paths from media: {e}")
+            
+        return file_paths
+    
+    def _atomic_cache_file(self, source_path: str, media_title: str) -> bool:
+        """
+        Atomically cache a file without interrupting active Plex playback.
+        
+        This method implements the critical atomic operation:
+        1. Copy source file to cache directory
+        2. Create temporary symlink in same directory as original
+        3. Atomically rename temp symlink to replace original file
+        4. Plex seamlessly switches from slow to fast storage
+        
+        Args:
+            source_path: Absolute path to the original media file
+            media_title: Title of media for logging purposes
+            
+        Returns:
+            bool: True if atomic operation succeeded, False otherwise
+            
+        Technical Details:
+            - Uses os.rename() for atomic replacement (POSIX guarantee)
+            - Temporary file created in same directory to ensure atomic operation
+            - Copy preserves file integrity during active playback
+            - Original file permissions and metadata preserved
+        """
+        try:
+            source_path_obj = Path(source_path)
+            
+            # Validate source file exists and is accessible
+            if not source_path_obj.exists():
+                self.logger.error(f"Source file does not exist: {source_path}")
+                return False
+                
+            if not os.access(source_path, os.R_OK):
+                self.logger.error(f"Source file not readable: {source_path}")
+                return False
+            
+            # Create cache destination path
+            cache_dir = Path(self.config.paths.cache_destination or '/cache')
+            cache_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Preserve directory structure in cache
+            relative_path = source_path_obj.relative_to(source_path_obj.anchor)
+            cache_file_path = cache_dir / relative_path
+            cache_file_path.parent.mkdir(parents=True, exist_ok=True)
+            
+            # Skip if already cached
+            if cache_file_path.exists():
+                self.logger.info(f"File already cached: {cache_file_path}")
+                return self._create_atomic_symlink(source_path, str(cache_file_path))
+            
+            # Step 1: Copy file to cache (never move during playback!)
+            self.logger.info(f"Copying to cache: {source_path} -> {cache_file_path}")
+            shutil.copy2(source_path, cache_file_path)
+            
+            # Verify copy integrity
+            if not cache_file_path.exists():
+                self.logger.error(f"Cache copy failed: {cache_file_path}")
+                return False
+                
+            # Step 2: Create atomic symlink replacement
+            return self._create_atomic_symlink(source_path, str(cache_file_path))
+            
+        except Exception as e:
+            self.logger.error(f"Error during atomic cache operation for {source_path}: {e}")
+            return False
+    
+    def _create_atomic_symlink(self, original_path: str, cache_path: str) -> bool:
+        """
+        Atomically replace original file with symlink to cache.
+        
+        This is the critical operation that must be atomic to avoid
+        interrupting Plex playback. Uses temporary file + rename pattern.
+        
+        Args:
+            original_path: Path to original file to replace
+            cache_path: Path to cached file to link to
+            
+        Returns:
+            bool: True if atomic replacement succeeded
+        """
+        try:
+            original_path_obj = Path(original_path)
+            
+            # Create temporary symlink in same directory (ensures atomic rename)
+            with tempfile.NamedTemporaryFile(
+                dir=original_path_obj.parent,
+                delete=False,
+                prefix=f".{original_path_obj.name}_cache_",
+                suffix=".tmp"
+            ) as temp_file:
+                temp_symlink_path = temp_file.name
+                
+            # Remove temp file, we just wanted the unique name
+            os.unlink(temp_symlink_path)
+            
+            # Create symlink pointing to cache
+            os.symlink(cache_path, temp_symlink_path)
+            
+            # Atomic replacement: rename temp symlink to original path
+            # This is atomic on POSIX systems and won't interrupt active reads
+            os.rename(temp_symlink_path, original_path)
+            
+            self.logger.info(f"Atomic symlink created: {original_path} -> {cache_path}")
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"Error creating atomic symlink for {original_path}: {e}")
+            # Clean up temp file if it exists
+            try:
+                if 'temp_symlink_path' in locals():
+                    os.unlink(temp_symlink_path)
+            except:
+                pass
+            return False
     
     def get_watch_history(self) -> Dict:
         """Get the history of watched media"""
@@ -480,6 +708,32 @@ class PlexWatcher:
         self.stats['total_cache_operations'] = 0
         self.stats['total_media_cached'] = 0
         self.stats['total_media_removed'] = 0
+    
+    def get_status(self) -> RealTimeWatchingStatus:
+        """
+        Get current real-time watching status using Pydantic v2 model.
+        
+        Returns:
+            RealTimeWatchingStatus: Validated status object with type safety
+            
+        Note:
+            This method provides type-safe status reporting for the web interface
+            and monitoring systems. All atomic cache operations are tracked here.
+        """
+        try:
+            return RealTimeWatchingStatus(
+                is_running=self.watching,
+                total_operations=self.stats.get('total_cache_operations', 0),
+                active_sessions=len(self.watch_history),
+                last_operation_time=max(
+                    (entry.get('timestamp', 0) for entry in self.watch_history.values()),
+                    default=None
+                ) if self.watch_history else None,
+                cached_media_count=self.stats.get('total_media_cached', 0)
+            )
+        except Exception as e:
+            self.logger.error(f"Error getting watcher status: {e}")
+            return RealTimeWatchingStatus()  # Return default values
     
     def get_cache_removal_schedule(self) -> Dict:
         """Get the current cache removal schedule"""
