@@ -15,6 +15,15 @@ import {
   TestResults,
   ConfigurationSettings,
   RunOperationRequest,
+  CachedFileInfo,
+  CacheStatistics,
+  UserCacheStatistics,
+  CachedFilesFilter,
+  CachedFilesResponse,
+  CachedFileSearchResponse,
+  CacheCleanupRequest,
+  CacheCleanupResponse,
+  RemoveCachedFileRequest,
 } from '@/types/api'
 
 // Generic API hook return type
@@ -406,6 +415,287 @@ export function useRealTimeData() {
     logs: logsApi,
     refreshAll,
     isLoading: systemStatusApi.isLoading || healthStatusApi.isLoading || logsApi.isLoading,
+  }
+}
+
+/**
+ * Hook for cached files data with filtering and search
+ */
+export function useCachedFiles(filter: CachedFilesFilter = {}, options: UseAPIOptions = {}) {
+  const { dispatch } = useAppContext()
+
+  return useAPI(
+    () => APIService.getCachedFiles(filter),
+    {
+      ...options,
+      onError: (error) => {
+        dispatch({
+          type: 'SET_ERROR',
+          payload: { key: 'cachedFiles', value: error.message }
+        })
+        if (options.onError) options.onError(error)
+      },
+    }
+  )
+}
+
+/**
+ * Hook for cache statistics
+ */
+export function useCacheStatistics(options: UseAPIOptions = {}) {
+  const { dispatch } = useAppContext()
+
+  return useAPI(
+    () => APIService.getCacheStatistics(),
+    {
+      ...options,
+      onError: (error) => {
+        dispatch({
+          type: 'SET_ERROR',
+          payload: { key: 'cacheStatistics', value: error.message }
+        })
+        if (options.onError) options.onError(error)
+      },
+    }
+  )
+}
+
+/**
+ * Hook for user-specific cache statistics
+ */
+export function useUserCacheStatistics(userId: string, days: number = 30, options: UseAPIOptions = {}) {
+  const { dispatch } = useAppContext()
+
+  return useAPI(
+    () => APIService.getUserCacheStatistics(userId, days),
+    {
+      ...options,
+      immediate: options.immediate !== false && !!userId, // Don't fetch if no userId
+      onError: (error) => {
+        dispatch({
+          type: 'SET_ERROR',
+          payload: { key: 'userCacheStats', value: error.message }
+        })
+        if (options.onError) options.onError(error)
+      },
+    }
+  )
+}
+
+/**
+ * Hook for cached files operations (remove, cleanup, search)
+ */
+export function useCachedFilesOperations() {
+  const { dispatch } = useAppContext()
+  const [isLoading, setIsLoading] = useState(false)
+
+  const removeCachedFile = useCallback(async (fileId: string, request: RemoveCachedFileRequest) => {
+    setIsLoading(true)
+    dispatch({ type: 'SET_ERROR', payload: { key: 'cachedFilesOperations', value: null } })
+
+    try {
+      const result = await APIService.removeCachedFile(fileId, request)
+      
+      dispatch({
+        type: 'ADD_TOAST',
+        payload: {
+          type: 'success',
+          message: `Successfully removed cached file: ${result.file_path}`,
+          duration: 5000,
+        }
+      })
+
+      return result
+
+    } catch (error) {
+      const apiError = error as APIError
+      const errorMessage = apiError.message || 'Failed to remove cached file'
+      
+      dispatch({
+        type: 'SET_ERROR',
+        payload: { key: 'cachedFilesOperations', value: errorMessage }
+      })
+      
+      dispatch({
+        type: 'ADD_TOAST',
+        payload: {
+          type: 'error',
+          message: errorMessage,
+          duration: 8000,
+        }
+      })
+
+      throw error
+
+    } finally {
+      setIsLoading(false)
+    }
+  }, [dispatch])
+
+  const cleanupCache = useCallback(async (request: CacheCleanupRequest = {}) => {
+    setIsLoading(true)
+    dispatch({ type: 'SET_ERROR', payload: { key: 'cachedFilesOperations', value: null } })
+
+    try {
+      const result = await APIService.cleanupCache(request)
+      
+      dispatch({
+        type: 'ADD_TOAST',
+        payload: {
+          type: 'success',
+          message: `Cache cleanup completed. ${result.orphaned_count} files marked as orphaned${result.removed_count > 0 ? `, ${result.removed_count} files removed` : ''}`,
+          duration: 5000,
+        }
+      })
+
+      return result
+
+    } catch (error) {
+      const apiError = error as APIError
+      const errorMessage = apiError.message || 'Failed to cleanup cache'
+      
+      dispatch({
+        type: 'SET_ERROR',
+        payload: { key: 'cachedFilesOperations', value: errorMessage }
+      })
+      
+      dispatch({
+        type: 'ADD_TOAST',
+        payload: {
+          type: 'error',
+          message: errorMessage,
+          duration: 8000,
+        }
+      })
+
+      throw error
+
+    } finally {
+      setIsLoading(false)
+    }
+  }, [dispatch])
+
+  const searchCachedFiles = useCallback(async (
+    query: string, 
+    searchType: string = 'all', 
+    limit: number = 50,
+    includeRemoved: boolean = false
+  ) => {
+    setIsLoading(true)
+    dispatch({ type: 'SET_ERROR', payload: { key: 'cachedFilesOperations', value: null } })
+
+    try {
+      const result = await APIService.searchCachedFiles(query, searchType, limit, includeRemoved)
+      return result
+
+    } catch (error) {
+      const apiError = error as APIError
+      const errorMessage = apiError.message || 'Search failed'
+      
+      dispatch({
+        type: 'SET_ERROR',
+        payload: { key: 'cachedFilesOperations', value: errorMessage }
+      })
+
+      throw error
+
+    } finally {
+      setIsLoading(false)
+    }
+  }, [dispatch])
+
+  const exportCachedFiles = useCallback(async (
+    format: 'csv' | 'json' | 'txt' = 'csv',
+    filter: Partial<CachedFilesFilter> = {},
+    includeMetadata: boolean = false
+  ) => {
+    setIsLoading(true)
+    dispatch({ type: 'SET_ERROR', payload: { key: 'cachedFilesOperations', value: null } })
+
+    try {
+      const blob = await APIService.exportCachedFiles(format, filter, includeMetadata)
+      
+      // Create download link
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `cached-files-${new Date().toISOString().split('T')[0]}.${format}`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+
+      dispatch({
+        type: 'ADD_TOAST',
+        payload: {
+          type: 'success',
+          message: `Export completed successfully (${format.toUpperCase()})`,
+          duration: 5000,
+        }
+      })
+
+    } catch (error) {
+      const apiError = error as APIError
+      const errorMessage = apiError.message || 'Export failed'
+      
+      dispatch({
+        type: 'SET_ERROR',
+        payload: { key: 'cachedFilesOperations', value: errorMessage }
+      })
+      
+      dispatch({
+        type: 'ADD_TOAST',
+        payload: {
+          type: 'error',
+          message: errorMessage,
+          duration: 8000,
+        }
+      })
+
+      throw error
+
+    } finally {
+      setIsLoading(false)
+    }
+  }, [dispatch])
+
+  return {
+    isLoading,
+    removeCachedFile,
+    cleanupCache,
+    searchCachedFiles,
+    exportCachedFiles,
+  }
+}
+
+/**
+ * Hook for real-time cached files data with auto-refresh
+ */
+export function useCachedFilesRealTime(filter: CachedFilesFilter = {}) {
+  const { state } = useAppContext()
+  
+  const cachedFilesApi = useCachedFiles(filter, {
+    autoRefresh: state.ui.autoRefresh,
+    refreshInterval: state.ui.refreshInterval * 2, // Less frequent than main dashboard
+  })
+
+  const cacheStatsApi = useCacheStatistics({
+    autoRefresh: state.ui.autoRefresh,
+    refreshInterval: state.ui.refreshInterval * 3, // Even less frequent for stats
+  })
+
+  const refreshAll = useCallback(async () => {
+    await Promise.all([
+      cachedFilesApi.refetch(),
+      cacheStatsApi.refetch(),
+    ])
+  }, [cachedFilesApi, cacheStatsApi])
+
+  return {
+    cachedFiles: cachedFilesApi,
+    cacheStatistics: cacheStatsApi,
+    refreshAll,
+    isLoading: cachedFilesApi.isLoading || cacheStatsApi.isLoading,
   }
 }
 

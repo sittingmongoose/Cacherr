@@ -14,9 +14,19 @@ import {
   LogUpdateMessage,
   OperationProgressMessage,
   ErrorMessage,
+  CacheFileAddedMessage,
+  CacheFileRemovedMessage,
+  CacheStatisticsUpdatedMessage,
 } from '@/types/api'
 
-export type WebSocketEventType = 'status_update' | 'log_entry' | 'operation_progress' | 'error'
+export type WebSocketEventType = 
+  | 'status_update' 
+  | 'log_entry' 
+  | 'operation_progress' 
+  | 'error'
+  | 'cache_file_added'
+  | 'cache_file_removed'
+  | 'cache_statistics_updated'
 
 export interface WebSocketEventHandler {
   (data: unknown): void
@@ -59,7 +69,15 @@ export class WebSocketService {
     this.url = url || this.buildWebSocketURL()
     
     // Initialize event handler maps
-    const eventTypes: WebSocketEventType[] = ['status_update', 'log_entry', 'operation_progress', 'error']
+    const eventTypes: WebSocketEventType[] = [
+      'status_update', 
+      'log_entry', 
+      'operation_progress', 
+      'error',
+      'cache_file_added',
+      'cache_file_removed',
+      'cache_statistics_updated'
+    ]
     eventTypes.forEach(type => {
       this.eventHandlers.set(type, new Set())
     })
@@ -347,6 +365,19 @@ export const useWebSocketProgress = (handler: (data: OperationProgressMessage['d
 
 export const useWebSocketErrors = (handler: (data: ErrorMessage['data']) => void): void => {
   webSocketService.addEventListener('error', handler)
+}
+
+// Cached Files WebSocket event handlers
+export const useWebSocketCacheFileAdded = (handler: (data: CacheFileAddedMessage['data']) => void): void => {
+  webSocketService.addEventListener('cache_file_added', handler)
+}
+
+export const useWebSocketCacheFileRemoved = (handler: (data: CacheFileRemovedMessage['data']) => void): void => {
+  webSocketService.addEventListener('cache_file_removed', handler)
+}
+
+export const useWebSocketCacheStatisticsUpdated = (handler: (data: CacheStatisticsUpdatedMessage['data']) => void): void => {
+  webSocketService.addEventListener('cache_statistics_updated', handler)
 }
 
 export default webSocketService

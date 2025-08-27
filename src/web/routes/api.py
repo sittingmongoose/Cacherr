@@ -56,11 +56,11 @@ Example:
 import logging
 import os
 import requests
-from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, Optional, List
+from datetime import datetime, timezone, timedelta
 
-from flask import Blueprint, jsonify, request, g
+from flask import Blueprint, jsonify, request, g, Response
 from pydantic import BaseModel, Field, ValidationError
 
 from ...core.interfaces import CacheService, MediaService, FileService, NotificationService
@@ -1344,3 +1344,616 @@ def api_trakt_stop():
         message="Trakt watcher stop requested (implementation pending)"
     )
     return jsonify(response.model_dump())
+
+
+# Cached Files Management Endpoints
+@api_bp.route('/cached/files', methods=['GET'])
+@handle_api_error
+def api_get_cached_files():
+    """
+    Get cached files with filtering and pagination.
+    
+    Query parameters:
+    - search: Search term for filename/path filtering
+    - user_id: Filter by user ID who triggered caching
+    - status: Filter by file status (active, orphaned, pending_removal, removed)
+    - triggered_by_operation: Filter by operation type (watchlist, ondeck, trakt, manual, etc.)
+    - size_min: Minimum file size in bytes
+    - size_max: Maximum file size in bytes  
+    - cached_since: ISO date string - only files cached since this date
+    - limit: Maximum results to return (1-500, default 50)
+    - offset: Offset for pagination (default 0)
+    
+    Returns:
+        JSON response with cached files list and pagination info
+    """
+    try:
+        # Parse query parameters with Pydantic validation
+        from ...core.cached_files_service import CachedFilesFilter
+        
+        filter_params = {}
+        
+        # String parameters
+        if request.args.get('search'):
+            filter_params['search'] = request.args.get('search').strip()
+        
+        if request.args.get('user_id'):
+            filter_params['user_id'] = request.args.get('user_id').strip()
+            
+        if request.args.get('status'):
+            filter_params['status'] = request.args.get('status').strip()
+            
+        if request.args.get('triggered_by_operation'):
+            filter_params['triggered_by_operation'] = request.args.get('triggered_by_operation').strip()
+        
+        # Integer parameters
+        if request.args.get('size_min'):
+            filter_params['size_min'] = int(request.args.get('size_min'))
+            
+        if request.args.get('size_max'):
+            filter_params['size_max'] = int(request.args.get('size_max'))
+            
+        if request.args.get('limit'):
+            filter_params['limit'] = min(int(request.args.get('limit')), 500)
+            
+        if request.args.get('offset'):
+            filter_params['offset'] = max(int(request.args.get('offset')), 0)
+        
+        # Date parameter
+        if request.args.get('cached_since'):
+            filter_params['cached_since'] = datetime.fromisoformat(request.args.get('cached_since'))
+        
+        # Validate with Pydantic
+        filter_obj = CachedFilesFilter(**filter_params)
+        
+        # Get cached files service
+        cached_files_service = getattr(g, 'cached_files_service', None)
+        if not cached_files_service:
+            response = APIResponse(
+                success=False,
+                error="Cached files service not available"
+            )
+            return jsonify(response.model_dump()), 500
+        
+        cached_files, total_count = cached_files_service.get_cached_files(filter_obj)
+        
+        # Convert to dict format for JSON response
+        files_data = []
+        for file_info in cached_files:
+            file_dict = file_info.model_dump()
+            # Convert datetime objects to ISO strings
+            if file_dict.get('cached_at'):
+                file_dict['cached_at'] = file_info.cached_at.isoformat()
+            if file_dict.get('last_accessed'):
+                file_dict['last_accessed'] = file_info.last_accessed.isoformat()
+            files_data.append(file_dict)
+        
+        response = APIResponse(
+            success=True,
+            data={
+                'files': files_data,
+                'pagination': {
+                    'limit': filter_obj.limit,
+                    'offset': filter_obj.offset,
+                    'total_count': total_count,
+                    'has_more': filter_obj.offset + len(cached_files) < total_count
+                },
+                'filter_applied': filter_obj.model_dump(exclude_unset=True)
+            }
+        )
+        return jsonify(response.model_dump())
+        
+    except ValueError as e:
+        response = APIResponse(
+            success=False,
+            error=f"Invalid query parameter: {e}"
+        )
+        return jsonify(response.model_dump()), 400
+
+
+@api_bp.route('/cached/files/<file_id>', methods=['DELETE'])
+@handle_api_error
+def api_remove_cached_file(file_id: str):
+    """
+    Remove a specific file from cache tracking.
+    
+    Args:
+        file_id: The ID of the cached file to remove
+        
+    Request body (JSON):
+    - reason: Reason for removal (optional, default: "manual")
+    - user_id: User ID triggering the removal (optional)
+    
+    Returns:
+        JSON response confirming removal
+    """
+    try:
+        data = request.get_json() or {}
+        reason = data.get('reason', 'manual')
+        user_id = data.get('user_id')
+        
+        cached_files_service = getattr(g, 'cached_files_service', None)
+        if not cached_files_service:
+            response = APIResponse(
+                success=False,
+                error="Cached files service not available"
+            )
+            return jsonify(response.model_dump()), 500
+        
+        # First, get the file info to get the file path
+        from ...core.cached_files_service import CachedFilesFilter
+        cached_files, _ = cached_files_service.get_cached_files(
+            CachedFilesFilter(search=file_id, limit=1)
+        )
+        
+        if not cached_files:
+            response = APIResponse(
+                success=False,
+                error=f"Cached file with ID {file_id} not found"
+            )
+            return jsonify(response.model_dump()), 404
+        
+        cached_file = cached_files[0]
+        success = cached_files_service.remove_cached_file(
+            cached_file.file_path, reason, user_id
+        )
+        
+        if success:
+            response = APIResponse(
+                success=True,
+                message=f"Cached file removed successfully: {cached_file.filename}",
+                data={
+                    'file_id': file_id,
+                    'file_path': cached_file.file_path,
+                    'reason': reason
+                }
+            )
+            return jsonify(response.model_dump())
+        else:
+            response = APIResponse(
+                success=False,
+                error="Failed to remove cached file"
+            )
+            return jsonify(response.model_dump()), 500
+            
+    except Exception as e:
+        logger.error(f"Error removing cached file {file_id}: {e}")
+        response = APIResponse(
+            success=False,
+            error=f"Failed to remove cached file: {str(e)}"
+        )
+        return jsonify(response.model_dump()), 500
+
+
+@api_bp.route('/cached/statistics', methods=['GET'])
+@handle_api_error
+def api_get_cache_statistics():
+    """
+    Get comprehensive cache statistics.
+    
+    Returns detailed statistics about cached files including:
+    - Total files and size
+    - Active vs orphaned files
+    - User count and access patterns
+    - Cache efficiency metrics
+    
+    Returns:
+        JSON response with cache statistics
+    """
+    try:
+        cached_files_service = getattr(g, 'cached_files_service', None)
+        if not cached_files_service:
+            response = APIResponse(
+                success=False,
+                error="Cached files service not available"
+            )
+            return jsonify(response.model_dump()), 500
+        
+        statistics = cached_files_service.get_cache_statistics()
+        stats_dict = statistics.model_dump()
+        
+        # Convert datetime objects to ISO strings
+        if stats_dict.get('oldest_cached_at'):
+            stats_dict['oldest_cached_at'] = statistics.oldest_cached_at.isoformat()
+        
+        response = APIResponse(
+            success=True,
+            data=stats_dict
+        )
+        return jsonify(response.model_dump())
+        
+    except Exception as e:
+        logger.error(f"Error getting cache statistics: {e}")
+        response = APIResponse(
+            success=False,
+            error=f"Failed to get cache statistics: {str(e)}"
+        )
+        return jsonify(response.model_dump()), 500
+
+
+@api_bp.route('/cached/users/<user_id>/stats', methods=['GET'])
+@handle_api_error
+def api_get_user_cache_stats(user_id: str):
+    """
+    Get cache statistics for a specific user.
+    
+    Query parameters:
+    - days: Number of days to include in statistics (default: 30)
+    
+    Args:
+        user_id: The user ID to get statistics for
+    
+    Returns:
+        JSON response with user-specific cache statistics
+    """
+    try:
+        days = int(request.args.get('days', 30))
+        if days <= 0:
+            raise ValueError("Days must be positive")
+        
+        cached_files_service = getattr(g, 'cached_files_service', None)
+        if not cached_files_service:
+            response = APIResponse(
+                success=False,
+                error="Cached files service not available"
+            )
+            return jsonify(response.model_dump()), 500
+        
+        # Get user's cached files
+        from ...core.cached_files_service import CachedFilesFilter
+        since_date = datetime.now(timezone.utc) - timedelta(days=days)
+        user_filter = CachedFilesFilter(
+            user_id=user_id,
+            cached_since=since_date,
+            limit=1000  # Get more files for accurate statistics
+        )
+        
+        cached_files, total_count = cached_files_service.get_cached_files(user_filter)
+        
+        # Calculate user statistics
+        total_size = sum(f.file_size_bytes for f in cached_files)
+        active_files = sum(1 for f in cached_files if f.status == 'active')
+        most_common_operation = None
+        
+        if cached_files:
+            from collections import Counter
+            operations = [f.triggered_by_operation for f in cached_files]
+            most_common_operation = Counter(operations).most_common(1)[0][0]
+        
+        user_stats = {
+            'user_id': user_id,
+            'period_days': days,
+            'total_files': total_count,
+            'active_files': active_files,
+            'total_size_bytes': total_size,
+            'total_size_readable': cached_files_service._format_file_size(total_size) if cached_files else "0 B",
+            'most_common_operation': most_common_operation,
+            'recent_files': [
+                {
+                    'filename': f.filename,
+                    'cached_at': f.cached_at.isoformat(),
+                    'file_size_readable': f.file_size_readable,
+                    'operation': f.triggered_by_operation
+                } for f in cached_files[:10]  # Last 10 files
+            ]
+        }
+        
+        response = APIResponse(
+            success=True,
+            data=user_stats
+        )
+        return jsonify(response.model_dump())
+        
+    except ValueError as e:
+        response = APIResponse(
+            success=False,
+            error=f"Invalid parameter: {e}"
+        )
+        return jsonify(response.model_dump()), 400
+        
+    except Exception as e:
+        logger.error(f"Error getting user cache stats for {user_id}: {e}")
+        response = APIResponse(
+            success=False,
+            error=f"Failed to get user statistics: {str(e)}"
+        )
+        return jsonify(response.model_dump()), 500
+
+
+@api_bp.route('/cached/cleanup', methods=['POST'])
+@handle_api_error
+def api_cleanup_cached_files():
+    """
+    Clean up orphaned cached files.
+    
+    Scans cached files and marks those that no longer exist on disk as orphaned.
+    Optionally removes orphaned entries completely.
+    
+    Request body (JSON):
+    - remove_orphaned: Whether to completely remove orphaned entries (default: false)
+    - user_id: User ID triggering the cleanup (optional)
+    
+    Returns:
+        JSON response with cleanup results
+    """
+    try:
+        data = request.get_json() or {}
+        remove_orphaned = data.get('remove_orphaned', False)
+        user_id = data.get('user_id')
+        
+        cached_files_service = getattr(g, 'cached_files_service', None)
+        if not cached_files_service:
+            response = APIResponse(
+                success=False,
+                error="Cached files service not available"
+            )
+            return jsonify(response.model_dump()), 500
+        
+        orphaned_count = cached_files_service.cleanup_orphaned_files()
+        
+        # If requested, remove orphaned entries completely
+        removed_count = 0
+        if remove_orphaned and orphaned_count > 0:
+            # This would require additional method in service
+            pass  # TODO: Implement complete removal of orphaned entries
+        
+        response = APIResponse(
+            success=True,
+            message=f"Cache cleanup completed. {orphaned_count} files marked as orphaned.",
+            data={
+                'orphaned_count': orphaned_count,
+                'removed_count': removed_count,
+                'remove_orphaned': remove_orphaned
+            }
+        )
+        return jsonify(response.model_dump())
+        
+    except Exception as e:
+        logger.error(f"Error during cache cleanup: {e}")
+        response = APIResponse(
+            success=False,
+            error=f"Cache cleanup failed: {str(e)}"
+        )
+        return jsonify(response.model_dump()), 500
+
+
+@api_bp.route('/cached/files/search', methods=['GET'])
+@handle_api_error
+def api_search_cached_files():
+    """
+    Advanced search for cached files.
+    
+    Query parameters:
+    - q: Search query (searches filename, path, and user fields)
+    - type: Search type ('filename', 'path', 'user', 'operation', 'all')
+    - limit: Maximum results (default: 50)
+    - include_removed: Include removed files in results (default: false)
+    
+    Returns:
+        JSON response with search results
+    """
+    try:
+        query = request.args.get('q', '').strip()
+        search_type = request.args.get('type', 'all')
+        limit = min(int(request.args.get('limit', 50)), 500)
+        include_removed = request.args.get('include_removed', 'false').lower() == 'true'
+        
+        if not query:
+            response = APIResponse(
+                success=False,
+                error="Search query parameter 'q' is required"
+            )
+            return jsonify(response.model_dump()), 400
+        
+        cached_files_service = getattr(g, 'cached_files_service', None)
+        if not cached_files_service:
+            response = APIResponse(
+                success=False,
+                error="Cached files service not available"
+            )
+            return jsonify(response.model_dump()), 500
+        
+        # Build search filter based on type
+        from ...core.cached_files_service import CachedFilesFilter
+        search_filter = CachedFilesFilter(limit=limit)
+        
+        if search_type in ('filename', 'path', 'all'):
+            search_filter.search = query
+            
+        if search_type == 'user':
+            search_filter.user_id = query
+            
+        if search_type == 'operation':
+            search_filter.triggered_by_operation = query
+            
+        if not include_removed:
+            # Exclude removed files
+            if not search_filter.status:
+                search_filter.status = 'active'
+        
+        cached_files, total_count = cached_files_service.get_cached_files(search_filter)
+        
+        # Convert to dict format
+        files_data = []
+        for file_info in cached_files:
+            file_dict = file_info.model_dump()
+            if file_dict.get('cached_at'):
+                file_dict['cached_at'] = file_info.cached_at.isoformat()
+            if file_dict.get('last_accessed'):
+                file_dict['last_accessed'] = file_info.last_accessed.isoformat()
+            files_data.append(file_dict)
+        
+        response = APIResponse(
+            success=True,
+            data={
+                'query': query,
+                'search_type': search_type,
+                'results': files_data,
+                'total_found': total_count,
+                'limited_to': limit
+            }
+        )
+        return jsonify(response.model_dump())
+        
+    except ValueError as e:
+        response = APIResponse(
+            success=False,
+            error=f"Invalid parameter: {e}"
+        )
+        return jsonify(response.model_dump()), 400
+        
+    except Exception as e:
+        logger.error(f"Error in cached files search: {e}")
+        response = APIResponse(
+            success=False,
+            error=f"Search failed: {str(e)}"
+        )
+        return jsonify(response.model_dump()), 500
+
+
+@api_bp.route('/cached/export', methods=['GET'])
+@handle_api_error
+def api_export_cached_files():
+    """
+    Export cached files data as downloadable file.
+    
+    Query parameters:
+    - format: Export format ('csv', 'json', 'txt') - default: 'csv'
+    - user_id: Filter by user ID (optional)
+    - status: Filter by status (optional)
+    - include_metadata: Include metadata in export (default: false)
+    
+    Returns:
+        Downloadable file with cached files data
+    """
+    try:
+        export_format = request.args.get('format', 'csv').lower()
+        user_id = request.args.get('user_id')
+        status = request.args.get('status')
+        include_metadata = request.args.get('include_metadata', 'false').lower() == 'true'
+        
+        if export_format not in ('csv', 'json', 'txt'):
+            response = APIResponse(
+                success=False,
+                error="Format must be 'csv', 'json', or 'txt'"
+            )
+            return jsonify(response.model_dump()), 400
+        
+        cached_files_service = getattr(g, 'cached_files_service', None)
+        if not cached_files_service:
+            response = APIResponse(
+                success=False,
+                error="Cached files service not available"
+            )
+            return jsonify(response.model_dump()), 500
+        
+        # Get filtered cached files
+        from ...core.cached_files_service import CachedFilesFilter
+        filter_params = CachedFilesFilter(limit=10000)  # Large limit for export
+        if user_id:
+            filter_params.user_id = user_id
+        if status:
+            filter_params.status = status
+            
+        cached_files, _ = cached_files_service.get_cached_files(filter_params)
+        
+        if export_format == 'json':
+            # JSON export
+            files_data = []
+            for file_info in cached_files:
+                file_dict = file_info.model_dump()
+                if file_dict.get('cached_at'):
+                    file_dict['cached_at'] = file_info.cached_at.isoformat()
+                if file_dict.get('last_accessed'):
+                    file_dict['last_accessed'] = file_info.last_accessed.isoformat()
+                if not include_metadata:
+                    file_dict.pop('metadata', None)
+                files_data.append(file_dict)
+            
+            export_data = {
+                'export_timestamp': datetime.now(timezone.utc).isoformat(),
+                'total_files': len(files_data),
+                'filters_applied': filter_params.model_dump(exclude_unset=True),
+                'cached_files': files_data
+            }
+            
+            response = jsonify(export_data)
+            response.headers['Content-Type'] = 'application/json'
+            response.headers['Content-Disposition'] = f'attachment; filename="cached_files_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json"'
+            return response
+            
+        elif export_format == 'csv':
+            # CSV export
+            import io
+            import csv
+            
+            output = io.StringIO()
+            writer = csv.writer(output)
+            
+            # Header row
+            headers = ['filename', 'file_path', 'cached_path', 'cache_method', 'file_size_readable', 
+                      'cached_at', 'triggered_by_user', 'triggered_by_operation', 'status', 'users']
+            if include_metadata:
+                headers.append('metadata')
+            writer.writerow(headers)
+            
+            # Data rows
+            for file_info in cached_files:
+                row = [
+                    file_info.filename,
+                    file_info.file_path,
+                    file_info.cached_path,
+                    file_info.cache_method,
+                    file_info.file_size_readable,
+                    file_info.cached_at.isoformat(),
+                    file_info.triggered_by_user or '',
+                    file_info.triggered_by_operation,
+                    file_info.status,
+                    ','.join(file_info.users)
+                ]
+                if include_metadata:
+                    row.append(str(file_info.metadata) if file_info.metadata else '')
+                writer.writerow(row)
+            
+            output.seek(0)
+            response = Response(
+                output.getvalue(),
+                mimetype='text/csv',
+                headers={'Content-Disposition': f'attachment; filename="cached_files_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv"'}
+            )
+            return response
+            
+        else:  # txt format
+            # Text export
+            export_lines = []
+            export_lines.append("PlexCacheUltra Cached Files Export")
+            export_lines.append(f"Generated: {datetime.now(timezone.utc).isoformat()}")
+            export_lines.append(f"Total Files: {len(cached_files)}")
+            export_lines.append("")
+            
+            for file_info in cached_files:
+                export_lines.append(f"File: {file_info.filename}")
+                export_lines.append(f"  Path: {file_info.file_path}")
+                export_lines.append(f"  Cached: {file_info.cached_at.isoformat()}")
+                export_lines.append(f"  Size: {file_info.file_size_readable}")
+                export_lines.append(f"  User: {file_info.triggered_by_user or 'N/A'}")
+                export_lines.append(f"  Operation: {file_info.triggered_by_operation}")
+                export_lines.append(f"  Status: {file_info.status}")
+                if file_info.users:
+                    export_lines.append(f"  All Users: {', '.join(file_info.users)}")
+                export_lines.append("")
+            
+            response = Response(
+                '\n'.join(export_lines),
+                mimetype='text/plain',
+                headers={'Content-Disposition': f'attachment; filename="cached_files_{datetime.now().strftime("%Y%m%d_%H%M%S")}.txt"'}
+            )
+            return response
+            
+    except Exception as e:
+        logger.error(f"Error exporting cached files: {e}")
+        response = APIResponse(
+            success=False,
+            error=f"Export failed: {str(e)}"
+        )
+        return jsonify(response.model_dump()), 500

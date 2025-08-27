@@ -16,6 +16,15 @@ import {
   RunOperationRequest,
   SettingsUpdateRequest,
   SettingsValidationRequest,
+  CachedFileInfo,
+  CacheStatistics,
+  UserCacheStatistics,
+  CachedFilesFilter,
+  CachedFilesResponse,
+  CachedFileSearchResponse,
+  CacheCleanupRequest,
+  CacheCleanupResponse,
+  RemoveCachedFileRequest,
 } from '@/types/api'
 
 // API configuration
@@ -350,6 +359,137 @@ export class APIService {
       throw new APIError(response.error || 'Failed to stop Trakt watcher', 500)
     }
     return { message: response.message || 'Trakt watcher stopped' }
+  }
+
+  // Cached Files endpoints
+  static async getCachedFiles(filter: CachedFilesFilter = {}): Promise<CachedFilesResponse> {
+    const params = new URLSearchParams()
+    
+    // Convert filter to query parameters
+    Object.entries(filter).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        params.append(key, String(value))
+      }
+    })
+
+    const endpoint = `/api/cached/files${params.toString() ? `?${params.toString()}` : ''}`
+    const response = await client.get<APIResponse<CachedFilesResponse>>(endpoint)
+    
+    if (!response.success || !response.data) {
+      throw new APIError(response.error || 'Failed to get cached files', 500)
+    }
+    return response.data
+  }
+
+  static async getCachedFile(fileId: string): Promise<CachedFileInfo> {
+    const response = await client.get<APIResponse<CachedFileInfo>>(`/api/cached/files/${fileId}`)
+    if (!response.success || !response.data) {
+      throw new APIError(response.error || 'Failed to get cached file', 500)
+    }
+    return response.data
+  }
+
+  static async removeCachedFile(fileId: string, request: RemoveCachedFileRequest): Promise<{
+    file_id: string
+    file_path: string
+    reason: string
+  }> {
+    const response = await client.delete<APIResponse<{
+      file_id: string
+      file_path: string
+      reason: string
+    }>>(`/api/cached/files/${fileId}`, { 
+      body: JSON.stringify(request)
+    })
+    
+    if (!response.success || !response.data) {
+      throw new APIError(response.error || 'Failed to remove cached file', 500)
+    }
+    return response.data
+  }
+
+  static async getCacheStatistics(): Promise<CacheStatistics> {
+    const response = await client.get<APIResponse<CacheStatistics>>('/api/cached/statistics')
+    if (!response.success || !response.data) {
+      throw new APIError(response.error || 'Failed to get cache statistics', 500)
+    }
+    return response.data
+  }
+
+  static async getUserCacheStatistics(userId: string, days: number = 30): Promise<UserCacheStatistics> {
+    const response = await client.get<APIResponse<UserCacheStatistics>>(
+      `/api/cached/users/${userId}/stats?days=${days}`
+    )
+    if (!response.success || !response.data) {
+      throw new APIError(response.error || 'Failed to get user cache statistics', 500)
+    }
+    return response.data
+  }
+
+  static async cleanupCache(request: CacheCleanupRequest = {}): Promise<CacheCleanupResponse> {
+    const response = await client.post<APIResponse<CacheCleanupResponse>>('/api/cached/cleanup', request)
+    if (!response.success || !response.data) {
+      throw new APIError(response.error || 'Failed to cleanup cache', 500)
+    }
+    return response.data
+  }
+
+  static async searchCachedFiles(
+    query: string, 
+    searchType: string = 'all', 
+    limit: number = 50,
+    includeRemoved: boolean = false
+  ): Promise<CachedFileSearchResponse> {
+    const params = new URLSearchParams({
+      q: query,
+      type: searchType,
+      limit: String(limit),
+      include_removed: String(includeRemoved)
+    })
+
+    const response = await client.get<APIResponse<CachedFileSearchResponse>>(
+      `/api/cached/files/search?${params.toString()}`
+    )
+    
+    if (!response.success || !response.data) {
+      throw new APIError(response.error || 'Failed to search cached files', 500)
+    }
+    return response.data
+  }
+
+  static async exportCachedFiles(
+    format: 'csv' | 'json' | 'txt' = 'csv',
+    filter: Partial<CachedFilesFilter> = {},
+    includeMetadata: boolean = false
+  ): Promise<Blob> {
+    const params = new URLSearchParams({
+      format,
+      include_metadata: String(includeMetadata)
+    })
+
+    // Add filter parameters
+    Object.entries(filter).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        params.append(key, String(value))
+      }
+    })
+
+    const response = await fetch(`${API_BASE_URL}/api/cached/export?${params.toString()}`, {
+      method: 'GET',
+      headers: {
+        'Accept': format === 'csv' ? 'text/csv' : format === 'json' ? 'application/json' : 'text/plain'
+      }
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      throw new APIError(
+        errorData.error || `Export failed with status ${response.status}`,
+        response.status
+      )
+    }
+
+    return response.blob()
   }
 }
 

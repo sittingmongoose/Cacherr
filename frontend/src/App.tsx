@@ -2,6 +2,7 @@ import React from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { AppProvider } from '@/store'
 import Dashboard from '@/components/Dashboard'
+import { AppLayout } from '@/components/Layout'
 import { FullPageLoader } from '@/components/common/LoadingSpinner'
 import { ToastContainer } from '@/components/common/Toast'
 
@@ -106,7 +107,7 @@ const PageLoader: React.FC = () => (
 
 // Lazy load components for better performance
 const Dashboard = React.lazy(() => import('@/components/Dashboard'))
-const Results = React.lazy(() => import('@/components/Results'))
+const Cached = React.lazy(() => import('@/components/Cached'))
 
 // Route components wrapper
 const DashboardPage: React.FC = () => (
@@ -115,9 +116,9 @@ const DashboardPage: React.FC = () => (
   </React.Suspense>
 )
 
-const ResultsPage: React.FC = () => (
+const CachedPage: React.FC = () => (
   <React.Suspense fallback={<PageLoader />}>
-    <Results />
+    <Cached />
   </React.Suspense>
 )
 
@@ -177,25 +178,30 @@ const App: React.FC = () => {
       <AppProvider>
         <Router>
           <div className="App">
-            <Routes>
-              {/* Main dashboard route */}
-              <Route path="/" element={<DashboardPage />} />
-              
-              {/* Dashboard explicit route */}
-              <Route path="/dashboard" element={<Navigate to="/" replace />} />
-              
-              {/* Results tab */}
-              <Route path="/results" element={<ResultsPage />} />
-              
-              {/* Settings route (placeholder) */}
-              <Route path="/settings" element={<SettingsPage />} />
-              
-              {/* Logs route (placeholder) */}
-              <Route path="/logs" element={<LogsPage />} />
-              
-              {/* Catch-all route for 404 */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+            <AppLayout>
+              <Routes>
+                {/* Main dashboard route */}
+                <Route path="/" element={<DashboardPage />} />
+                
+                {/* Dashboard explicit route */}
+                <Route path="/dashboard" element={<Navigate to="/" replace />} />
+                
+                {/* Cached files tab */}
+                <Route path="/cached" element={<CachedPage />} />
+                
+                {/* Legacy results route - redirect to cached */}
+                <Route path="/results" element={<Navigate to="/cached" replace />} />
+                
+                {/* Settings route (placeholder) */}
+                <Route path="/settings" element={<SettingsPage />} />
+                
+                {/* Logs route (placeholder) */}
+                <Route path="/logs" element={<LogsPage />} />
+                
+                {/* Catch-all route for 404 */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </AppLayout>
             
             {/* Global components */}
             <ToastContainer />

@@ -233,6 +233,105 @@ export interface PathCheckResult {
   path: string
 }
 
+// Cached Files Types
+export interface CachedFileInfo {
+  id: string
+  file_path: string
+  filename: string
+  original_path: string
+  cached_path: string
+  cache_method: 'atomic_symlink' | 'atomic_copy' | 'symlink' | 'hardlink' | 'copy'
+  file_size_bytes: number
+  file_size_readable: string
+  cached_at: string
+  last_accessed?: string
+  access_count: number
+  triggered_by_user?: string
+  triggered_by_operation: 'watchlist' | 'ondeck' | 'trakt' | 'manual' | 'continue_watching' | 'real_time_watch' | 'active_watching'
+  status: 'active' | 'orphaned' | 'pending_removal' | 'removed'
+  users: string[]
+  metadata?: Record<string, unknown>
+}
+
+export interface CacheStatistics {
+  total_files: number
+  total_size_bytes: number
+  total_size_readable: string
+  active_files: number
+  orphaned_files: number
+  users_count: number
+  oldest_cached_at?: string
+  most_accessed_file?: string
+  cache_hit_ratio: number
+}
+
+export interface CachedFilesFilter {
+  search?: string
+  user_id?: string
+  status?: CachedFileInfo['status']
+  triggered_by_operation?: CachedFileInfo['triggered_by_operation']
+  size_min?: number
+  size_max?: number
+  cached_since?: string
+  limit?: number
+  offset?: number
+}
+
+export interface CachedFilesResponse {
+  files: CachedFileInfo[]
+  pagination: {
+    limit: number
+    offset: number
+    total_count: number
+    has_more: boolean
+  }
+  filter_applied: Partial<CachedFilesFilter>
+}
+
+export interface CacheUpdateMessage extends WebSocketMessage {
+  type: 'cache_file_added' | 'cache_file_removed'
+  data: {
+    file_path: string
+    action: 'added' | 'removed'
+    user_id?: string
+    reason: string
+    file_info?: CachedFileInfo
+    cache_method?: CachedFileInfo['cache_method']
+  }
+}
+
+export interface CacheStatisticsMessage extends WebSocketMessage {
+  type: 'cache_statistics_updated'
+  data: CacheStatistics
+}
+
+export interface CacheCleanupRequest {
+  remove_orphaned?: boolean
+  user_id?: string
+}
+
+export interface CacheCleanupResponse {
+  orphaned_count: number
+  removed_count: number
+  remove_orphaned: boolean
+}
+
+export interface UserCacheStatistics {
+  user_id: string
+  period_days: number
+  total_files: number
+  active_files: number
+  total_size_bytes: number
+  total_size_readable: string
+  most_common_operation?: string
+  recent_files: {
+    filename: string
+    cached_at: string
+    file_size_readable: string
+    operation: string
+  }[]
+}
+
 export interface ConnectivityCheckResult {
   status: 'success' | 'failed' | 'error'
   url?: string
@@ -531,6 +630,129 @@ export interface FileOperationUpdateMessage extends WebSocketMessage {
     error_message?: string
     completed_at?: string
   }
+}
+
+// Cached Files Types (for new Cached tab)
+export interface CachedFileInfo {
+  id: string
+  file_path: string
+  filename: string
+  original_path: string
+  cached_path: string
+  cache_method: string
+  file_size_bytes: number
+  file_size_readable: string
+  cached_at: string
+  last_accessed?: string
+  access_count: number
+  triggered_by_user?: string
+  triggered_by_operation: string
+  status: 'active' | 'orphaned' | 'pending_removal' | 'removed'
+  users: string[]
+  metadata?: Record<string, unknown>
+}
+
+export interface CacheStatistics {
+  total_files: number
+  total_size_bytes: number
+  total_size_readable: string
+  active_files: number
+  orphaned_files: number
+  users_count: number
+  oldest_cached_at?: string
+  most_accessed_file?: string
+  cache_hit_ratio: number
+}
+
+export interface UserCacheStatistics {
+  user_id: string
+  period_days: number
+  total_files: number
+  active_files: number
+  total_size_bytes: number
+  total_size_readable: string
+  most_common_operation: string
+  recent_files: Array<{
+    filename: string
+    cached_at: string
+    file_size_readable: string
+    operation: string
+  }>
+}
+
+export interface CachedFilesFilter {
+  search?: string
+  user_id?: string
+  status?: CachedFileInfo['status']
+  triggered_by_operation?: string
+  size_min?: number
+  size_max?: number
+  cached_since?: string
+  limit?: number
+  offset?: number
+}
+
+export interface CachedFilesResponse {
+  files: CachedFileInfo[]
+  pagination: {
+    limit: number
+    offset: number
+    total_count: number
+    has_more: boolean
+  }
+  filter_applied: CachedFilesFilter
+}
+
+export interface CachedFileSearchResponse {
+  query: string
+  search_type: string
+  results: CachedFileInfo[]
+  total_found: number
+  limited_to: number
+}
+
+export interface CacheCleanupRequest {
+  remove_orphaned?: boolean
+  user_id?: string
+}
+
+export interface CacheCleanupResponse {
+  orphaned_count: number
+  removed_count: number
+  remove_orphaned: boolean
+}
+
+export interface RemoveCachedFileRequest {
+  reason: string
+  user_id?: string
+}
+
+// Cached Files WebSocket Message Types
+export interface CacheFileAddedMessage extends WebSocketMessage {
+  type: 'cache_file_added'
+  data: {
+    file_path: string
+    action: 'added'
+    user_id?: string
+    reason: string
+    file_info: CachedFileInfo
+  }
+}
+
+export interface CacheFileRemovedMessage extends WebSocketMessage {
+  type: 'cache_file_removed'
+  data: {
+    file_path: string
+    action: 'removed'
+    user_id?: string
+    reason: string
+    file_id: string
+  }
+}
+
+export interface CacheStatisticsUpdatedMessage extends WebSocketMessage {
+  type: 'cache_statistics_updated'
+  data: CacheStatistics
 }
 
 // Export all types for convenient importing
