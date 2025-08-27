@@ -42,10 +42,19 @@ export const Dashboard: React.FC<DashboardProps> = ({ className }) => {
 
   // Initialize WebSocket connection
   useEffect(() => {
-    webSocketService.connect()
+    try {
+      webSocketService.connect()
+    } catch (error) {
+      console.warn('WebSocket connection failed:', error)
+      // Don't let WebSocket errors crash the component
+    }
     
     return () => {
-      webSocketService.disconnect()
+      try {
+        webSocketService.disconnect()
+      } catch (error) {
+        console.warn('WebSocket disconnect failed:', error)
+      }
     }
   }, [])
 
@@ -234,7 +243,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ className }) => {
           )}
 
           {/* Dashboard Grid */}
-          <div className="dashboard-grid">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Status Card - Left Column */}
             <div className="lg:col-span-1">
               <StatusCard
