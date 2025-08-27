@@ -44,7 +44,7 @@ services:
       - EXIT_IF_ACTIVE_SESSION=${EXIT_IF_ACTIVE_SESSION:-false}
       
       # Cache Behavior (Hardlink enabled by default in unified mount)
-      - COPY_TO_CACHE=${COPY_TO_CACHE:-false}
+      - COPY_TO_CACHE=${COPY_TO_CACHE:-true}
       - DELETE_FROM_CACHE_WHEN_DONE=${DELETE_FROM_CACHE_WHEN_DONE:-true}
       
       # Performance Settings (Unraid optimized)

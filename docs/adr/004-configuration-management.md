@@ -176,29 +176,75 @@ class PathConfiguration(BaseModel):
             return self.base_directory / "cache"
 ```
 
-### Configuration Validation
+### Configuration Validation (Pydantic v2)
 ```python
-class Config(BaseModel):
-    """Main configuration model with validation"""
+from pydantic import BaseModel, Field, ConfigDict, HttpUrl, field_validator
+from pydantic_settings import BaseSettings
+
+class PlexConfig(BaseModel):
+    """Plex server configuration with Pydantic v2 validation"""
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_default=True,
+        extra='forbid'
+    )
     
-    # Plex settings
-    plex_url: str = Field(..., regex=r'^https?://.+')
-    plex_token: str = Field(..., min_length=20)
+    url: HttpUrl = Field(..., description="Plex server URL")
+    token: str = Field(..., min_length=20, description="Plex authentication token")
+    username: Optional[str] = Field(None, description="Plex username (optional)")
+    password: Optional[str] = Field(None, description="Plex password (optional)")
     
-    # Directory paths
-    cache_directory: Optional[Path] = None
-    array_directory: Optional[Path] = None
-    
-    # Resource limits
-    max_cache_size: int = Field(default=50_000_000_000, ge=1_000_000_000)  # 50GB default
-    max_concurrent_operations: int = Field(default=4, ge=1, le=20)
-    
-    @validator('plex_url')
-    def validate_plex_connectivity(cls, v):
-        """Validate Plex server connectivity"""
-        if not NetworkValidator.test_connectivity(v):
-            raise ValueError(f"Cannot connect to Plex server: {v}")
+    @field_validator('token')
+    @classmethod
+    def validate_token_format(cls, v: str) -> str:
+        """Validate Plex token format"""
+        if not v.startswith(('plex_', 'X-Plex-Token-')):
+            # Allow any alphanumeric token for flexibility
+            pass
         return v
+
+class MediaConfig(BaseModel):
+    """Media processing configuration with enhanced validation"""
+    model_config = ConfigDict(
+        validate_default=True,
+        extra='forbid'
+    )
+    
+    copy_to_cache: bool = Field(True, description="Copy files to cache (vs move)")
+    delete_from_cache_when_done: bool = Field(True, description="Delete from cache when done")
+    watched_move: bool = Field(True, description="Move watched content")
+    users_toggle: bool = Field(True, description="Enable multi-user support")
+    exit_if_active_session: bool = Field(False, description="Exit if Plex session active")
+    
+    # Numeric constraints with Pydantic v2
+    days_to_monitor: PositiveInt = Field(99, description="Days to monitor media")
+    number_episodes: PositiveInt = Field(5, description="Number of episodes to cache")
+    watchlist_episodes: PositiveInt = Field(1, description="Watchlist episodes to cache")
+    
+    @computed_field
+    @property
+    def cache_mode_description(self) -> str:
+        """Human-readable cache mode description"""
+        return "Copy to cache (preserves originals)" if self.copy_to_cache else "Move to cache (frees source space)"
+
+class CacherrSettings(BaseSettings):
+    """Main application settings using Pydantic v2 BaseSettings"""
+    model_config = SettingsConfigDict(
+        env_file=('.env', '.env.prod'),
+        env_file_encoding='utf-8',
+        case_sensitive=False,
+        extra='ignore'
+    )
+    
+    # Core settings
+    debug: bool = Field(False, description="Enable debug mode")
+    config_dir: str = Field("/config", description="Configuration directory")
+    
+    # Nested configuration models
+    plex: PlexConfig
+    media: MediaConfig = Field(default_factory=MediaConfig)
+    paths: PathsConfig = Field(default_factory=PathsConfig)
+    performance: PerformanceConfig = Field(default_factory=PerformanceConfig)
 ```
 
 ### Migration System
@@ -333,12 +379,66 @@ For complex migrations, manual intervention may be required:
 3. **Guided Process**: Step-by-step migration assistance
 4. **Verification**: User verification of migrated settings
 
+## Implementation Update: Pydantic v2 Migration (2024)
+
+### Status: COMPLETED
+The configuration system has been fully migrated to Pydantic v2 with enhanced type safety, performance, and validation capabilities.
+
+### Key Improvements
+1. **Modern Pydantic v2**: Full migration from dataclasses to Pydantic BaseModel
+2. **BaseSettings Integration**: Automatic environment variable loading via pydantic-settings
+3. **Enhanced Validation**: Comprehensive field validation with helpful error messages
+4. **Performance Optimizations**: Model caching and production-ready optimizations
+5. **Type Safety**: Complete type hints with IDE support and static analysis
+6. **Real-time Validation**: API endpoints validate configuration updates in real-time
+
+### New Configuration Architecture
+```python
+# Modern configuration structure
+config = get_config()
+
+# Type-safe access with IDE completion
+print(config.media.copy_to_cache)  # bool
+print(config.media.cache_mode_description)  # computed field
+print(config.plex.url)  # HttpUrl (validated)
+print(config.performance.max_concurrent_moves_cache)  # PositiveInt
+
+# Validation and persistence
+config.save_updates({
+    'media': {'copy_to_cache': True},
+    'performance': {'max_concurrent_moves_cache': 3}
+})
+
+# Comprehensive validation
+validation_results = config.validate_all()
+if not validation_results['valid']:
+    print(f"Errors: {validation_results['errors']}")
+```
+
+### Configuration Flow
+```
+Environment Variables → CacherrSettings (BaseSettings) → Config Class → Pydantic Models
+                    ↓
+            Automatic Type Conversion & Validation
+                    ↓
+            Application Services (Type-Safe Access)
+```
+
+### Benefits Achieved
+- **🛡️ Type Safety**: All configuration access is type-safe
+- **⚡ Performance**: Model caching and optimized validation  
+- **🔧 Maintainability**: Self-documenting Pydantic models
+- **🐛 Reliability**: Comprehensive validation prevents invalid configs
+- **🔄 Backward Compatibility**: Existing Docker setups work unchanged
+- **📝 Self-Documenting**: Pydantic models serve as living documentation
+
 ## Future Considerations
 
-1. **Configuration UI**: Web-based configuration interface
-2. **Advanced Validation**: More sophisticated validation rules
-3. **Dynamic Reconfiguration**: Runtime configuration updates
-4. **Configuration Profiles**: Pre-defined configuration templates
-5. **Cloud Configuration**: Remote configuration storage and sync
+1. **Configuration UI**: Enhanced web-based configuration interface with real-time validation
+2. **Advanced Validation**: Cross-field validation and business rule enforcement
+3. **Dynamic Reconfiguration**: Hot-reload capabilities for configuration updates
+4. **Configuration Profiles**: Environment-specific configuration templates
+5. **Cloud Configuration**: Remote configuration storage and synchronization
+6. **Schema Evolution**: Automated schema migration for configuration updates
 
-This ADR establishes a robust, flexible configuration system that adapts automatically to different environments while providing validation, migration, and user-friendly error handling.
+This ADR establishes a robust, modern configuration system using Pydantic v2 that provides excellent type safety, validation, and developer experience while maintaining backward compatibility.

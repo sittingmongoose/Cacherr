@@ -86,44 +86,88 @@ export interface HealthCheck {
 
 export type ServiceStatus = 'healthy' | 'unhealthy' | 'unknown' | 'not_configured'
 
-// Configuration Types
+// Configuration Types (Updated for Pydantic v2)
 export interface ConfigurationSettings {
-  general: GeneralSettings
   plex: PlexSettings
+  media: MediaSettings
   paths: PathSettings
-  cache: CacheSettings
-  scheduler: SchedulerSettings
+  performance: PerformanceSettings
+  real_time_watch: RealTimeWatchSettings
+  trakt: TraktSettings
+  web: WebSettings
+  test_mode: TestModeSettings
   notifications: NotificationSettings
-  trakt?: TraktSettings
-}
-
-export interface GeneralSettings {
-  log_level: 'DEBUG' | 'INFO' | 'WARNING' | 'ERROR'
+  logging: LoggingSettings
   debug: boolean
-  test_mode: boolean
-  exit_if_active_session: boolean
 }
 
 export interface PlexSettings {
   url: string
   token: string
-  timeout_seconds: number
-  max_retries: number
+  username?: string
+  password?: string
+}
+
+export interface MediaSettings {
+  copy_to_cache: boolean
+  delete_from_cache_when_done: boolean
+  watched_move: boolean
+  users_toggle: boolean
+  watchlist_toggle: boolean
+  exit_if_active_session: boolean
+  days_to_monitor: number
+  number_episodes: number
+  watchlist_episodes: number
+  watchlist_cache_expiry: number
+  watched_cache_expiry: number
+  cache_mode_description: string  // Computed field
 }
 
 export interface PathSettings {
   plex_source: string
-  cache_destination?: string
+  cache_destination: string
   additional_sources: string[]
+  additional_plex_sources: string[]
 }
 
-export interface CacheSettings {
-  copy_to_cache: boolean
-  delete_from_cache_when_done: boolean
+export interface PerformanceSettings {
   max_concurrent_moves_cache: number
   max_concurrent_moves_array: number
   max_concurrent_local_transfers: number
   max_concurrent_network_transfers: number
+  enable_monitoring: boolean
+}
+
+export interface RealTimeWatchSettings {
+  enabled: boolean
+  check_interval: number
+  auto_cache_on_watch: boolean
+  cache_on_complete: boolean
+  respect_existing_rules: boolean
+  max_concurrent_watches: number
+  remove_from_cache_after_hours: number
+  respect_other_users_watchlists: boolean
+  exclude_inactive_users_days: number
+}
+
+export interface WebSettings {
+  host: string
+  port: number
+  debug: boolean
+  enable_scheduler: boolean
+}
+
+export interface TestModeSettings {
+  enabled: boolean
+  show_file_sizes: boolean
+  show_total_size: boolean
+  dry_run: boolean
+}
+
+export interface LoggingSettings {
+  level: 'DEBUG' | 'INFO' | 'WARNING' | 'ERROR' | 'CRITICAL'
+  max_files: number
+  max_size_mb: number
 }
 
 export interface SchedulerSettings {
@@ -152,21 +196,34 @@ export interface EmailConfig {
 }
 
 export interface TraktSettings {
+  enabled: boolean
   client_id: string
   client_secret: string
-  username: string
-  enabled: boolean
-  sync_watched: boolean
-  sync_watchlist: boolean
+  trending_movies_count: number
+  check_interval: number
 }
 
-// Validation Types
+// Validation Types (Pydantic v2)
 export interface ValidationResult {
   valid: boolean
   errors: string[]
   warnings: string[]
-  path_checks: Record<string, PathCheckResult>
-  connectivity_checks: Record<string, ConnectivityCheckResult>
+  sections: Record<string, SectionValidationResult>
+  message?: string
+}
+
+export interface SectionValidationResult {
+  valid: boolean
+  errors: string[]
+  model_class: string
+}
+
+export interface ConfigurationSummary {
+  valid: boolean
+  error_count: number
+  sections_count: number
+  key_settings: Record<string, any>
+  validation_details: Record<string, SectionValidationResult>
 }
 
 export interface PathCheckResult {

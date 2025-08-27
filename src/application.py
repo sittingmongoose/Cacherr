@@ -405,9 +405,10 @@ class ApplicationContext:
         try:
             self.logger.info("Validating application configuration...")
             
-            # Validate core configuration
-            if not self.config.validate():
-                self.logger.error("Core configuration validation failed")
+            # Validate core configuration using new Pydantic validation
+            validation_results = self.config.validate_all()
+            if not validation_results['valid']:
+                self.logger.error(f"Core configuration validation failed: {validation_results['errors']}")
                 return False
             
             # Additional validation can be added here

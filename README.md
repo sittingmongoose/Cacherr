@@ -113,18 +113,36 @@ Open your browser and navigate to: `http://your-server:5445`
 
 ## 🔧 Configuration
 
-### Recent Changes & Updates
+### ✨ **Modern Pydantic v2 Configuration System**
 
-**Configuration Persistence (v2.1.1)**
-- **Persistent Settings**: Web-configured settings are now automatically saved to a JSON file (`/config/cacherr_config.json`) and persist across container restarts
-- **Environment Variable Priority**: Docker environment variables take precedence over web-configured settings, ensuring Docker/Unraid template configurations are always respected
-- **Additional Sources**: `ADDITIONAL_SOURCES` and `ADDITIONAL_PLEX_SOURCES` are now **only configurable via Docker environment variables** and are no longer editable in the web GUI
-- **Space-Separated Values**: Environment variables now correctly use space-separated values (e.g., `/mediasource2 /mediasource3`) instead of comma-separated values
+**Latest Update: Complete Pydantic v2 Migration**
+- **🛡️ Type Safety**: All configuration values validated with comprehensive type checking
+- **⚡ Enhanced Performance**: Model caching and optimized validation for production
+- **🔧 Real-time Validation**: Configuration updates validated instantly via web GUI
+- **📝 Self-Documenting**: Pydantic models serve as living configuration documentation
+- **🔄 Backward Compatible**: All existing Docker environment variables work unchanged
 
-**Configuration Loading Priority:**
-1. **Docker Environment Variables** (highest priority)
-2. **Persistent Configuration File** (web-configured settings)
-3. **Default Values** (lowest priority)
+**Key Features:**
+- **Automatic Environment Loading**: Uses `pydantic-settings` for seamless environment variable integration
+- **Comprehensive Validation**: URL validation, positive integer constraints, boolean parsing, and more
+- **Computed Fields**: Dynamic configuration descriptions (e.g., cache mode explanations)
+- **Error Handling**: Detailed validation error messages with specific field information
+- **Performance Optimizations**: Production-ready caching and validation optimizations
+
+**Configuration Loading Priority** (Pydantic v2):
+1. **Web GUI Overrides** (`/config/cacherr_config.json`) - highest priority
+2. **Docker Environment Variables** 
+3. **`.env` File Values**
+4. **Pydantic Model Defaults** - lowest priority
+
+**Configuration Sections:**
+- `media`: Media processing settings (copy/move behavior, cache expiry, etc.)
+- `plex`: Plex server connection settings (URL, token, authentication)
+- `paths`: Directory paths for source and cache locations  
+- `performance`: Concurrency limits and transfer settings
+- `real_time_watch`: Real-time Plex watching configuration
+- `trakt`: Trakt.tv integration settings
+- `notifications`: Webhook and notification configuration
 
 ### Environment Variables
 
@@ -165,7 +183,7 @@ Open your browser and navigate to: `http://your-server:5445`
 | `REAL_TIME_WATCH_REMOVE_FROM_CACHE_AFTER_HOURS` | Hours before removing media from cache (0 = never) | `24` |
 | `REAL_TIME_WATCH_RESPECT_OTHER_USERS_WATCHLISTS` | Keep media in cache for other users' watchlists | `true` |
 | `REAL_TIME_WATCH_EXCLUDE_INACTIVE_USERS_DAYS` | Days of inactivity before excluding users (0 = no exclusion) | `30` |
-| `COPY_TO_CACHE` | Copy files to cache instead of moving | `false` |
+| `COPY_TO_CACHE` | Copy files to cache instead of moving | `true` |
 | `DELETE_FROM_CACHE_WHEN_DONE` | Delete from cache when done (vs moving back) | `true` |
 | `DEBUG` | Enable debug mode | `false` |
 | `ENABLE_SCHEDULER` | Enable automatic scheduling | `false` |

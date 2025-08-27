@@ -351,11 +351,10 @@ def api_get_settings():
 @handle_api_error
 def api_update_settings():
     """
-    Update configuration settings.
+    Update configuration settings using modern Pydantic v2 validation.
     
-    Accepts JSON payload with settings to update. Filtered to prevent
-    updating certain critical settings like additional sources which
-    should only be configured via Docker environment variables.
+    Accepts JSON payload with settings to update. Uses Pydantic validation
+    to ensure all updates are type-safe and within valid ranges.
     
     Returns:
         JSON response with update results
@@ -377,38 +376,43 @@ def api_update_settings():
             )
             return jsonify(response.dict()), 400
         
-        # Filter out restricted settings
+        # Filter out restricted settings (environment-only configurations)
         filtered_data = {}
         for key, value in data.items():
             if key == 'paths':
-                # Only allow plex_source and cache_destination, not additional_sources
+                # Only allow user-configurable path settings
                 filtered_paths = {}
                 if 'plex_source' in value:
                     filtered_paths['plex_source'] = value['plex_source']
                 if 'cache_destination' in value:
                     filtered_paths['cache_destination'] = value['cache_destination']
+                # additional_sources are environment-only for security
                 if filtered_paths:
                     filtered_data['paths'] = filtered_paths
-            else:
+            elif key not in ['logging']:  # logging is system-managed
                 filtered_data[key] = value
         
-        # Update configuration
-        updated_vars = {}
-        for key, value in filtered_data.items():
-            if hasattr(config, key) and hasattr(getattr(config, key), '__dict__'):
-                # Handle nested configuration objects
-                section = getattr(config, key)
-                for subkey, subvalue in value.items():
-                    if hasattr(section, subkey):
-                        # Don't save empty strings for any configuration - preserve existing values
-                        if subvalue == '' or subvalue is None:
-                            continue
-                        if config.update_persistent_config(key, subkey, subvalue):
-                            updated_vars[f"{key}.{subkey}"] = subvalue
-            else:
-                # Handle top-level configuration
-                if config.update_persistent_config('general', key, value):
-                    updated_vars[key] = value
+        # Remove empty values to preserve existing settings
+        def clean_empty_values(obj):
+            if isinstance(obj, dict):
+                return {k: clean_empty_values(v) for k, v in obj.items() 
+                       if v != '' and v is not None}
+            return obj
+        
+        filtered_data = clean_empty_values(filtered_data)
+        
+        if not filtered_data:
+            response = APIResponse(
+                success=True,
+                message="No valid settings to update"
+            )
+            return jsonify(response.dict())
+        
+        # Use new Pydantic-based save_updates method
+        config.save_updates(filtered_data)
+        
+        # Log successful update
+        logger.info(f"Configuration updated successfully: {list(filtered_data.keys())}")
         
         # Reinitialize engine if Plex settings were updated
         if 'plex' in filtered_data and (filtered_data['plex'].get('url') or filtered_data['plex'].get('token')):
@@ -427,17 +431,26 @@ def api_update_settings():
                     engine.reload_watchers()
                     logger.info("Watchers reloaded due to configuration changes")
             except Exception as e:
-                logger.warning(f"Failed to reload watchers after configuration update: {e}")
+                logger.warning(f"Failed to reload watchers: {e}")
         
         response = APIResponse(
             success=True,
-            message=f"Updated {len(updated_vars)} settings",
+            message="Settings updated successfully",
             data={
-                "updated_variables": updated_vars,
-                "total_updates": len(updated_vars)
+                "updated_sections": list(filtered_data.keys()),
+                "validation_summary": config.get_summary()
             }
         )
         return jsonify(response.dict())
+        
+    except ValueError as e:
+        # Pydantic validation error
+        logger.error(f"Settings validation failed: {e}")
+        response = APIResponse(
+            success=False,
+            error=f"Invalid settings: {str(e)}"
+        )
+        return jsonify(response.dict()), 400
         
     except Exception as e:
         logger.error(f"Failed to update settings: {e}")
@@ -452,16 +465,16 @@ def api_update_settings():
 @handle_api_error
 def api_validate_settings():
     """
-    Validate configuration settings without applying them.
+    Validate configuration settings using Pydantic v2 validation.
     
     Performs comprehensive validation including:
-    - Path existence and accessibility checks
-    - Plex server connectivity tests
-    - Configuration value validation
-    - Dependency availability checks
+    - Type checking and constraint validation
+    - Cross-field validation (e.g., path matching)
+    - Business logic validation
+    - Range and format validation
     
     Returns:
-        JSON response with validation results
+        JSON response with detailed validation results
     """
     config = get_config()
     if not config:
@@ -474,94 +487,27 @@ def api_validate_settings():
     try:
         data = request.get_json()
         if not data:
-            response = APIResponse(
-                success=False,
-                error="No settings data provided for validation"
-            )
-            return jsonify(response.dict()), 400
-        
-        validation_results = {
-            'valid': True,
-            'errors': [],
-            'warnings': [],
-            'path_checks': {},
-            'connectivity_checks': {}
-        }
-        
-        # Validate paths
-        if 'paths' in data:
-            paths = data['paths']
-            
-            # Check plex source
-            if 'plex_source' in paths:
-                plex_source = paths['plex_source']
-                if os.path.exists(plex_source):
-                    validation_results['path_checks']['plex_source'] = {
-                        'exists': True,
-                        'readable': os.access(plex_source, os.R_OK),
-                        'path': plex_source
-                    }
-                else:
-                    validation_results['path_checks']['plex_source'] = {
-                        'exists': False,
-                        'readable': False,
-                        'path': plex_source
-                    }
-                    validation_results['errors'].append(f"Plex source directory does not exist: {plex_source}")
-                    validation_results['valid'] = False
-            
-            # Check cache destination
-            if 'cache_destination' in paths and paths['cache_destination']:
-                cache_dest = paths['cache_destination']
-                if os.path.exists(cache_dest):
-                    validation_results['path_checks']['cache_destination'] = {
-                        'exists': True,
-                        'writable': os.access(cache_dest, os.W_OK),
-                        'path': cache_dest
-                    }
-                else:
-                    validation_results['path_checks']['cache_destination'] = {
-                        'exists': False,
-                        'writable': False,
-                        'path': cache_dest
-                    }
-                    validation_results['warnings'].append(f"Cache destination directory does not exist: {cache_dest}")
-        
-        # Validate Plex connection
-        if 'plex' in data:
-            plex_config = data['plex']
-            if 'url' in plex_config and 'token' in plex_config:
-                try:
-                    plex_url = plex_config['url']
-                    plex_token = plex_config['token']
-                    
-                    # Test Plex connection
-                    test_url = f"{plex_url}/status/sessions"
-                    headers = {'X-Plex-Token': plex_token}
-                    response_req = requests.get(test_url, headers=headers, timeout=10)
-                    
-                    if response_req.status_code == 200:
-                        validation_results['connectivity_checks']['plex_server'] = {
-                            'status': 'success',
-                            'url': plex_url,
-                            'response_time_ms': response_req.elapsed.total_seconds() * 1000
-                        }
-                    else:
-                        validation_results['connectivity_checks']['plex_server'] = {
-                            'status': 'failed',
-                            'url': plex_url,
-                            'status_code': response_req.status_code
-                        }
-                        validation_results['errors'].append(f"Plex connection failed: HTTP {response_req.status_code}")
-                        validation_results['valid'] = False
-                        
-                except Exception as e:
-                    validation_results['connectivity_checks']['plex_server'] = {
-                        'status': 'error',
-                        'error': str(e)
-                    }
-                    validation_results['errors'].append(f"Plex connection error: {e}")
-                    validation_results['valid'] = False
+            # Validate current configuration
+            validation_results = config.validate_all()
+        else:
+            # Validate provided settings without saving
+            try:
+                config._validate_updates(data)
+                validation_results = {
+                    'valid': True,
+                    'errors': [],
+                    'warnings': [],
+                    'sections': {},
+                    'message': 'All provided settings are valid'
+                }
+            except ValueError as e:
+                validation_results = {
+                    'valid': False,
+                    'errors': [str(e)],
+                    'warnings': [],
+                    'sections': {},
+                    'message': f'Validation failed: {str(e)}'
+                }
         
         response = APIResponse(
             success=True,
@@ -582,9 +528,9 @@ def api_validate_settings():
 @handle_api_error
 def api_reset_settings():
     """
-    Reset configuration to default values.
+    Reset configuration to default values using Pydantic v2 defaults.
     
-    Resets all configurable settings to their default values.
+    Resets all configurable settings to their Pydantic model defaults.
     This operation cannot be undone, so use with caution.
     
     Returns:
@@ -599,42 +545,62 @@ def api_reset_settings():
         return jsonify(response.dict()), 500
     
     try:
-        # Default settings
+        # Reset to Pydantic model defaults
         default_settings = {
-            'PLEX_SOURCE': '/media',
-            'LOG_LEVEL': 'INFO',
-            'NOTIFICATION_TYPE': 'webhook',
-            'MAX_CONCURRENT_MOVES_CACHE': '5',
-            'MAX_CONCURRENT_MOVES_ARRAY': '2',
-            'MAX_CONCURRENT_LOCAL_TRANSFERS': '5',
-            'MAX_CONCURRENT_NETWORK_TRANSFERS': '2',
-            'NUMBER_EPISODES': '5',
-            'DAYS_TO_MONITOR': '99',
-            'WATCHLIST_TOGGLE': 'true',
-            'WATCHLIST_EPISODES': '1',
-            'WATCHLIST_CACHE_EXPIRY': '6',
-            'WATCHED_MOVE': 'true',
-            'WATCHED_CACHE_EXPIRY': '48',
-            'USERS_TOGGLE': 'true',
-            'EXIT_IF_ACTIVE_SESSION': 'false',
-            'COPY_TO_CACHE': 'false',
-            'DELETE_FROM_CACHE_WHEN_DONE': 'true',
-            'TEST_MODE': 'false',
-            'TEST_SHOW_FILE_SIZES': 'true',
-            'TEST_SHOW_TOTAL_SIZE': 'true',
-            'DEBUG': 'false'
+            'media': {
+                'copy_to_cache': True,  # New default
+                'delete_from_cache_when_done': True,
+                'watched_move': True,
+                'users_toggle': True,
+                'watchlist_toggle': True,
+                'exit_if_active_session': False,
+                'days_to_monitor': 99,
+                'number_episodes': 5,
+                'watchlist_episodes': 1,
+                'watchlist_cache_expiry': 6,
+                'watched_cache_expiry': 48
+            },
+            'performance': {
+                'max_concurrent_moves_cache': 3,  # Updated defaults
+                'max_concurrent_moves_array': 1,
+                'max_concurrent_local_transfers': 3,
+                'max_concurrent_network_transfers': 1
+            },
+            'test_mode': {
+                'enabled': False,
+                'show_file_sizes': True,
+                'show_total_size': True
+            },
+            'real_time_watch': {
+                'enabled': False,
+                'check_interval': 30,
+                'auto_cache_on_watch': True,
+                'cache_on_complete': True,
+                'respect_existing_rules': True,
+                'max_concurrent_watches': 5,
+                'remove_from_cache_after_hours': 24,
+                'respect_other_users_watchlists': True,
+                'exclude_inactive_users_days': 30
+            },
+            'trakt': {
+                'enabled': False,
+                'trending_movies_count': 10,
+                'check_interval': 3600
+            }
         }
         
-        # Apply default settings to environment
-        for key, value in default_settings.items():
-            os.environ[key] = value
+        # Apply default settings using the new configuration system
+        config.save_updates(default_settings)
+        
+        # Reload configuration to ensure all changes are applied
+        config.reload()
         
         response = APIResponse(
             success=True,
-            message="Settings reset to defaults successfully",
+            message="Configuration reset to default values",
             data={
-                "default_settings": default_settings,
-                "total_reset": len(default_settings)
+                "reset_sections": list(default_settings.keys()),
+                "validation_summary": config.get_summary()
             }
         )
         return jsonify(response.dict())

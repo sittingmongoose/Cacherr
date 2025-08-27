@@ -426,20 +426,20 @@
                         <div style="margin-left: 20px;">
                             <div class="form-group">
                                 <label class="form-label">
-                                    <input type="radio" name="cache_mode" value="move" id="cache_mode_move" checked>
+                                    <input type="radio" name="cache_mode" value="move" id="cache_mode_move">
                                     Move to Cache
                                 </label>
                                 <small class="form-help">Move files to cache (frees source space). Uses symlinks/hardlinks so Plex still sees the files.</small>
                             </div>
                             <div class="form-group">
                                 <label class="form-label">
-                                    <input type="radio" name="cache_mode" value="copy" id="cache_mode_copy">
+                                    <input type="radio" name="cache_mode" value="copy" id="cache_mode_copy" checked>
                                     Copy to Cache
                                 </label>
                                 <small class="form-help">Copy files to cache (preserves originals). Uses symlinks/hardlinks so Plex uses cached versions.</small>
                                 
                                 <!-- Delete option only for copy mode -->
-                                <div id="copy_mode_options" style="margin-left: 20px; margin-top: 10px; display: none;">
+                                <div id="copy_mode_options" style="margin-left: 20px; margin-top: 10px; display: block;">
                                     <div class="form-group">
                                         <label class="form-label">
                                             <input type="checkbox" class="form-checkbox" id="delete_from_cache_when_done" name="media[delete_from_cache_when_done]" checked>
@@ -456,7 +456,7 @@
                     </div>
                     
                     <!-- Hidden inputs to maintain compatibility -->
-                    <input type="hidden" id="copy_to_cache" name="media[copy_to_cache]" value="false">
+                    <input type="hidden" id="copy_to_cache" name="media[copy_to_cache]" value="true">
                     
                     <h4>Performance Settings</h4>
                     <div class="form-group">
@@ -913,6 +913,14 @@
             if (formData.get('performance[max_concurrent_network_transfers]')) {
                 if (!settings.performance) settings.performance = {};
                 settings.performance.max_concurrent_network_transfers = parseInt(formData.get('performance[max_concurrent_network_transfers]'));
+            }
+            
+            // Handle cache mode radio buttons
+            const cacheModeMove = document.getElementById('cache_mode_move');
+            const cacheModeCopy = document.getElementById('cache_mode_copy');
+            if (cacheModeMove && cacheModeCopy) {
+                if (!settings.media) settings.media = {};
+                settings.media.copy_to_cache = cacheModeCopy.checked;
             }
             
             // Debug: Log the settings object being sent

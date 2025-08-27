@@ -604,7 +604,7 @@ class CacheServiceFactory(BaseServiceFactory[CacheService]):
                 days_to_monitor=days_to_monitor,
                 number_episodes=number_episodes,
                 watchlist_episodes=watchlist_episodes,
-                copy_to_cache=self.config_provider.get_bool("COPY_TO_CACHE", False),
+                copy_to_cache=self.config_provider.get_bool("COPY_TO_CACHE", True),
                 delete_from_cache_when_done=self.config_provider.get_bool(
                     "DELETE_FROM_CACHE_WHEN_DONE", True
                 ),
