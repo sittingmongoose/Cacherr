@@ -20,7 +20,7 @@ import {
   Activity
 } from 'lucide-react'
 import { CachedFileInfo, RemoveCachedFileRequest } from '@/types/api'
-import { useAPI } from '@/hooks/useApi'
+import useAPI from '@/hooks/useApi'
 import APIService from '@/services/api'
 import { useCachedFilesOperations } from '@/hooks/useApi'
 import { LoadingSpinner } from '@/components/common/LoadingSpinner'

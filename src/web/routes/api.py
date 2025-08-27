@@ -1409,7 +1409,7 @@ def api_get_cached_files():
         # Get cached files service from dependency injection
         from ...core.cached_files_service import CachedFilesService
         try:
-            cached_files_service = g.service_container.resolve(CachedFilesService)
+            cached_files_service = g.container.resolve(CachedFilesService)
         except Exception as e:
             logger.error(f"Failed to resolve CachedFilesService: {e}")
             response = APIResponse(
@@ -1469,7 +1469,7 @@ def api_get_cached_file(file_id: str):
     try:
         from ...core.cached_files_service import CachedFilesService
         try:
-            cached_files_service = g.service_container.resolve(CachedFilesService)
+            cached_files_service = g.container.resolve(CachedFilesService)
         except Exception as e:
             logger.error(f"Failed to resolve CachedFilesService: {e}")
             response = APIResponse(
@@ -1533,7 +1533,7 @@ def api_remove_cached_file(file_id: str):
         
         from ...core.cached_files_service import CachedFilesService
         try:
-            cached_files_service = g.service_container.resolve(CachedFilesService)
+            cached_files_service = g.container.resolve(CachedFilesService)
         except Exception as e:
             logger.error(f"Failed to resolve CachedFilesService: {e}")
             response = APIResponse(
@@ -1600,7 +1600,7 @@ def api_get_cache_statistics():
     try:
         from ...core.cached_files_service import CachedFilesService
         try:
-            cached_files_service = g.service_container.resolve(CachedFilesService)
+            cached_files_service = g.container.resolve(CachedFilesService)
         except Exception as e:
             logger.error(f"Failed to resolve CachedFilesService: {e}")
             response = APIResponse(
@@ -1653,7 +1653,7 @@ def api_get_user_cache_stats(user_id: str):
         
         from ...core.cached_files_service import CachedFilesService
         try:
-            cached_files_service = g.service_container.resolve(CachedFilesService)
+            cached_files_service = g.container.resolve(CachedFilesService)
         except Exception as e:
             logger.error(f"Failed to resolve CachedFilesService: {e}")
             response = APIResponse(
@@ -1710,7 +1710,7 @@ def api_cleanup_cached_files():
         
         from ...core.cached_files_service import CachedFilesService
         try:
-            cached_files_service = g.service_container.resolve(CachedFilesService)
+            cached_files_service = g.container.resolve(CachedFilesService)
         except Exception as e:
             logger.error(f"Failed to resolve CachedFilesService: {e}")
             response = APIResponse(
@@ -1777,7 +1777,7 @@ def api_search_cached_files():
         
         from ...core.cached_files_service import CachedFilesService
         try:
-            cached_files_service = g.service_container.resolve(CachedFilesService)
+            cached_files_service = g.container.resolve(CachedFilesService)
         except Exception as e:
             logger.error(f"Failed to resolve CachedFilesService: {e}")
             response = APIResponse(
@@ -1874,7 +1874,7 @@ def api_export_cached_files():
         
         from ...core.cached_files_service import CachedFilesService
         try:
-            cached_files_service = g.service_container.resolve(CachedFilesService)
+            cached_files_service = g.container.resolve(CachedFilesService)
         except Exception as e:
             logger.error(f"Failed to resolve CachedFilesService: {e}")
             response = APIResponse(

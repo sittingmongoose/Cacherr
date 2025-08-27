@@ -584,7 +584,6 @@ Cacherr/
 ├── docker-compose.yml   # Docker Compose configuration
 ├── requirements.txt     # Python dependencies
 ├── env.example          # Environment variables template
-├── dashboard.html       # Web interface
 └── README.md           # This file
 
 **Runtime Files (created automatically):**

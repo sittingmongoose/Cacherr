@@ -457,6 +457,47 @@ export class APIService {
     return response.data
   }
 
+  static async getOperations(
+    limit: number = 50,
+    offset: number = 0,
+    user_id?: string,
+    operation_type?: string,
+    start_date?: string,
+    end_date?: string,
+    active_only: boolean = false
+  ): Promise<OperationsResponse> {
+    const params = new URLSearchParams({
+      limit: String(limit),
+      offset: String(offset),
+      active_only: String(active_only)
+    })
+
+    if (user_id) params.append('user_id', user_id)
+    if (operation_type) params.append('operation_type', operation_type)
+    if (start_date) params.append('start_date', start_date)
+    if (end_date) params.append('end_date', end_date)
+
+    const response = await client.get<APIResponse<OperationsResponse>>(
+      `/api/results/operations?${params.toString()}`
+    )
+    
+    if (!response.success || !response.data) {
+      throw new APIError(response.error || 'Failed to get operations', 500)
+    }
+    return response.data
+  }
+
+  static async getOperationDetails(operationId: string): Promise<OperationDetails> {
+    const response = await client.get<APIResponse<OperationDetails>>(
+      `/api/results/operations/${operationId}`
+    )
+    
+    if (!response.success || !response.data) {
+      throw new APIError(response.error || 'Failed to get operation details', 500)
+    }
+    return response.data
+  }
+
   static async exportCachedFiles(
     format: 'csv' | 'json' | 'txt' = 'csv',
     filter: Partial<CachedFilesFilter> = {},

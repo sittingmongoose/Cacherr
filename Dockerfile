@@ -56,7 +56,6 @@ COPY --from=frontend-builder /app/frontend/dist ./frontend/dist/
 # Copy application code
 COPY src/ ./src/
 COPY main.py .
-COPY dashboard.html .
 COPY entrypoint.sh .
 
 # SECURITY: Create directories with minimal permissions - NO ownership changes

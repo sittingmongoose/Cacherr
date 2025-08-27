@@ -170,6 +170,12 @@ class WebApplicationFactory:
                 g.media_service = self.container.try_resolve(MediaService)
                 g.file_service = self.container.try_resolve(FileService)
                 g.notification_service = self.container.try_resolve(NotificationService)
+                # Try to resolve CachedFilesService if available
+                try:
+                    from ..core.cached_files_service import CachedFilesService
+                    g.cached_files_service = self.container.try_resolve(CachedFilesService)
+                except ImportError:
+                    g.cached_files_service = None
             except Exception as e:
                 self.logger.warning(f"Failed to pre-resolve services: {e}")
         

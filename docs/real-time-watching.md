@@ -215,7 +215,6 @@ Safety measures include:
 
 - `src/core/plex_watcher.py`: Main watcher implementation
 - `src/web/routes/api.py`: REST API endpoints
-- `dashboard.html`: Web interface
 - `src/config/settings.py`: Configuration management
 
 ### Testing Considerations

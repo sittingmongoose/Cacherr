@@ -446,7 +446,26 @@ class ApplicationContext:
             if self.app_config.enable_cache_engine:
                 self.container.register_singleton(CacherrEngine, CacherrEngine)
             
-            # Additional service registrations would go here based on actual implementations
+            # Register CachedFilesService for tracking cached files
+            try:
+                from .core.cached_files_service import CachedFilesService
+                # Use a standard database path in the config directory
+                db_path = "/config/cached_files.db"
+                # Create the config directory if it doesn't exist
+                import os
+                config_dir = "/config"
+                if not os.path.exists(config_dir):
+                    os.makedirs(config_dir, exist_ok=True)
+                
+                # Create and register the CachedFilesService instance
+                cached_files_service = CachedFilesService(database_path=db_path)
+                self.container.register_instance(CachedFilesService, cached_files_service)
+                self.logger.info("CachedFilesService registered successfully")
+            except ImportError as e:
+                self.logger.warning(f"Failed to import CachedFilesService: {e}")
+            except Exception as e:
+                self.logger.error(f"Failed to register CachedFilesService: {e}")
+                self.startup_errors.append(f"CachedFilesService registration failed: {e}")
             
             self.logger.info("Service registration completed")
             
