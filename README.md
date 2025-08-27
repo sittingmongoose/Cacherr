@@ -165,8 +165,6 @@ Open your browser and navigate to: `http://your-server:5445`
 | `REAL_TIME_WATCH_EXCLUDE_INACTIVE_USERS_DAYS` | Days of inactivity before excluding users (0 = no exclusion) | `30` |
 | `COPY_TO_CACHE` | Copy files to cache instead of moving | `false` |
 | `DELETE_FROM_CACHE_WHEN_DONE` | Delete from cache when done (vs moving back) | `true` |
-| `USE_SYMLINKS_FOR_CACHE` | Create symlinks so Plex uses cached files | `true` |
-| `MOVE_WITH_SYMLINKS` | Enable hybrid move+symlink mode | `false` |
 | `DEBUG` | Enable debug mode | `false` |
 | `ENABLE_SCHEDULER` | Enable automatic scheduling | `false` |
 | `PORT` | Web interface port (container) | `5445` |
@@ -492,10 +490,10 @@ REAL_TIME_WATCH_EXCLUDE_INACTIVE_USERS_DAYS=30    # Exclude after 30 days inacti
    - Review test mode results in web dashboard
 
 7. **🆕 Copy/Symlink Mode Issues**
-   - Verify USE_SYMLINKS_FOR_CACHE is enabled for automatic Plex cache usage
+   - Symlinks/hardlinks are automatically used for Plex cache compatibility
    - Check symlink permissions and creation
    - Ensure Plex can follow symlinks to cached files
-   - Verify COPY_TO_CACHE and DELETE_FROM_CACHE_WHEN_DONE settings
+   - Verify COPY_TO_CACHE and DELETE_FROM_CACHE_WHEN_DONE settings in web interface
 
 ### Debug Mode
 

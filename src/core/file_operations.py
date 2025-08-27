@@ -20,8 +20,7 @@ class FileOperationConfig(BaseModel):
     max_concurrent: Optional[int] = None
     dry_run: bool = False
     copy_mode: bool = False
-    create_symlinks: bool = False
-    move_with_symlinks: bool = False
+    create_symlinks: bool = True  # Always use symlinks/hardlinks by default
 
 
 class FileOperationResult(BaseModel):
@@ -354,9 +353,7 @@ class FileOperations:
         if max_concurrent is None:
             max_concurrent = self._get_optimal_concurrency(source_dir)
         
-        if config.move_with_symlinks:
-            operation = "move+symlink"
-        elif config.create_symlinks:
+        if config.create_symlinks:
             operation = "symlink"
         elif config.copy_mode:
             operation = "copy"
@@ -421,24 +418,21 @@ class FileOperations:
         # Execute operations with thread pool
         with ThreadPoolExecutor(max_workers=max_concurrent) as executor:
             # Submit all operations
-            if config.move_with_symlinks:
-                future_to_move = {
-                    executor.submit(self._move_with_symlink, src, dest): (src, dest)
-                    for src, dest in move_operations
-                }
-            elif config.copy_mode:
-                future_to_move = {
+            if config.copy_mode:
+                # Copy mode - copy files 
+                future_to_operations = {
                     executor.submit(self._copy_single_file, src, dest): (src, dest)
                     for src, dest in move_operations
                 }
             else:
-                future_to_move = {
+                # Move mode - move files
+                future_to_operations = {
                     executor.submit(self._move_single_file, src, dest): (src, dest)
                     for src, dest in move_operations
                 }
             
-            for future in as_completed(future_to_move):
-                src, dest = future_to_move[future]
+            for future in as_completed(future_to_operations):
+                src, dest = future_to_operations[future]
                 try:
                     success, file_size = future.result()
                     if success:

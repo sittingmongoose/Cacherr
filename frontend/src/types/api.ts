@@ -120,8 +120,6 @@ export interface PathSettings {
 export interface CacheSettings {
   copy_to_cache: boolean
   delete_from_cache_when_done: boolean
-  use_symlinks_for_cache: boolean
-  move_with_symlinks: boolean
   max_concurrent_moves_cache: number
   max_concurrent_moves_array: number
   max_concurrent_local_transfers: number

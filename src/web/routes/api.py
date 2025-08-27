@@ -619,8 +619,6 @@ def api_reset_settings():
             'EXIT_IF_ACTIVE_SESSION': 'false',
             'COPY_TO_CACHE': 'false',
             'DELETE_FROM_CACHE_WHEN_DONE': 'true',
-            'USE_SYMLINKS_FOR_CACHE': 'true',
-            'MOVE_WITH_SYMLINKS': 'false',
             'TEST_MODE': 'false',
             'TEST_SHOW_FILE_SIZES': 'true',
             'TEST_SHOW_TOTAL_SIZE': 'true',

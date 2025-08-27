@@ -63,13 +63,9 @@ class MediaConfig:
     days_to_monitor: int
     number_episodes: int
     watchlist_episodes: int
-    # New: Copy vs Move behavior
+    # Simplified: Copy vs Move behavior (always uses symlinks/hardlinks)
     copy_to_cache: bool
     delete_from_cache_when_done: bool
-    # New: Cache access method
-    use_symlinks_for_cache: bool
-    # New: Hybrid mode - Move + Symlink
-    move_with_symlinks: bool
     # Cache expiry settings (with defaults)
     watchlist_cache_expiry: int = 6
     watched_cache_expiry: int = 48
@@ -375,13 +371,9 @@ class Config:
             days_to_monitor=get_int('days_to_monitor', 'DAYS_TO_MONITOR', 99),
             number_episodes=get_int('number_episodes', 'NUMBER_EPISODES', 5),
             watchlist_episodes=get_int('watchlist_episodes', 'WATCHLIST_EPISODES', 1),
-            # New: Copy vs Move behavior
+            # Simplified: Copy vs Move behavior (always uses symlinks/hardlinks)
             copy_to_cache=get_bool('copy_to_cache', 'COPY_TO_CACHE', 'false'),
-            delete_from_cache_when_done=get_bool('delete_from_cache_when_done', 'DELETE_FROM_CACHE_WHEN_DONE', 'true'),
-            # New: Cache access method
-            use_symlinks_for_cache=get_bool('use_symlinks_for_cache', 'USE_SYMLINKS_FOR_CACHE', 'true'),
-            # New: Hybrid mode - Move + Symlink
-            move_with_symlinks=get_bool('move_with_symlinks', 'MOVE_WITH_SYMLINKS', 'false')
+            delete_from_cache_when_done=get_bool('delete_from_cache_when_done', 'DELETE_FROM_CACHE_WHEN_DONE', 'true')
         )
 
     def _load_paths_config(self) -> PathsConfig:
@@ -590,9 +582,7 @@ class Config:
                 'number_episodes': self.media.number_episodes,
                 'watchlist_episodes': self.media.watchlist_episodes,
                 'copy_to_cache': self.media.copy_to_cache,
-                'delete_from_cache_when_done': self.media.delete_from_cache_when_done,
-                'use_symlinks_for_cache': self.media.use_symlinks_for_cache,
-                'move_with_symlinks': self.media.move_with_symlinks
+                'delete_from_cache_when_done': self.media.delete_from_cache_when_done
             },
             'paths': {
                 'plex_source': self.paths.plex_source,

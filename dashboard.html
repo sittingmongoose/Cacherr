@@ -420,38 +420,55 @@
                         </label>
                     </div>
                     
-                    <h4>🆕 Copy vs Move Behavior</h4>
+                    <h4>Cache Behavior</h4>
                     <div class="form-group">
-                        <label class="form-label">
-                            <input type="checkbox" class="form-checkbox" id="copy_to_cache" name="media[copy_to_cache]">
-                            Copy to Cache (instead of moving)
-                        </label>
-                        <small class="form-help">When enabled, files are copied to cache, preserving originals in source locations</small>
+                        <label class="form-label">Cache Operation Mode:</label>
+                        <div style="margin-left: 20px;">
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <input type="radio" name="cache_mode" value="move" id="cache_mode_move" checked>
+                                    Move to Cache
+                                </label>
+                                <small class="form-help">Move files to cache (frees source space). Uses symlinks/hardlinks so Plex still sees the files.</small>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <input type="radio" name="cache_mode" value="copy" id="cache_mode_copy">
+                                    Copy to Cache
+                                </label>
+                                <small class="form-help">Copy files to cache (preserves originals). Uses symlinks/hardlinks so Plex uses cached versions.</small>
+                            </div>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label class="form-label">
                             <input type="checkbox" class="form-checkbox" id="delete_from_cache_when_done" name="media[delete_from_cache_when_done]" checked>
                             Delete from Cache When Done
                         </label>
-                        <small class="form-help">When copy mode is enabled, delete files from cache instead of moving them back</small>
+                        <small class="form-help">Remove files from cache when no longer needed (instead of moving back to array)</small>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">
-                            <input type="checkbox" class="form-checkbox" id="use_symlinks_for_cache" name="media[use_symlinks_for_cache]" checked>
-                            Use Symlinks for Cache
-                        </label>
-                        <small class="form-help">Create symlinks so Plex automatically uses cached files</small>
+                        <small style="color: #28a745; font-style: italic;">🔗 <strong>Symlinks/hardlinks are always used</strong> to ensure Plex sees cached files without permission issues.</small>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">
-                            <input type="checkbox" class="form-checkbox" id="move_with_symlinks" name="media[move_with_symlinks]">
-                            🆕 Move + Symlink Mode (Hybrid)
-                        </label>
-                        <small class="form-help">Move files to cache and create symlinks back - frees source space while keeping Plex happy</small>
-                    </div>
-                    <div class="form-group">
-                        <small style="color: #6c757d; font-style: italic;">💡 <strong>Copy mode</strong> preserves your originals while still providing fast cache performance. <strong>Move+Symlink mode</strong> frees source space while keeping Plex library intact.</small>
-                    </div>
+                    
+                    <!-- Hidden inputs to maintain compatibility -->
+                    <input type="hidden" id="copy_to_cache" name="media[copy_to_cache]" value="false">
+                    
+                    <script>
+                        // Handle cache mode radio button changes
+                        document.addEventListener('DOMContentLoaded', function() {
+                            const moveModeRadio = document.getElementById('cache_mode_move');
+                            const copyModeRadio = document.getElementById('cache_mode_copy');
+                            const hiddenInput = document.getElementById('copy_to_cache');
+                            
+                            function updateCacheMode() {
+                                hiddenInput.value = copyModeRadio.checked ? 'true' : 'false';
+                            }
+                            
+                            moveModeRadio.addEventListener('change', updateCacheMode);
+                            copyModeRadio.addEventListener('change', updateCacheMode);
+                        });
+                    </script>
                     
                     <h4>Performance Settings</h4>
                     <div class="form-group">
@@ -741,10 +758,13 @@
                     document.getElementById('watched_cache_expiry').value = data.data.media?.watched_cache_expiry || 48;
                     document.getElementById('users_toggle').checked = data.data.media?.users_toggle || false;
                     document.getElementById('exit_if_active_session').checked = data.data.media?.exit_if_active_session || false;
-                    document.getElementById('copy_to_cache').checked = data.data.media?.copy_to_cache || false;
+                    // Set cache mode radio buttons
+                    const copyToCache = data.data.media?.copy_to_cache || false;
+                    document.getElementById('cache_mode_copy').checked = copyToCache;
+                    document.getElementById('cache_mode_move').checked = !copyToCache;
+                    document.getElementById('copy_to_cache').value = copyToCache ? 'true' : 'false';
+                    
                     document.getElementById('delete_from_cache_when_done').checked = data.data.media?.delete_from_cache_when_done || false;
-                    document.getElementById('use_symlinks_for_cache').checked = data.data.media?.use_symlinks_for_cache || false;
-                    document.getElementById('move_with_symlinks').checked = data.data.media?.move_with_symlinks || false;
                     
                     document.getElementById('max_concurrent_moves_cache').value = data.data.performance?.max_concurrent_moves_cache || 5;
                     document.getElementById('max_concurrent_moves_array').value = data.data.performance?.max_concurrent_moves_array || 2;

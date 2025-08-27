@@ -37,8 +37,6 @@ services:
       # Cache Behavior (Unraid optimized)
       - COPY_TO_CACHE=${COPY_TO_CACHE:-false}
       - DELETE_FROM_CACHE_WHEN_DONE=${DELETE_FROM_CACHE_WHEN_DONE:-true}
-      - USE_SYMLINKS_FOR_CACHE=${USE_SYMLINKS_FOR_CACHE:-true}
-      - MOVE_WITH_SYMLINKS=${MOVE_WITH_SYMLINKS:-false}
       
       # Performance Settings (Unraid optimized)
       - MAX_CONCURRENT_MOVES_CACHE=${MAX_CONCURRENT_MOVES_CACHE:-3}

@@ -294,7 +294,7 @@ class CacherrEngine:
             max_concurrent=self.config.performance.max_concurrent_moves_cache,
             dry_run=self.config.test_mode.dry_run,
             copy_mode=self.config.media.copy_to_cache,
-            move_with_symlinks=self.config.media.move_with_symlinks
+            create_symlinks=True  # Always use symlinks/hardlinks for Plex compatibility
         )
         
         # Use the configured real source path (now matches Plex mount)
@@ -367,7 +367,7 @@ class CacherrEngine:
                 max_concurrent=self.config.performance.max_concurrent_moves_array,
                 dry_run=self.config.test_mode.dry_run,
                 copy_mode=False,  # Always move back, don't copy
-                move_with_symlinks=False  # Don't use symlinks for array moves
+                create_symlinks=False  # Don't use symlinks for array moves
             )
             
             # Move back to array  
