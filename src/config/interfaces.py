@@ -53,6 +53,7 @@ class NotificationConfiguration(BaseModel):
     """Pydantic model for notification configuration."""
     enabled: bool = Field(default=True, description="Enable notifications")
     webhook_url: Optional[str] = Field(None, description="Webhook URL for notifications")
+    webhook_headers: Dict[str, str] = Field(default_factory=dict, description="Additional headers for webhook requests")
     notification_levels: List[str] = Field(default_factory=lambda: ['error', 'warning', 'info'], 
                                          description="Enabled notification levels")
     rate_limit_minutes: int = Field(default=5, description="Rate limit for notifications in minutes")

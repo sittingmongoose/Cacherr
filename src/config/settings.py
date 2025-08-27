@@ -154,12 +154,17 @@ class Config:
             'dry_run': self.settings.test_mode,
         }
     
-    def _build_notification_config(self) -> Dict[str, Any]:
+    def _build_notification_config(self) -> 'NotificationConfiguration':
         """Build notification configuration."""
-        return {
-            'webhook_url': self.settings.webhook_url,
-            'webhook_headers': {},
-        }
+        from .interfaces import NotificationConfiguration
+        
+        return NotificationConfiguration(
+            enabled=True,  # Default to enabled
+            webhook_url=self.settings.webhook_url,
+            webhook_headers={},  # Default empty headers
+            notification_levels=['error', 'warning', 'info'],
+            rate_limit_minutes=5
+        )
     
     def _build_cache_config(self) -> Dict[str, Any]:
         """Build cache configuration for legacy compatibility."""
