@@ -192,7 +192,8 @@ class Config:
         # Apply media configuration overrides
         if 'media' in overrides:
             try:
-                media_data = self.media.model_dump()
+                # Exclude computed fields when dumping model data
+                media_data = self.media.model_dump(exclude={'cache_mode_description'})
                 media_data.update(overrides['media'])
                 self.media = MediaConfig(**media_data)
                 self.logger.debug("Applied media configuration overrides")
@@ -202,7 +203,8 @@ class Config:
         # Apply performance configuration overrides
         if 'performance' in overrides:
             try:
-                perf_data = self.performance.model_dump()
+                # Exclude computed fields when dumping model data
+                perf_data = self.performance.model_dump(exclude={'total_max_concurrent'})
                 perf_data.update(overrides['performance'])
                 self.performance = PerformanceConfig(**perf_data)
                 self.logger.debug("Applied performance configuration overrides")
@@ -257,7 +259,8 @@ class Config:
         # Validate media updates
         if 'media' in updates:
             try:
-                media_data = self.media.model_dump()
+                # Exclude computed fields when dumping model data
+                media_data = self.media.model_dump(exclude={'cache_mode_description'})
                 media_data.update(updates['media'])
                 MediaConfig(**media_data)  # Validate without assigning
             except ValidationError as e:
@@ -266,7 +269,8 @@ class Config:
         # Validate performance updates
         if 'performance' in updates:
             try:
-                perf_data = self.performance.model_dump()
+                # Exclude computed fields when dumping model data
+                perf_data = self.performance.model_dump(exclude={'total_max_concurrent'})
                 perf_data.update(updates['performance'])
                 PerformanceConfig(**perf_data)  # Validate without assigning
             except ValidationError as e:
