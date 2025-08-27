@@ -29,10 +29,9 @@ type Theme = 'light' | 'dark' | 'auto'
 
 export const Dashboard: React.FC<DashboardProps> = ({ className }) => {
   // Global state management
-  const { state } = useAppContext()
+  const { state, dispatch } = useAppContext()
   const { systemStatus, healthStatus, logs, refreshAll, isLoading } = useRealTimeData()
   const { ui, setTheme, setAutoRefresh } = useUIState()
-  const { dispatch } = useAppContext()
   const { isRunning, runCacheOperation, startScheduler, stopScheduler } = useOperations()
   const wsStatus = useWebSocketStatus()
 
