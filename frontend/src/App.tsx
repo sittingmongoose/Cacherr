@@ -1,7 +1,6 @@
 import React from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { AppProvider } from '@/store'
-import Dashboard from '@/components/Dashboard'
 import { AppLayout } from '@/components/Layout'
 import { FullPageLoader } from '@/components/common/LoadingSpinner'
 import { ToastContainer } from '@/components/common/Toast'
@@ -105,11 +104,11 @@ const PageLoader: React.FC = () => (
   <FullPageLoader text="Loading..." />
 )
 
-// Lazy load components for better performance
+// Lazy load components for better performance and code splitting
 const Dashboard = React.lazy(() => import('@/components/Dashboard'))
 const Cached = React.lazy(() => import('@/components/Cached'))
 
-// Route components wrapper
+// Route components wrapper with Suspense for lazy loading
 const DashboardPage: React.FC = () => (
   <React.Suspense fallback={<PageLoader />}>
     <Dashboard />

@@ -1406,9 +1406,12 @@ def api_get_cached_files():
         # Validate with Pydantic
         filter_obj = CachedFilesFilter(**filter_params)
         
-        # Get cached files service
-        cached_files_service = getattr(g, 'cached_files_service', None)
-        if not cached_files_service:
+        # Get cached files service from dependency injection
+        from ...core.cached_files_service import CachedFilesService
+        try:
+            cached_files_service = g.service_container.resolve(CachedFilesService)
+        except Exception as e:
+            logger.error(f"Failed to resolve CachedFilesService: {e}")
             response = APIResponse(
                 success=False,
                 error="Cached files service not available"
@@ -1451,6 +1454,62 @@ def api_get_cached_files():
         return jsonify(response.model_dump()), 400
 
 
+@api_bp.route('/cached/files/<file_id>', methods=['GET'])
+@handle_api_error
+def api_get_cached_file(file_id: str):
+    """
+    Get details for a specific cached file.
+    
+    Args:
+        file_id: The ID of the cached file to retrieve
+        
+    Returns:
+        JSON response with cached file details
+    """
+    try:
+        from ...core.cached_files_service import CachedFilesService
+        try:
+            cached_files_service = g.service_container.resolve(CachedFilesService)
+        except Exception as e:
+            logger.error(f"Failed to resolve CachedFilesService: {e}")
+            response = APIResponse(
+                success=False,
+                error="Cached files service not available"
+            )
+            return jsonify(response.model_dump()), 500
+        
+        # Get the file info by ID
+        cached_file = cached_files_service.get_cached_file_by_id(file_id)
+        
+        if not cached_file:
+            response = APIResponse(
+                success=False,
+                error=f"Cached file with ID {file_id} not found"
+            )
+            return jsonify(response.model_dump()), 404
+        
+        # Convert to dict format for JSON response
+        file_dict = cached_file.model_dump()
+        if file_dict.get('cached_at'):
+            file_dict['cached_at'] = cached_file.cached_at.isoformat()
+        if file_dict.get('last_accessed'):
+            file_dict['last_accessed'] = cached_file.last_accessed.isoformat()
+        
+        response = APIResponse(
+            success=True,
+            data=file_dict
+        )
+        return jsonify(response.model_dump())
+        
+    except Exception as e:
+        logger.error(f"Error retrieving cached file {file_id}: {e}")
+        response = APIResponse(
+            success=False,
+            error=f"Failed to retrieve cached file: {str(e)}"
+        )
+        return jsonify(response.model_dump()), 500
+
+
 @api_bp.route('/cached/files/<file_id>', methods=['DELETE'])
 @handle_api_error
 def api_remove_cached_file(file_id: str):
@@ -1472,28 +1531,26 @@ def api_remove_cached_file(file_id: str):
         reason = data.get('reason', 'manual')
         user_id = data.get('user_id')
         
-        cached_files_service = getattr(g, 'cached_files_service', None)
-        if not cached_files_service:
+        from ...core.cached_files_service import CachedFilesService
+        try:
+            cached_files_service = g.service_container.resolve(CachedFilesService)
+        except Exception as e:
+            logger.error(f"Failed to resolve CachedFilesService: {e}")
             response = APIResponse(
                 success=False,
                 error="Cached files service not available"
             )
             return jsonify(response.model_dump()), 500
         
-        # First, get the file info to get the file path
-        from ...core.cached_files_service import CachedFilesFilter
-        cached_files, _ = cached_files_service.get_cached_files(
-            CachedFilesFilter(search=file_id, limit=1)
-        )
+        # Get the file info by ID
+        cached_file = cached_files_service.get_cached_file_by_id(file_id)
         
-        if not cached_files:
+        if not cached_file:
             response = APIResponse(
                 success=False,
                 error=f"Cached file with ID {file_id} not found"
             )
             return jsonify(response.model_dump()), 404
-        
-        cached_file = cached_files[0]
         success = cached_files_service.remove_cached_file(
             cached_file.file_path, reason, user_id
         )
@@ -1541,8 +1598,11 @@ def api_get_cache_statistics():
         JSON response with cache statistics
     """
     try:
-        cached_files_service = getattr(g, 'cached_files_service', None)
-        if not cached_files_service:
+        from ...core.cached_files_service import CachedFilesService
+        try:
+            cached_files_service = g.service_container.resolve(CachedFilesService)
+        except Exception as e:
+            logger.error(f"Failed to resolve CachedFilesService: {e}")
             response = APIResponse(
                 success=False,
                 error="Cached files service not available"
@@ -1591,52 +1651,19 @@ def api_get_user_cache_stats(user_id: str):
         if days <= 0:
             raise ValueError("Days must be positive")
         
-        cached_files_service = getattr(g, 'cached_files_service', None)
-        if not cached_files_service:
+        from ...core.cached_files_service import CachedFilesService
+        try:
+            cached_files_service = g.service_container.resolve(CachedFilesService)
+        except Exception as e:
+            logger.error(f"Failed to resolve CachedFilesService: {e}")
             response = APIResponse(
                 success=False,
                 error="Cached files service not available"
             )
             return jsonify(response.model_dump()), 500
         
-        # Get user's cached files
-        from ...core.cached_files_service import CachedFilesFilter
-        since_date = datetime.now(timezone.utc) - timedelta(days=days)
-        user_filter = CachedFilesFilter(
-            user_id=user_id,
-            cached_since=since_date,
-            limit=1000  # Get more files for accurate statistics
-        )
-        
-        cached_files, total_count = cached_files_service.get_cached_files(user_filter)
-        
-        # Calculate user statistics
-        total_size = sum(f.file_size_bytes for f in cached_files)
-        active_files = sum(1 for f in cached_files if f.status == 'active')
-        most_common_operation = None
-        
-        if cached_files:
-            from collections import Counter
-            operations = [f.triggered_by_operation for f in cached_files]
-            most_common_operation = Counter(operations).most_common(1)[0][0]
-        
-        user_stats = {
-            'user_id': user_id,
-            'period_days': days,
-            'total_files': total_count,
-            'active_files': active_files,
-            'total_size_bytes': total_size,
-            'total_size_readable': cached_files_service._format_file_size(total_size) if cached_files else "0 B",
-            'most_common_operation': most_common_operation,
-            'recent_files': [
-                {
-                    'filename': f.filename,
-                    'cached_at': f.cached_at.isoformat(),
-                    'file_size_readable': f.file_size_readable,
-                    'operation': f.triggered_by_operation
-                } for f in cached_files[:10]  # Last 10 files
-            ]
-        }
+        # Get user's cached files stats using the service method
+        user_stats = cached_files_service.get_user_statistics(user_id, days)
         
         response = APIResponse(
             success=True,
@@ -1681,8 +1708,11 @@ def api_cleanup_cached_files():
         remove_orphaned = data.get('remove_orphaned', False)
         user_id = data.get('user_id')
         
-        cached_files_service = getattr(g, 'cached_files_service', None)
-        if not cached_files_service:
+        from ...core.cached_files_service import CachedFilesService
+        try:
+            cached_files_service = g.service_container.resolve(CachedFilesService)
+        except Exception as e:
+            logger.error(f"Failed to resolve CachedFilesService: {e}")
             response = APIResponse(
                 success=False,
                 error="Cached files service not available"
@@ -1745,8 +1775,11 @@ def api_search_cached_files():
             )
             return jsonify(response.model_dump()), 400
         
-        cached_files_service = getattr(g, 'cached_files_service', None)
-        if not cached_files_service:
+        from ...core.cached_files_service import CachedFilesService
+        try:
+            cached_files_service = g.service_container.resolve(CachedFilesService)
+        except Exception as e:
+            logger.error(f"Failed to resolve CachedFilesService: {e}")
             response = APIResponse(
                 success=False,
                 error="Cached files service not available"
@@ -1839,8 +1872,11 @@ def api_export_cached_files():
             )
             return jsonify(response.model_dump()), 400
         
-        cached_files_service = getattr(g, 'cached_files_service', None)
-        if not cached_files_service:
+        from ...core.cached_files_service import CachedFilesService
+        try:
+            cached_files_service = g.service_container.resolve(CachedFilesService)
+        except Exception as e:
+            logger.error(f"Failed to resolve CachedFilesService: {e}")
             response = APIResponse(
                 success=False,
                 error="Cached files service not available"

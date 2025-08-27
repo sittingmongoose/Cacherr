@@ -24,7 +24,7 @@ import logging
 from pathlib import Path
 from typing import Optional
 
-from flask import Blueprint, render_template_string, current_app
+from flask import Blueprint, render_template_string, current_app, send_from_directory, send_file
 from pydantic import BaseModel, Field
 
 
@@ -560,3 +560,88 @@ def dashboard_config():
     except Exception as e:
         logger.error(f"Failed to get dashboard config: {e}")
         return {"error": str(e)}, 500
+
+
+@dashboard_bp.route('/app')
+@dashboard_bp.route('/app/<path:path>')
+def react_app(path=None):
+    """
+    Serve the React application.
+    
+    This route serves the built React application for the modern UI.
+    It handles client-side routing by serving index.html for all paths
+    that don't correspond to static assets.
+    
+    Args:
+        path: Optional path for client-side routing
+        
+    Returns:
+        React application HTML or static assets
+    """
+    try:
+        # Define the frontend build directory
+        frontend_dist = Path('frontend/dist')
+        
+        if not frontend_dist.exists():
+            logger.error("Frontend build directory not found")
+            return """
+            <html>
+            <head><title>Frontend Not Built</title></head>
+            <body>
+                <h1>Frontend Not Available</h1>
+                <p>The React frontend has not been built yet.</p>
+                <p>Please build the frontend using: npm run build</p>
+                <p><a href="/">Use Legacy Dashboard</a></p>
+            </body>
+            </html>
+            """, 404
+        
+        # If no path or path doesn't exist as a file, serve index.html
+        if not path:
+            return send_file(frontend_dist / 'index.html')
+        
+        # Check if the path corresponds to a static file
+        static_file = frontend_dist / path
+        if static_file.exists() and static_file.is_file():
+            return send_from_directory(frontend_dist, path)
+        
+        # For client-side routing, serve index.html
+        return send_file(frontend_dist / 'index.html')
+        
+    except Exception as e:
+        logger.error(f"Failed to serve React app: {e}")
+        return f"""
+        <html>
+        <head><title>Frontend Error</title></head>
+        <body>
+            <h1>Frontend Error</h1>
+            <p>Failed to load React frontend: {e}</p>
+            <p><a href="/">Use Legacy Dashboard</a></p>
+        </body>
+        </html>
+        """, 500
+
+
+@dashboard_bp.route('/assets/<path:filename>')
+def react_assets(filename):
+    """
+    Serve React application static assets.
+    
+    Args:
+        filename: Asset filename
+        
+    Returns:
+        Static asset file
+    """
+    try:
+        frontend_dist = Path('frontend/dist')
+        assets_dir = frontend_dist / 'assets'
+        
+        if not assets_dir.exists():
+            return "Asset not found", 404
+            
+        return send_from_directory(assets_dir, filename)
+        
+    except Exception as e:
+        logger.error(f"Failed to serve asset {filename}: {e}")
+        return "Asset error", 500

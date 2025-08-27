@@ -31,6 +31,7 @@ Example:
     ```
 """
 
+import os
 import logging
 from abc import ABC, abstractmethod
 from typing import Type, TypeVar, Generic, Optional, Dict, Any, Callable, List
@@ -44,6 +45,7 @@ from .interfaces import (
     MediaFileInfo, CacheOperationResult, TestModeAnalysis, NotificationEvent
 )
 from .repositories import CacheRepository, ConfigRepository, MetricsRepository
+from .cached_files_service import CachedFilesService
 from ..config.interfaces import (
     ConfigProvider, EnvironmentConfig, PathConfiguration,
     PlexConfiguration, PathConfigurationModel, PerformanceConfiguration,
@@ -671,6 +673,132 @@ class CacheServiceFactory(BaseServiceFactory[CacheService]):
         return lambda provider: factory_instance.create(provider)
 
 
+class CachedFilesServiceFactory(BaseServiceFactory[CachedFilesService]):
+    """
+    Factory for creating CachedFilesService instances.
+    
+    Handles the creation of CachedFilesService with proper database initialization,
+    configuration validation, and dependency injection integration.
+    """
+    
+    def __init__(self, config_provider: ConfigProvider, database_path: Optional[str] = None,
+                 factory_config: Optional[FactoryConfiguration] = None):
+        """
+        Initialize the cached files service factory.
+        
+        Args:
+            config_provider: Configuration provider for service settings
+            database_path: Optional custom database path
+            factory_config: Optional factory configuration
+        """
+        super().__init__(config_provider, factory_config)
+        self.database_path = database_path
+    
+    def get_service_type(self) -> Type[CachedFilesService]:
+        """Get the service type this factory creates."""
+        return CachedFilesService
+    
+    def validate_configuration(self) -> List[str]:
+        """Validate configuration required for CachedFilesService creation."""
+        errors = []
+        
+        try:
+            # Get database path from config or use default
+            db_path = self._get_database_path()
+            if not db_path:
+                errors.append("Database path not configured")
+            else:
+                # Validate database directory is writable
+                db_path_obj = Path(db_path)
+                db_dir = db_path_obj.parent
+                
+                if not db_dir.exists():
+                    try:
+                        db_dir.mkdir(parents=True, exist_ok=True)
+                    except Exception as e:
+                        errors.append(f"Cannot create database directory {db_dir}: {e}")
+                elif not os.access(db_dir, os.W_OK):
+                    errors.append(f"Database directory {db_dir} is not writable")
+                
+        except Exception as e:
+            errors.append(f"Configuration validation failed: {e}")
+        
+        return errors
+    
+    def can_create(self) -> bool:
+        """Check if CachedFilesService can be created."""
+        try:
+            db_path = self._get_database_path()
+            if not db_path:
+                return False
+            
+            # Check if we can create/access the database directory
+            db_path_obj = Path(db_path)
+            db_dir = db_path_obj.parent
+            
+            if not db_dir.exists():
+                try:
+                    db_dir.mkdir(parents=True, exist_ok=True)
+                except Exception:
+                    return False
+            
+            return os.access(db_dir, os.W_OK)
+            
+        except Exception as e:
+            self._logger.error(f"Error checking if CachedFilesService can be created: {e}")
+            return False
+    
+    def _create_instance(self, provider: Optional[IServiceProvider] = None) -> CachedFilesService:
+        """Create the actual CachedFilesService instance."""
+        try:
+            db_path = self._get_database_path()
+            
+            # Create the service instance
+            service = CachedFilesService(database_path=db_path)
+            
+            # Run database migrations if needed
+            try:
+                service.migrate_database()
+            except Exception as e:
+                self._logger.warning(f"Database migration failed (service may still work): {e}")
+            
+            self._logger.info(f"Created CachedFilesService with database: {db_path}")
+            return service
+            
+        except Exception as e:
+            raise ServiceCreationError(
+                CachedFilesService,
+                f"Failed to create CachedFilesService: {e}",
+                e
+            )
+    
+    def _get_database_path(self) -> str:
+        """Get the database path for the CachedFilesService."""
+        if self.database_path:
+            return self.database_path
+        
+        try:
+            # Try to get from config provider
+            config = self.config_provider.get_configuration()
+            if hasattr(config, 'paths') and hasattr(config.paths, 'data_dir'):
+                data_dir = Path(config.paths.data_dir)
+            elif hasattr(config, 'config_dir'):
+                data_dir = Path(config.config_dir) / 'data'
+            else:
+                # Fallback to default
+                data_dir = Path('/config/data')
+            
+            # Ensure data directory exists
+            data_dir.mkdir(parents=True, exist_ok=True)
+            
+            return str(data_dir / 'cached_files.db')
+            
+        except Exception as e:
+            self._logger.error(f"Failed to determine database path: {e}")
+            # Ultimate fallback
+            return '/config/data/cached_files.db'
+
+
 class ServiceFactoryRegistry:
     """
     Registry for managing service factories.
@@ -795,6 +923,11 @@ def register_default_factories(config_provider: ConfigProvider,
     factory_registry.register_factory(
         CacheService,
         CacheServiceFactory(config_provider)
+    )
+    
+    factory_registry.register_factory(
+        CachedFilesService,
+        CachedFilesServiceFactory(config_provider)
     )
     
     logger.info("Registered default factories for core services")

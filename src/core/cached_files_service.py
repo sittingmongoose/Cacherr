@@ -9,7 +9,7 @@ import json
 import logging
 import sqlite3
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Any, Set
 from dataclasses import dataclass
@@ -545,6 +545,328 @@ class CachedFilesService:
         else:
             return f"{size:.1f} {size_units[unit_index]}"
 
+    def get_cached_file_by_id(self, file_id: str) -> Optional[CachedFileInfo]:
+        """Get a specific cached file by ID."""
+        try:
+            with sqlite3.connect(self.database_path) as conn:
+                conn.row_factory = sqlite3.Row
+                
+                row = conn.execute("""
+                    SELECT * FROM cached_files WHERE id = ?
+                """, (file_id,)).fetchone()
+                
+                if not row:
+                    return None
+                
+                # Get user attributions
+                user_rows = conn.execute("""
+                    SELECT user_id FROM cached_file_users WHERE cached_file_id = ?
+                """, (file_id,)).fetchall()
+                users = [user_row['user_id'] for user_row in user_rows]
+                
+                return CachedFileInfo(
+                    id=row['id'],
+                    file_path=row['file_path'],
+                    filename=row['filename'],
+                    original_path=row['original_path'],
+                    cached_path=row['cached_path'],
+                    cache_method=row['cache_method'],
+                    file_size_bytes=row['file_size_bytes'],
+                    file_size_readable=row['file_size_readable'],
+                    cached_at=datetime.fromisoformat(row['cached_at']),
+                    last_accessed=datetime.fromisoformat(row['last_accessed']) if row['last_accessed'] else None,
+                    access_count=row['access_count'],
+                    triggered_by_user=row['triggered_by_user'],
+                    triggered_by_operation=row['triggered_by_operation'],
+                    status=row['status'],
+                    users=users,
+                    metadata=json.loads(row['metadata']) if row['metadata'] else None
+                )
+                
+        except Exception as e:
+            self.logger.error(f"Failed to get cached file by ID {file_id}: {e}")
+            return None
+
+    def update_file_access(self, file_path: str, user_id: Optional[str] = None) -> bool:
+        """Update file access timestamp and count."""
+        try:
+            with sqlite3.connect(self.database_path) as conn:
+                cursor = conn.execute("""
+                    UPDATE cached_files 
+                    SET last_accessed = ?, access_count = access_count + 1
+                    WHERE file_path = ? AND status = 'active'
+                """, (datetime.now(timezone.utc).isoformat(), file_path))
+                
+                if cursor.rowcount > 0:
+                    conn.commit()
+                    self._log_operation('cache_access', file_path, 'system',
+                                      user_id, 'File accessed', True)
+                    return True
+                return False
+                
+        except Exception as e:
+            self.logger.error(f"Failed to update file access for {file_path}: {e}")
+            return False
+
+    def add_user_to_file(self, file_path: str, user_id: str, attribution_reason: str = 'manual') -> bool:
+        """Add a user attribution to a cached file."""
+        try:
+            with sqlite3.connect(self.database_path) as conn:
+                # Get the file ID first
+                row = conn.execute("SELECT id FROM cached_files WHERE file_path = ?", (file_path,)).fetchone()
+                if not row:
+                    self.logger.warning(f"Cached file not found: {file_path}")
+                    return False
+                
+                file_id = row[0]
+                
+                # Add user attribution
+                conn.execute("""
+                    INSERT OR IGNORE INTO cached_file_users 
+                    (cached_file_id, user_id, attribution_reason)
+                    VALUES (?, ?, ?)
+                """, (file_id, user_id, attribution_reason))
+                
+                conn.commit()
+                self.logger.debug(f"Added user {user_id} to cached file: {file_path}")
+                return True
+                
+        except Exception as e:
+            self.logger.error(f"Failed to add user {user_id} to cached file {file_path}: {e}")
+            return False
+
+    def remove_user_from_file(self, file_path: str, user_id: str) -> bool:
+        """Remove a user attribution from a cached file."""
+        try:
+            with sqlite3.connect(self.database_path) as conn:
+                # Get the file ID first
+                row = conn.execute("SELECT id FROM cached_files WHERE file_path = ?", (file_path,)).fetchone()
+                if not row:
+                    return False
+                
+                file_id = row[0]
+                
+                # Remove user attribution
+                cursor = conn.execute("""
+                    DELETE FROM cached_file_users 
+                    WHERE cached_file_id = ? AND user_id = ?
+                """, (file_id, user_id))
+                
+                if cursor.rowcount > 0:
+                    conn.commit()
+                    self.logger.debug(f"Removed user {user_id} from cached file: {file_path}")
+                    return True
+                return False
+                
+        except Exception as e:
+            self.logger.error(f"Failed to remove user {user_id} from cached file {file_path}: {e}")
+            return False
+
+    def get_files_by_user(self, user_id: str, limit: int = 100) -> List[CachedFileInfo]:
+        """Get all cached files associated with a specific user."""
+        try:
+            filter_params = CachedFilesFilter(user_id=user_id, limit=limit)
+            cached_files, _ = self.get_cached_files(filter_params)
+            return cached_files
+        except Exception as e:
+            self.logger.error(f"Failed to get files for user {user_id}: {e}")
+            return []
+
+    def cleanup_removed_files(self, days_to_keep: int = 7) -> int:
+        """Permanently remove old files marked as 'removed'."""
+        try:
+            cutoff_date = datetime.now(timezone.utc) - timedelta(days=days_to_keep)
+            
+            with sqlite3.connect(self.database_path) as conn:
+                # Delete old removed files
+                cursor = conn.execute("""
+                    DELETE FROM cached_files 
+                    WHERE status = 'removed' AND cached_at < ?
+                """, (cutoff_date.isoformat(),))
+                
+                deleted_count = cursor.rowcount
+                conn.commit()
+                
+                if deleted_count > 0:
+                    self._log_operation('cache_cleanup', '', 'system', None,
+                                      f'Permanently removed {deleted_count} old files', True)
+                    self.logger.info(f"Permanently removed {deleted_count} old cached file records")
+                
+                return deleted_count
+                
+        except Exception as e:
+            self.logger.error(f"Failed to cleanup removed files: {e}")
+            return 0
+
+    def verify_cache_integrity(self) -> Tuple[int, int]:
+        """Verify cache integrity and return (verified_count, error_count)."""
+        try:
+            verified_count = 0
+            error_count = 0
+            
+            with sqlite3.connect(self.database_path) as conn:
+                # Get all active cached files
+                rows = conn.execute("""
+                    SELECT id, file_path, cached_path, original_path FROM cached_files 
+                    WHERE status = 'active'
+                """).fetchall()
+                
+                for row in rows:
+                    file_id, file_path, cached_path, original_path = row
+                    
+                    # Check if cached file exists
+                    if not Path(cached_path).exists():
+                        # Mark as orphaned
+                        conn.execute("""
+                            UPDATE cached_files 
+                            SET status = 'orphaned' 
+                            WHERE id = ?
+                        """, (file_id,))
+                        error_count += 1
+                        self.logger.warning(f"Cached file missing, marked as orphaned: {cached_path}")
+                    else:
+                        verified_count += 1
+                
+                conn.commit()
+                
+            self._log_operation('cache_verify', '', 'system', None,
+                              f'Verified {verified_count} files, found {error_count} errors', True)
+            self.logger.info(f"Cache integrity check: {verified_count} verified, {error_count} errors")
+            
+            return verified_count, error_count
+            
+        except Exception as e:
+            self.logger.error(f"Failed to verify cache integrity: {e}")
+            return 0, 0
+
+    def get_user_statistics(self, user_id: str, days: int = 30) -> Dict[str, Any]:
+        """Get comprehensive statistics for a specific user."""
+        try:
+            since_date = datetime.now(timezone.utc) - timedelta(days=days)
+            
+            with sqlite3.connect(self.database_path) as conn:
+                conn.row_factory = sqlite3.Row
+                
+                # Get user's cached files stats
+                stats_row = conn.execute("""
+                    SELECT 
+                        COUNT(*) as total_files,
+                        SUM(file_size_bytes) as total_size_bytes,
+                        COUNT(CASE WHEN status = 'active' THEN 1 END) as active_files,
+                        COUNT(CASE WHEN triggered_by_operation = 'watchlist' THEN 1 END) as watchlist_files,
+                        COUNT(CASE WHEN triggered_by_operation = 'ondeck' THEN 1 END) as ondeck_files,
+                        COUNT(CASE WHEN triggered_by_operation = 'real_time_watch' THEN 1 END) as realtime_files,
+                        AVG(access_count) as avg_access_count,
+                        MAX(access_count) as max_access_count
+                    FROM cached_files 
+                    WHERE (triggered_by_user = ? OR EXISTS (
+                        SELECT 1 FROM cached_file_users cfu 
+                        WHERE cfu.cached_file_id = cached_files.id AND cfu.user_id = ?
+                    )) AND cached_at >= ?
+                """, (user_id, user_id, since_date.isoformat())).fetchone()
+                
+                # Get most accessed file by this user
+                most_accessed_row = conn.execute("""
+                    SELECT file_path, filename, access_count 
+                    FROM cached_files 
+                    WHERE (triggered_by_user = ? OR EXISTS (
+                        SELECT 1 FROM cached_file_users cfu 
+                        WHERE cfu.cached_file_id = cached_files.id AND cfu.user_id = ?
+                    )) AND access_count > 0
+                    ORDER BY access_count DESC 
+                    LIMIT 1
+                """, (user_id, user_id)).fetchone()
+                
+                total_size_bytes = stats_row['total_size_bytes'] or 0
+                
+                return {
+                    'user_id': user_id,
+                    'period_days': days,
+                    'total_files': stats_row['total_files'],
+                    'active_files': stats_row['active_files'],
+                    'total_size_bytes': total_size_bytes,
+                    'total_size_readable': self._format_file_size(total_size_bytes),
+                    'files_by_operation': {
+                        'watchlist': stats_row['watchlist_files'],
+                        'ondeck': stats_row['ondeck_files'],
+                        'real_time_watch': stats_row['realtime_files']
+                    },
+                    'access_stats': {
+                        'average_access_count': round(stats_row['avg_access_count'] or 0, 1),
+                        'max_access_count': stats_row['max_access_count'] or 0
+                    },
+                    'most_accessed_file': {
+                        'path': most_accessed_row['file_path'] if most_accessed_row else None,
+                        'filename': most_accessed_row['filename'] if most_accessed_row else None,
+                        'access_count': most_accessed_row['access_count'] if most_accessed_row else 0
+                    } if most_accessed_row else None
+                }
+                
+        except Exception as e:
+            self.logger.error(f"Failed to get user statistics for {user_id}: {e}")
+            return {
+                'user_id': user_id,
+                'period_days': days,
+                'total_files': 0,
+                'active_files': 0,
+                'total_size_bytes': 0,
+                'total_size_readable': '0 B',
+                'files_by_operation': {},
+                'access_stats': {'average_access_count': 0, 'max_access_count': 0},
+                'most_accessed_file': None
+            }
+
+    def get_operation_logs(self, limit: int = 100, user_id: Optional[str] = None,
+                          operation_type: Optional[str] = None) -> List[CacheOperationLog]:
+        """Get cache operation logs with filtering."""
+        try:
+            with sqlite3.connect(self.database_path) as conn:
+                conn.row_factory = sqlite3.Row
+                
+                where_clauses = []
+                params = []
+                
+                if user_id:
+                    where_clauses.append("triggered_by_user = ?")
+                    params.append(user_id)
+                
+                if operation_type:
+                    where_clauses.append("operation_type = ?")
+                    params.append(operation_type)
+                
+                where_sql = "WHERE " + " AND ".join(where_clauses) if where_clauses else ""
+                
+                query = f"""
+                    SELECT * FROM cache_operations_log 
+                    {where_sql}
+                    ORDER BY timestamp DESC 
+                    LIMIT ?
+                """
+                params.append(limit)
+                
+                rows = conn.execute(query, params).fetchall()
+                
+                logs = []
+                for row in rows:
+                    logs.append(CacheOperationLog(
+                        id=row['id'],
+                        operation_type=row['operation_type'],
+                        file_path=row['file_path'],
+                        triggered_by=row['triggered_by'],
+                        triggered_by_user=row['triggered_by_user'],
+                        reason=row['reason'],
+                        success=bool(row['success']),
+                        error_message=row['error_message'],
+                        metadata=json.loads(row['metadata']) if row['metadata'] else None,
+                        timestamp=datetime.fromisoformat(row['timestamp'])
+                    ))
+                
+                return logs
+                
+        except Exception as e:
+            self.logger.error(f"Failed to get operation logs: {e}")
+            return []
+
     def _log_operation(self, operation_type: str, file_path: str, triggered_by: str,
                       triggered_by_user: Optional[str], reason: str, success: bool,
                       error_message: Optional[str] = None, metadata: Optional[Dict] = None) -> None:
@@ -579,3 +901,39 @@ class CachedFilesService:
                 
         except Exception as e:
             self.logger.error(f"Failed to log cache operation: {e}")
+
+    def migrate_database(self) -> bool:
+        """Migrate database schema to latest version."""
+        try:
+            with sqlite3.connect(self.database_path) as conn:
+                # Check current schema version
+                try:
+                    version_result = conn.execute("PRAGMA user_version").fetchone()
+                    current_version = version_result[0] if version_result else 0
+                except sqlite3.Error:
+                    current_version = 0
+                
+                self.logger.info(f"Current database schema version: {current_version}")
+                
+                # Apply migrations based on version
+                if current_version < 1:
+                    # Migration 1: Add indexes for better performance
+                    conn.execute("CREATE INDEX IF NOT EXISTS idx_cached_files_operation ON cached_files(triggered_by_operation)")
+                    conn.execute("CREATE INDEX IF NOT EXISTS idx_cached_files_size ON cached_files(file_size_bytes)")
+                    conn.execute("CREATE INDEX IF NOT EXISTS idx_cache_log_type ON cache_operations_log(operation_type)")
+                    conn.execute("PRAGMA user_version = 1")
+                    self.logger.info("Applied migration 1: Added performance indexes")
+                
+                if current_version < 2:
+                    # Migration 2: Add cache method validation
+                    # This would be handled by the Pydantic validation in the application
+                    conn.execute("PRAGMA user_version = 2")
+                    self.logger.info("Applied migration 2: Cache method validation")
+                
+                conn.commit()
+                self.logger.info("Database migration completed successfully")
+                return True
+                
+        except Exception as e:
+            self.logger.error(f"Database migration failed: {e}")
+            return False

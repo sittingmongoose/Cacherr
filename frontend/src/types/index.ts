@@ -166,7 +166,7 @@ export interface ValidationRule<T = any> {
 }
 
 export interface ValidationSchema<T = Record<string, any>> {
-  [K in keyof T]?: ValidationRule<T[K]>
+  [key: string]: ValidationRule
 }
 
 export interface ValidationResult<T = Record<string, any>> {

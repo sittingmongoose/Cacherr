@@ -1,3 +1,23 @@
+# Multi-stage build for production deployment
+# Stage 1: Frontend Build
+FROM node:20-alpine AS frontend-builder
+
+# Set working directory for frontend
+WORKDIR /app/frontend
+
+# Copy frontend package files
+COPY frontend/package.json ./
+
+# Install frontend dependencies (including dev dependencies for build)
+RUN npm install --silent
+
+# Copy frontend source code
+COPY frontend/ ./
+
+# Build frontend for production
+RUN npm run build
+
+# Stage 2: Python Backend
 FROM python:3.11-slim
 
 # Set environment variables
@@ -29,6 +49,9 @@ COPY requirements.txt .
 # Install Python dependencies
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
+
+# Copy built frontend assets from the frontend builder stage
+COPY --from=frontend-builder /app/frontend/dist ./frontend/dist/
 
 # Copy application code
 COPY src/ ./src/
