@@ -9,10 +9,11 @@ import {
   BarChart3,
   FileText,
   Clock,
-  HardDrive
+  HardDrive,
+  Activity
 } from 'lucide-react'
-import { CachedFilesFilter } from '@/types/api'
-import { useCachedFilesRealTime, useCachedFilesOperations } from '@/hooks/useApi'
+import { CachedFilesFilter, ResultsFilter } from '@/types/api'
+import { useCachedFilesRealTime, useCachedFilesOperations, useOperationResults, useOperationDetails } from '@/hooks/useApi'
 import { useAppContext } from '@/store/AppContext'
 import { LoadingSpinner, FullPageLoader } from '@/components/common/LoadingSpinner'
 import { classNames } from '@/utils/format'
@@ -23,12 +24,14 @@ import CachedFilesView from './CachedFilesView'
 import CacheStatistics from './CacheStatistics'
 import CacheActionsPanel from './CacheActionsPanel'
 import FileDetailsModal from './FileDetailsModal'
+import OperationsView from './OperationsView'
 
 /**
  * Main Cached Tab Component
  * 
  * Features:
  * - Real-time cached files monitoring
+ * - Operations tracking and history
  * - Advanced filtering and search capabilities
  * - Cache statistics dashboard
  * - File management operations
@@ -49,7 +52,13 @@ export const CachedTab: React.FC<CachedTabProps> = ({ className }) => {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null)
   const [showFilters, setShowFilters] = useState(false)
-  const [activeView, setActiveView] = useState<'files' | 'stats'>('files')
+  const [activeView, setActiveView] = useState<'files' | 'stats' | 'operations'>('files')
+  
+  // Operations state
+  const [operationsFilter, setOperationsFilter] = useState<ResultsFilter>({})
+  const [expandedOperations, setExpandedOperations] = useState<Set<string>>(new Set())
+  const [selectedOperation, setSelectedOperation] = useState<string | null>(null)
+  const [isPollingEnabled, setIsPollingEnabled] = useState(true)
 
   // API hooks
   const { 
@@ -66,6 +75,14 @@ export const CachedTab: React.FC<CachedTabProps> = ({ className }) => {
     searchCachedFiles
   } = useCachedFilesOperations()
 
+  // Operations API hooks
+  const { data: operationsData, isLoading: operationsLoading, error: operationsError, refetch: fetchOperations } = useOperationResults({
+    autoRefresh: isPollingEnabled && activeView === 'operations',
+    refreshInterval: 5000
+  })
+
+  const { data: operationDetails, isLoading: detailsLoading, error: detailsError, refetch: fetchOperationDetails } = useOperationDetails(selectedOperation)
+
   // Initialize WebSocket connection for real-time updates
   useEffect(() => {
     webSocketService.connect()
@@ -75,17 +92,36 @@ export const CachedTab: React.FC<CachedTabProps> = ({ className }) => {
       refreshAll()
     }
 
+    // Listen for operations-related WebSocket events
+    const handleOperationUpdate = () => {
+      if (activeView === 'operations') {
+        fetchOperations()
+      }
+    }
+
+    const handleFileUpdate = () => {
+      if (selectedOperation) {
+        fetchOperationDetails()
+      }
+    }
+
     // Add event listeners for cache updates
     webSocketService.addEventListener('cache_file_added', handleCacheUpdate)
     webSocketService.addEventListener('cache_file_removed', handleCacheUpdate)
     webSocketService.addEventListener('cache_statistics_updated', handleCacheUpdate)
     
+    // Add event listeners for operations updates
+    webSocketService.addEventListener('operation_progress', handleOperationUpdate)
+    webSocketService.addEventListener('operation_file_update', handleFileUpdate)
+    
     return () => {
       webSocketService.removeEventListener('cache_file_added', handleCacheUpdate)
       webSocketService.removeEventListener('cache_file_removed', handleCacheUpdate)
       webSocketService.removeEventListener('cache_statistics_updated', handleCacheUpdate)
+      webSocketService.removeEventListener('operation_progress', handleOperationUpdate)
+      webSocketService.removeEventListener('operation_file_update', handleFileUpdate)
     }
-  }, [refreshAll])
+  }, [refreshAll, activeView, selectedOperation, fetchOperations, fetchOperationDetails])
 
   // Event handlers
   const handleSearch = async (term: string) => {
@@ -140,14 +176,44 @@ export const CachedTab: React.FC<CachedTabProps> = ({ className }) => {
     setSelectedFileId(null)
   }
 
+  // Operations event handlers
+  const handleOperationToggle = (operationId: string) => {
+    setExpandedOperations(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(operationId)) {
+        newSet.delete(operationId)
+        if (selectedOperation === operationId) {
+          setSelectedOperation(null)
+        }
+      } else {
+        newSet.add(operationId)
+        setSelectedOperation(operationId)
+        fetchOperationDetails()
+      }
+      return newSet
+    })
+  }
+
+  const handleOperationExport = (operationId: string) => {
+    window.open(`/api/results/export/${operationId}`, '_blank')
+  }
+
+  const handleOperationsFilterChange = (newFilter: Partial<ResultsFilter>) => {
+    setOperationsFilter(prev => ({ ...prev, ...newFilter }))
+  }
+
   // Get current data
   const files = cachedFiles.data?.files || []
   const pagination = cachedFiles.data?.pagination
   const statistics = cacheStatistics.data
   const error = cachedFiles.error || cacheStatistics.error
+  
+  // Operations data
+  const operations = operationsData?.operations || []
+  const hasActiveOperations = operations.some(op => op.status === 'running' || op.status === 'pending')
 
   // Show loading state on initial load
-  if (isLoading && !files.length && !statistics) {
+  if (isLoading && !files.length && !statistics && activeView !== 'operations') {
     return <FullPageLoader text="Loading cached files data..." />
   }
 
@@ -162,7 +228,7 @@ export const CachedTab: React.FC<CachedTabProps> = ({ className }) => {
               <div className="flex items-center">
                 <HardDrive className="w-6 h-6 text-primary-600 mr-2" />
                 <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-                  Cached Files
+                  Cached Files & Operations
                 </h1>
               </div>
 
@@ -192,64 +258,74 @@ export const CachedTab: React.FC<CachedTabProps> = ({ className }) => {
                   <BarChart3 className="w-4 h-4 mr-1 inline" />
                   Statistics
                 </button>
+                <button
+                  onClick={() => setActiveView('operations')}
+                  className={classNames(
+                    'px-3 py-1 text-sm font-medium rounded-md transition-colors',
+                    activeView === 'operations'
+                      ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 shadow'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                  )}
+                >
+                  <Activity className="w-4 h-4 mr-1 inline" />
+                  Operations
+                  {hasActiveOperations && (
+                    <span className="ml-1 inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      Active
+                    </span>
+                  )}
+                </button>
               </div>
             </div>
 
             {/* Actions */}
             <div className="flex items-center space-x-3">
               {/* Quick Stats */}
-              {statistics && (
-                <div className="hidden lg:flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
-                  <div className="flex items-center">
-                    <FileText className="w-4 h-4 mr-1" />
-                    <span>{statistics.total_files} files</span>
-                  </div>
-                  <div className="flex items-center">
-                    <HardDrive className="w-4 h-4 mr-1" />
+              {activeView === 'files' && (
+                <div className="hidden md:flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
+                  <span>{files.length} files</span>
+                  {statistics && (
                     <span>{statistics.total_size_readable}</span>
-                  </div>
-                  <div className="flex items-center">
-                    <Users className="w-4 h-4 mr-1" />
-                    <span>{statistics.users_count} users</span>
-                  </div>
+                  )}
+                </div>
+              )}
+              
+              {activeView === 'operations' && (
+                <div className="hidden md:flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
+                  <span>{operations.length} operations</span>
+                  {hasActiveOperations && (
+                    <span className="text-green-600 dark:text-green-400">Active</span>
+                  )}
                 </div>
               )}
 
-              {/* Refresh */}
-              <button
-                onClick={refreshAll}
-                disabled={isLoading}
-                className="btn btn-ghost p-2"
-                aria-label="Refresh cached files data"
-              >
-                <RefreshCw className={classNames(
-                  'w-4 h-4',
-                  isLoading && 'animate-spin'
-                )} />
-              </button>
+              {/* Live updates toggle for operations */}
+              {activeView === 'operations' && (
+                <label className="flex items-center space-x-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={isPollingEnabled}
+                    onChange={(e) => setIsPollingEnabled(e.target.checked)}
+                    className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                  />
+                  <span className="text-gray-600 dark:text-gray-400">Live updates</span>
+                </label>
+              )}
 
-              {/* Export */}
-              <div className="relative">
-                <button
-                  className="btn btn-ghost p-2"
-                  aria-label="Export cached files"
-                  onClick={() => handleExport('csv')}
-                  disabled={isOperationLoading}
-                >
-                  <Download className="w-4 h-4" />
-                </button>
-              </div>
-
-              {/* Filters Toggle */}
+              {/* Refresh button */}
               <button
-                onClick={() => setShowFilters(!showFilters)}
-                className={classNames(
-                  'btn btn-ghost p-2',
-                  showFilters && 'bg-gray-100 dark:bg-gray-700'
-                )}
-                aria-label="Toggle filters"
+                onClick={() => {
+                  if (activeView === 'operations') {
+                    fetchOperations()
+                  } else {
+                    refreshAll()
+                  }
+                }}
+                disabled={isLoading || operationsLoading}
+                className="btn btn-ghost btn-sm"
+                aria-label="Refresh data"
               >
-                <Filter className="w-4 h-4" />
+                <RefreshCw className={classNames('w-4 h-4', (isLoading || operationsLoading) && 'animate-spin')} />
               </button>
             </div>
           </div>
@@ -279,76 +355,62 @@ export const CachedTab: React.FC<CachedTabProps> = ({ className }) => {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="space-y-8">
-          {/* Error Message */}
-          {error && (
-            <div className="bg-error-50 border border-error-200 rounded-lg p-4 dark:bg-error-900/20 dark:border-error-800">
-              <p className="text-error-700 dark:text-error-300">
-                {error}
-              </p>
-            </div>
-          )}
-
-          {/* Status Info */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                {activeView === 'files' ? 'Cached Files' : 'Cache Statistics'}
-              </h2>
-              <p className="text-gray-600 dark:text-gray-400 mt-1">
-                Last updated: {cachedFiles.lastFetched?.toLocaleTimeString() || 'Never'}
-                {state.ui.autoRefresh && (
-                  <span className="ml-2 text-xs">
-                    (refreshes every {state.ui.refreshInterval / 1000}s)
-                  </span>
-                )}
-              </p>
-            </div>
-            
-            {isLoading && (
-              <LoadingSpinner size="sm" text="Updating..." />
-            )}
-          </div>
-
-          {/* Cache Actions Panel */}
-          <CacheActionsPanel
-            statistics={statistics}
-            onCleanup={handleCleanup}
-            onExport={handleExport}
-            isLoading={isOperationLoading}
-            className={showFilters ? 'block' : 'hidden lg:block'}
+      <main className="flex-1">
+        {activeView === 'files' && (
+          <CachedFilesView
+            files={files}
+            pagination={pagination}
+            filter={filter}
+            isLoading={isLoading}
+            showFilters={showFilters}
+            onFilterChange={handleFilterChange}
+            onPageChange={handlePageChange}
+            onFileSelect={handleFileSelect}
           />
+        )}
 
-          {/* Main Content Area */}
-          {activeView === 'files' ? (
-            <CachedFilesView
-              files={files}
-              pagination={pagination}
-              filter={filter}
-              isLoading={isLoading}
-              showFilters={showFilters}
-              onFilterChange={handleFilterChange}
-              onPageChange={handlePageChange}
-              onFileSelect={handleFileSelect}
-            />
-          ) : (
-            <CacheStatistics
-              statistics={statistics}
-              isLoading={cacheStatistics.isLoading}
-            />
-          )}
-        </div>
+        {activeView === 'stats' && (
+          <CacheStatistics
+            statistics={statistics}
+            isLoading={isLoading}
+          />
+        )}
+
+        {activeView === 'operations' && (
+          <OperationsView
+            operations={operations}
+            isLoading={operationsLoading}
+            error={operationsError}
+            filter={operationsFilter}
+            expandedOperations={expandedOperations}
+            operationDetails={operationDetails}
+            detailsLoading={detailsLoading}
+            onFilterChange={handleOperationsFilterChange}
+            onOperationToggle={handleOperationToggle}
+            onExport={handleOperationExport}
+          />
+        )}
       </main>
 
-      {/* File Details Modal */}
-      {selectedFileId && (
-        <FileDetailsModal
-          fileId={selectedFileId}
-          isOpen={!!selectedFileId}
-          onClose={handleCloseModal}
+      {/* Actions Panel */}
+      {activeView === 'files' && (
+        <CacheActionsPanel
+          onSearch={handleSearch}
+          onFilterChange={handleFilterChange}
+          onExport={handleExport}
+          onCleanup={handleCleanup}
+          isLoading={isOperationLoading}
+          showFilters={showFilters}
+          onToggleFilters={() => setShowFilters(!showFilters)}
         />
       )}
+
+      {/* File Details Modal */}
+      <FileDetailsModal
+        fileId={selectedFileId}
+        isOpen={!!selectedFileId}
+        onClose={handleCloseModal}
+      />
     </div>
   )
 }

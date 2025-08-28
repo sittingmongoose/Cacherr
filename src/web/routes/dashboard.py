@@ -38,22 +38,98 @@ class DashboardConfig(BaseModel):
         extra = "forbid"
 
 
+def serve_react_app(path=None):
+    """
+    Helper function to serve the React application.
+    
+    This function handles serving the built React application for the modern UI.
+    It handles client-side routing by serving index.html for all paths
+    that don't correspond to static assets.
+    
+    Args:
+        path: Optional path for client-side routing
+        
+    Returns:
+        React application HTML or static assets
+    """
+    try:
+        # Define the frontend build directory using absolute path
+        # In Docker, the working directory is /app, so frontend is at /app/frontend/dist
+        # In development, it might be relative to the project root
+        app_root = Path('/app')
+        if not app_root.exists():
+            # Fallback to current working directory for development
+            app_root = Path.cwd()
+        
+        # Check multiple possible locations for the frontend
+        possible_paths = [
+            app_root / 'frontend' / 'dist',  # Docker path
+            Path.cwd() / 'frontend' / 'dist',  # Current working directory
+            Path('/mnt/user/Cursor/Cacherr/frontend/dist'),  # Absolute path for current setup
+        ]
+        
+        frontend_dist = None
+        for possible_path in possible_paths:
+            if possible_path.exists():
+                frontend_dist = possible_path
+                break
+        
+        if not frontend_dist or not frontend_dist.exists():
+            logger.error(f"Frontend build directory not found. Checked paths: {possible_paths}")
+            return """
+            <html>
+            <head><title>Frontend Not Built</title></head>
+            <body>
+                <h1>Frontend Not Available</h1>
+                <p>The React frontend has not been built yet.</p>
+                <p>Please build the frontend using: npm run build</p>
+                <p>Expected location: /app/frontend/dist</p>
+            </body>
+            </html>
+            """, 404
+        
+        # If no path or path doesn't exist as a file, serve index.html
+        if not path:
+            return send_file(frontend_dist / 'index.html')
+        
+        # Check if the path corresponds to a static file
+        static_file = frontend_dist / path
+        if static_file.exists() and static_file.is_file():
+            return send_from_directory(frontend_dist, path)
+        
+        # For client-side routing, serve index.html
+        return send_file(frontend_dist / 'index.html')
+        
+    except Exception as e:
+        logger.error(f"Failed to serve React app: {e}")
+        return f"""
+        <html>
+        <head><title>Frontend Error</title></head>
+        <body>
+            <h1>Frontend Error</h1>
+            <p>Failed to load React frontend: {e}</p>
+            <p>Please check the application logs for more details.</p>
+        </body>
+        </html>
+        """, 500
+
+
 @dashboard_bp.route('/')
 def index():
     """
     Main dashboard page route.
     
-    Redirects to the React application for the modern web interface.
+    Serves the React application directly at the root path.
     
     Returns:
-        Redirect to React application
+        React application HTML
     """
     try:
-        # Redirect to React application
-        return redirect(url_for('dashboard.react_app'))
+        # Serve React application directly at root
+        return serve_react_app()
         
     except Exception as e:
-        logger.error(f"Failed to redirect to React app: {e}")
+        logger.error(f"Failed to serve React app: {e}")
         return f"""
         <html>
         <head><title>Application Error</title></head>
@@ -61,7 +137,6 @@ def index():
         <h1>Application Error</h1>
         <p>Failed to load application: {e}</p>
         <p>Please check the application logs for more details.</p>
-        <p><a href="/app">Try accessing the application directly</a></p>
         </body>
         </html>
         """, 500
@@ -109,7 +184,7 @@ def dashboard_config():
 @dashboard_bp.route('/app/<path:path>')
 def react_app(path=None):
     """
-    Serve the React application.
+    Serve the React application at /app path (for backward compatibility).
     
     This route serves the built React application for the modern UI.
     It handles client-side routing by serving index.html for all paths
@@ -121,66 +196,7 @@ def react_app(path=None):
     Returns:
         React application HTML or static assets
     """
-    try:
-        # Define the frontend build directory using absolute path
-        # In Docker, the working directory is /app, so frontend is at /app/frontend/dist
-        # In development, it might be relative to the project root
-        app_root = Path('/app')
-        if not app_root.exists():
-            # Fallback to current working directory for development
-            app_root = Path.cwd()
-        
-        # Check multiple possible locations for the frontend
-        possible_paths = [
-            app_root / 'frontend' / 'dist',  # Docker path
-            Path.cwd() / 'frontend' / 'dist',  # Current working directory
-            Path('/mnt/user/Cursor/Cacherr/frontend/dist'),  # Absolute path for current setup
-        ]
-        
-        frontend_dist = None
-        for path in possible_paths:
-            if path.exists():
-                frontend_dist = path
-                break
-        
-        if not frontend_dist.exists():
-            logger.error(f"Frontend build directory not found at: {frontend_dist}")
-            return """
-            <html>
-            <head><title>Frontend Not Built</title></head>
-            <body>
-                <h1>Frontend Not Available</h1>
-                <p>The React frontend has not been built yet.</p>
-                <p>Please build the frontend using: npm run build</p>
-                <p>Expected location: /app/frontend/dist</p>
-            </body>
-            </html>
-            """, 404
-        
-        # If no path or path doesn't exist as a file, serve index.html
-        if not path:
-            return send_file(frontend_dist / 'index.html')
-        
-        # Check if the path corresponds to a static file
-        static_file = frontend_dist / path
-        if static_file.exists() and static_file.is_file():
-            return send_from_directory(frontend_dist, path)
-        
-        # For client-side routing, serve index.html
-        return send_file(frontend_dist / 'index.html')
-        
-    except Exception as e:
-        logger.error(f"Failed to serve React app: {e}")
-        return f"""
-        <html>
-        <head><title>Frontend Error</title></head>
-        <body>
-            <h1>Frontend Error</h1>
-            <p>Failed to load React frontend: {e}</p>
-            <p>Please check the application logs for more details.</p>
-        </body>
-        </html>
-        """, 500
+    return serve_react_app(path)
 
 
 @dashboard_bp.route('/assets/<path:filename>')
@@ -226,3 +242,26 @@ def react_assets(filename):
     except Exception as e:
         logger.error(f"Failed to serve asset {filename}: {e}")
         return "Asset error", 500
+
+
+@dashboard_bp.route('/<path:path>')
+def catch_all(path):
+    """
+    Catch-all route for client-side routing.
+    
+    This route handles all other paths and serves the React application
+    to enable client-side routing. It should be placed after all other
+    specific routes.
+    
+    Args:
+        path: The requested path
+        
+    Returns:
+        React application HTML for client-side routing
+    """
+    # Skip API routes and other backend routes
+    if path.startswith(('api/', 'health', 'dashboard/config')):
+        return "Not found", 404
+    
+    # Serve React app for all other paths (client-side routing)
+    return serve_react_app(path)

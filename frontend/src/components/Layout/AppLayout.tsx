@@ -39,13 +39,7 @@ const navigation: NavigationItem[] = [
     name: 'Cached',
     href: '/cached',
     icon: Database,
-    description: 'Cached files management'
-  },
-  {
-    name: 'Operations',
-    href: '/results',
-    icon: Activity,
-    description: 'Operation history and tracking'
+    description: 'Cached files and operations management'
   },
   {
     name: 'Logs',

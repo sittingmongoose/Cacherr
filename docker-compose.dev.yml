@@ -8,6 +8,8 @@ services:
     image: cacherr:dev
     container_name: cacherr-dev
     restart: unless-stopped
+    env_file:
+      - .env
     ports:
       - "5445:5445"  # Backend API
       - "3000:3000"  # Frontend dev server

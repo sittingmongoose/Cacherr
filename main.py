@@ -178,11 +178,15 @@ def run_web_server(app_context: ApplicationContext) -> None:
         from src.web.app import WebApplicationFactory
         factory = WebApplicationFactory(app_context.container)
         
+        # Create the app with WebSocket support
+        web_app_with_websocket = factory.create_app()
+        
+        # Check if the factory has SocketIO support
         if hasattr(factory, 'socketio') and factory.socketio:
             logger.info("Starting Flask-SocketIO server with WebSocket support")
             # Run with SocketIO
             factory.socketio.run(
-                web_app,
+                web_app_with_websocket,
                 host=web_config.host,
                 port=web_config.port,
                 debug=web_config.debug,

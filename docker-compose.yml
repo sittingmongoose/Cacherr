@@ -1,136 +1,26 @@
 version: '3.8'
 
 services:
-  cacherr:
-    build: 
-      context: .
-      dockerfile: Dockerfile
-    image: cacherr:unraid
-    container_name: cacherr-unraid
-    restart: unless-stopped
-    ports:
-      - "5445:5445"
-    environment:
-      # Plex Configuration
-      - PLEX_URL=${PLEX_URL}
-      - PLEX_TOKEN=${PLEX_TOKEN}
-      
-      # Path Configuration (matched to your Plex setup)
-      - CONFIG_DIR=${CONFIG_DIR:-/config}
-      - REAL_SOURCE=${REAL_SOURCE:-/media}
-      - PLEX_SOURCE=${PLEX_SOURCE:-/media}
-      - CACHE_DESTINATION=${CACHE_DESTINATION:-/cache}
-      - ADDITIONAL_SOURCES=${ADDITIONAL_SOURCES:-[]}
-      - ADDITIONAL_PLEX_SOURCES=${ADDITIONAL_PLEX_SOURCES:-[]}
-      
-      # Media Settings
-      - NUMBER_EPISODES=${NUMBER_EPISODES:-5}
-      - DAYS_TO_MONITOR=${DAYS_TO_MONITOR:-99}
-      - WATCHLIST_TOGGLE=${WATCHLIST_TOGGLE:-true}
-      - WATCHLIST_EPISODES=${WATCHLIST_EPISODES:-1}
-      - WATCHLIST_CACHE_EXPIRY=${WATCHLIST_CACHE_EXPIRY:-6}
-      - WATCHED_MOVE=${WATCHED_MOVE:-true}
-      - WATCHED_CACHE_EXPIRY=${WATCHED_CACHE_EXPIRY:-48}
-      - USERS_TOGGLE=${USERS_TOGGLE:-true}
-      - EXIT_IF_ACTIVE_SESSION=${EXIT_IF_ACTIVE_SESSION:-false}
-      
-      # Cache Behavior (Unraid optimized)
-      - COPY_TO_CACHE=${COPY_TO_CACHE:-true}
-      - DELETE_FROM_CACHE_WHEN_DONE=${DELETE_FROM_CACHE_WHEN_DONE:-true}
-      
-      # Performance Settings (Unraid optimized)
-      - MAX_CONCURRENT_MOVES_CACHE=${MAX_CONCURRENT_MOVES_CACHE:-3}
-      - MAX_CONCURRENT_MOVES_ARRAY=${MAX_CONCURRENT_MOVES_ARRAY:-1}
-      - MAX_CONCURRENT_LOCAL_TRANSFERS=${MAX_CONCURRENT_LOCAL_TRANSFERS:-3}
-      - MAX_CONCURRENT_NETWORK_TRANSFERS=${MAX_CONCURRENT_NETWORK_TRANSFERS:-1}
-      
-      # Real-time Watching
-      - REAL_TIME_WATCH_ENABLED=${REAL_TIME_WATCH_ENABLED:-false}
-      - REAL_TIME_WATCH_CHECK_INTERVAL=${REAL_TIME_WATCH_CHECK_INTERVAL:-30}
-      - REAL_TIME_WATCH_AUTO_CACHE_ON_WATCH=${REAL_TIME_WATCH_AUTO_CACHE_ON_WATCH:-true}
-      - REAL_TIME_WATCH_CACHE_ON_COMPLETE=${REAL_TIME_WATCH_CACHE_ON_COMPLETE:-true}
-      - REAL_TIME_WATCH_RESPECT_EXISTING_RULES=${REAL_TIME_WATCH_RESPECT_EXISTING_RULES:-true}
-      - REAL_TIME_WATCH_MAX_CONCURRENT_WATCHES=${REAL_TIME_WATCH_MAX_CONCURRENT_WATCHES:-5}
-      - REAL_TIME_WATCH_REMOVE_FROM_CACHE_AFTER_HOURS=${REAL_TIME_WATCH_REMOVE_FROM_CACHE_AFTER_HOURS:-24}
-      - REAL_TIME_WATCH_RESPECT_OTHER_USERS_WATCHLISTS=${REAL_TIME_WATCH_RESPECT_OTHER_USERS_WATCHLISTS:-true}
-      - REAL_TIME_WATCH_EXCLUDE_INACTIVE_USERS_DAYS=${REAL_TIME_WATCH_EXCLUDE_INACTIVE_USERS_DAYS:-30}
-      
-      # Trakt.tv Integration
-      - TRAKT_ENABLED=${TRAKT_ENABLED:-false}
-      - TRAKT_CLIENT_ID=${TRAKT_CLIENT_ID:-}
-      - TRAKT_CLIENT_SECRET=${TRAKT_CLIENT_SECRET:-}
-      - TRAKT_TRENDING_MOVIES_COUNT=${TRAKT_TRENDING_MOVIES_COUNT:-10}
-      - TRAKT_CHECK_INTERVAL=${TRAKT_CHECK_INTERVAL:-3600}
-      
-      # Test Mode
-      - TEST_MODE=${TEST_MODE:-false}
-      - TEST_SHOW_FILE_SIZES=${TEST_SHOW_FILE_SIZES:-true}
-      - TEST_SHOW_TOTAL_SIZE=${TEST_SHOW_TOTAL_SIZE:-true}
-      
-      # Web Interface
-      - WEB_HOST=${WEB_HOST:-0.0.0.0}
-      - WEB_PORT=${WEB_PORT:-5445}
-      - PORT=${PORT:-5445}
-      - DEBUG=${DEBUG:-false}
-      - LOG_LEVEL=${LOG_LEVEL:-INFO}
-      - ENABLE_SCHEDULER=${ENABLE_SCHEDULER:-false}
-      
-      # Notifications
-      - WEBHOOK_URL=${WEBHOOK_URL:-}
-      - NOTIFICATION_TYPE=${NOTIFICATION_TYPE:-webhook}
-      
-      # Container Configuration
-      - TZ=${TZ:-America/New_York}
+  playwright:
+    build: .
     volumes:
-      # SOLUTION: Use same mount paths as Plex for compatibility
-      # This ensures cacherr and Plex see files through identical paths
-      
-      # Cache destination (where files are moved for performance)
-      - ${CACHE_DESTINATION:-/mnt/transcode}:/cache:rw
-      
-      # PRIMARY MEDIA: Mount exactly like Plex does
-      - /mnt/user/Media:/media:rw
-      
-      # REMOTE MEDIA: Mount NAS exactly like Plex does  
-      - /mnt/remotes/NAS1_Media2:/Nas1:rw
-      
-      # PLEX-COMPATIBLE PATHS: cacherr will create hardlinks/symlinks here
-      # These should point to subdirectories within the same mount as cache
-      - /mnt/user/Media:/plexmedia:rw
-      - /mnt/remotes/NAS1_Media2:/plexnas:rw
-      
-      # Application data (persistent)
-      - ${CONFIG_DIR:-/mnt/user/appdata/cacherr/config}:/config:rw
-    networks:
-      - cacherr-network
-    security_opt:
-      - no-new-privileges:true
-    read_only: false
-    tmpfs:
-      - /tmp:noexec,nosuid,size=100m
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5445/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-    deploy:
-      resources:
-        limits:
-          memory: 1G
-          cpus: '1.0'
-        reservations:
-          memory: 256M
-          cpus: '0.25'
-
-networks:
-  cacherr-network:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.20.0.0/16
+      - .:/app
+      - /app/node_modules
+    environment:
+      - CI=true
+    working_dir: /app
+    command: npx playwright test
+    # For debugging, you can override the command
+    # command: npx playwright test --debug
+    
+  playwright-ui:
+    build: .
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - CI=false
+    working_dir: /app
+    ports:
+      - "9323:9323"
+    command: npx playwright test --ui --ui-host=0.0.0.0

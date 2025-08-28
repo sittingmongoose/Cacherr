@@ -11,6 +11,8 @@ export { default as CacheStatistics } from './CacheStatistics'
 export { default as FileDetailsModal } from './FileDetailsModal'
 export { default as UserAttributionCard } from './UserAttributionCard'
 export { default as CacheActionsPanel } from './CacheActionsPanel'
+export { default as OperationsView } from './OperationsView'
+export { default as OperationCard } from './OperationCard'
 
 // Re-export the main component as default
 export { default } from './CachedTab'
