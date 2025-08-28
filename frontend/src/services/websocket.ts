@@ -27,6 +27,7 @@ export type WebSocketEventType =
   | 'cache_file_added'
   | 'cache_file_removed'
   | 'cache_statistics_updated'
+  | 'pong'
 
 export interface WebSocketEventHandler {
   (data: unknown): void
@@ -76,7 +77,8 @@ export class WebSocketService {
       'error',
       'cache_file_added',
       'cache_file_removed',
-      'cache_statistics_updated'
+      'cache_statistics_updated',
+      'pong'
     ]
     eventTypes.forEach(type => {
       this.eventHandlers.set(type, new Set())
