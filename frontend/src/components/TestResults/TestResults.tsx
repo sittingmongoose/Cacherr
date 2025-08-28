@@ -248,7 +248,7 @@ export const TestResults: React.FC<TestResultsProps> = ({
   const handleExportResults = () => {
     if (!testResults) return
 
-    let exportData = 'PlexCacheUltra Test Results\n'
+    let exportData = 'Cacherr Test Results\n'
     exportData += `Generated: ${new Date().toLocaleString()}\n\n`
     exportData += `Summary:\n`
     exportData += `- Total Files: ${totals.files}\n`

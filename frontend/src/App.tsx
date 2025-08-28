@@ -192,7 +192,7 @@ const App: React.FC = () => {
   return (
     <ErrorBoundary>
       <AppProvider>
-        <Router>
+        <Router basename="/app">
           <div className="App">
             <AppLayout>
               <Routes>

@@ -117,7 +117,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ className }) => {
   }
 
   if (isLoading && !currentSystemStatus) {
-    return <FullPageLoader text="Loading PlexCacheUltra Dashboard..." />
+    return <FullPageLoader text="Loading Cacherr Dashboard..." />
   }
 
   return (
@@ -130,7 +130,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ className }) => {
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-                  🎬 PlexCacheUltra
+                  🎬 Cacherr
                 </h1>
               </div>
               <div className="hidden md:block ml-4">
@@ -282,7 +282,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ className }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
             <div>
-              PlexCacheUltra v1.0.0 - Modern React Dashboard
+              Cacherr v1.0.0 - Modern React Dashboard
             </div>
             <div>
               Theme: <span className="capitalize">{ui.theme}</span>

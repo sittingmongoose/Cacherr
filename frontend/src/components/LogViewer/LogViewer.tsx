@@ -38,7 +38,7 @@ interface LogViewerProps {
 const mockLogs: LogEntry[] = [
   {
     level: 'info',
-    message: 'PlexCacheUltra started successfully',
+    message: 'Cacherr started successfully',
     timestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
     module: 'main',
   },

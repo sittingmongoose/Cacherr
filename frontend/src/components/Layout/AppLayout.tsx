@@ -82,7 +82,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children, className }) => 
               <div className="flex-shrink-0 flex items-center">
                 <Database className="h-8 w-8 text-primary-600 dark:text-primary-400" />
                 <h1 className="ml-3 text-xl font-bold text-gray-900 dark:text-gray-100">
-                  PlexCacheUltra
+                  Cacherr
                 </h1>
               </div>
             </div>

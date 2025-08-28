@@ -1,7 +1,7 @@
 {
-  "name": "PlexCacheUltra Dashboard",
+  "name": "Cacherr Dashboard",
   "short_name": "PCU Dashboard",
-  "description": "Modern React dashboard for PlexCacheUltra - Docker-optimized Plex media caching system",
+  "description": "Modern React dashboard for Cacherr - Docker-optimized Plex media caching system",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#1f2937",

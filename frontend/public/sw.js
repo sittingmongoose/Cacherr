@@ -8,8 +8,8 @@
  * - Asset caching and updates
  */
 
-const CACHE_NAME = 'plexcacheultra-v1'
-const API_CACHE_NAME = 'plexcacheultra-api-v1'
+const CACHE_NAME = 'cacherr-v1'
+const API_CACHE_NAME = 'cacherr-api-v1'
 const OFFLINE_URL = '/offline.html'
 
 // Assets to cache on install
@@ -76,8 +76,8 @@ self.addEventListener('fetch', (event) => {
   const { request } = event
   const url = new URL(request.url)
   
-  // Skip cross-origin requests
-  if (!url.origin === location.origin) {
+  // Skip cross-origin requests (correct comparison)
+  if (url.origin !== location.origin) {
     return
   }
   

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react'
 import { SystemStatus, HealthStatus, LogEntry, TestResults, UIState, ToastOptions } from '@/types/api'
-import webSocketService from '@/services/websocket'
+import webSocketService, { WebSocketConnectionStatus } from '@/services/websocket'
 
 /**
  * Application-wide state management using React Context API
@@ -374,11 +374,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // WebSocket event handling
   useEffect(() => {
     // Connection status handler
-    const handleConnectionStatus = (status: typeof webSocketService.getStatus) => {
-      dispatch({ type: 'SET_WEBSOCKET_CONNECTED', payload: status().connected })
-      dispatch({ type: 'SET_WEBSOCKET_RECONNECTING', payload: status().reconnecting })
-      if (status().lastConnectedAt) {
-        dispatch({ type: 'SET_WEBSOCKET_LAST_CONNECTED', payload: status().lastConnectedAt })
+    const handleConnectionStatus = (status: WebSocketConnectionStatus) => {
+      dispatch({ type: 'SET_WEBSOCKET_CONNECTED', payload: status.connected })
+      dispatch({ type: 'SET_WEBSOCKET_RECONNECTING', payload: status.reconnecting })
+      if (status.lastConnectedAt) {
+        dispatch({ type: 'SET_WEBSOCKET_LAST_CONNECTED', payload: status.lastConnectedAt })
       }
     }
 

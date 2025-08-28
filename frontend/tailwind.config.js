@@ -21,7 +21,7 @@ export default {
           800: '#1e40af',
           900: '#1e3a8a',
         },
-        // Custom colors for PlexCacheUltra theme
+        // Custom colors for Cacherr theme
         plex: {
           orange: '#e5a00d',
           'orange-dark': '#cc8400',
