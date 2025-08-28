@@ -110,7 +110,7 @@ function useAPI<T>(
     if (immediate) {
       fetchData()
     }
-  }, [immediate, fetchData])
+  }, [immediate]) // Remove fetchData from dependencies to prevent infinite loops
 
   // Auto-refresh with stable timer
   useEffect(() => {
@@ -251,6 +251,23 @@ export function useTestResults(options: UseAPIOptions = {}) {
  */
 export function useSettings(options: UseAPIOptions = {}) {
   return useAPI(() => APIService.getSettings(), options)
+}
+
+/**
+ * Hook for fetching operation results
+ */
+export function useOperationResults(options: UseAPIOptions = {}) {
+  return useAPI(() => APIService.getOperations(50, 0), options)
+}
+
+/**
+ * Hook for fetching operation details
+ */
+export function useOperationDetails(operationId: string | null, options: UseAPIOptions = {}) {
+  return useAPI(
+    () => operationId ? APIService.getOperationDetails(operationId) : Promise.reject(new Error('No operation ID')),
+    { ...options, immediate: !!operationId }
+  )
 }
 
 /**

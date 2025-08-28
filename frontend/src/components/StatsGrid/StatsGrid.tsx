@@ -26,6 +26,7 @@ import { formatBytes, formatNumber, formatRelativeTime, classNames } from '@/uti
 interface StatsGridProps {
   status?: SystemStatus
   cacheStats?: CacheStatistics
+  healthStatus?: any // Add healthStatus prop to match Dashboard usage
   isLoading?: boolean
   error?: string
   className?: string
@@ -158,7 +159,7 @@ export const StatsGrid: React.FC<StatsGridProps> = ({
       value: status?.status === 'running' ? 'Running' : 'Idle',
       subtitle: status?.scheduler_running ? 'Scheduler active' : 'Scheduler inactive',
       icon: <Activity className="w-5 h-5" />,
-      color: status?.status === 'running' ? 'orange' : 'gray',
+      color: (status?.status === 'running' ? 'orange' : 'gray') as 'orange' | 'gray',
     },
     {
       title: 'Last Execution',
@@ -171,8 +172,8 @@ export const StatsGrid: React.FC<StatsGridProps> = ({
       icon: status?.last_execution?.success ? 
         <CheckCircle className="w-5 h-5" /> : 
         <Clock className="w-5 h-5" />,
-      color: status?.last_execution?.success ? 'green' : 
-             status?.last_execution ? 'red' : 'gray',
+      color: (status?.last_execution?.success ? 'green' : 
+             status?.last_execution ? 'red' : 'gray') as 'green' | 'red' | 'gray',
     },
     {
       title: 'Cache Hit Ratio',
@@ -182,9 +183,9 @@ export const StatsGrid: React.FC<StatsGridProps> = ({
       subtitle: 'Cache efficiency',
       icon: <Zap className="w-5 h-5" />,
       color: 'orange' as const,
-      trend: cacheStats?.cache_hit_ratio && cacheStats.cache_hit_ratio > 0.8 ? 'up' : 
+      trend: (cacheStats?.cache_hit_ratio && cacheStats.cache_hit_ratio > 0.8 ? 'up' : 
              cacheStats?.cache_hit_ratio && cacheStats.cache_hit_ratio < 0.5 ? 'down' : 
-             'neutral',
+             'neutral') as 'up' | 'down' | 'neutral',
       trendValue: cacheStats?.cache_hit_ratio ? 
         (cacheStats.cache_hit_ratio > 0.8 ? 'Excellent' : 
          cacheStats.cache_hit_ratio > 0.6 ? 'Good' : 'Poor') : 

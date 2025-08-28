@@ -53,19 +53,24 @@ Object.defineProperty(window, 'matchMedia', {
 })
 
 // Mock WebSocket for real-time functionality tests
-global.WebSocket = vi.fn().mockImplementation((url) => ({
+const MockWebSocket = vi.fn().mockImplementation((url) => ({
   url,
   readyState: 0,
-  CONNECTING: 0,
-  OPEN: 1,
-  CLOSING: 2,
-  CLOSED: 3,
   close: vi.fn(),
   send: vi.fn(),
   addEventListener: vi.fn(),
   removeEventListener: vi.fn(),
   dispatchEvent: vi.fn(),
 }))
+
+// Add static properties to the mock constructor
+;(MockWebSocket as any).CONNECTING = 0
+;(MockWebSocket as any).OPEN = 1
+;(MockWebSocket as any).CLOSING = 2
+;(MockWebSocket as any).CLOSED = 3
+MockWebSocket.prototype = WebSocket.prototype
+
+global.WebSocket = MockWebSocket as any
 
 // Mock localStorage
 const localStorageMock = {

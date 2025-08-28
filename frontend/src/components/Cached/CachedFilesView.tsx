@@ -226,7 +226,9 @@ export const CachedFilesView: React.FC<CachedFilesViewProps> = ({
               </label>
               <select
                 value={filter.triggered_by_operation || ''}
-                onChange={(e) => onFilterChange({ triggered_by_operation: e.target.value || undefined })}
+                onChange={(e) => onFilterChange({ 
+                  triggered_by_operation: (e.target.value || undefined) as CachedFileInfo['triggered_by_operation'] | undefined 
+                })}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               >
                 <option value="">All Operations</option>
@@ -463,11 +465,9 @@ export const CachedFilesView: React.FC<CachedFilesViewProps> = ({
                       </td>
                       <td className="py-4 px-4">
                         <StatusBadge 
-                          status={getStatusColor(file.status)}
+                          status={file.status}
                           icon={getStatusIcon(file.status)}
-                        >
-                          {file.status}
-                        </StatusBadge>
+                        />
                       </td>
                       <td className="py-4 px-4">
                         <span className="text-sm text-gray-600 dark:text-gray-400">
@@ -529,12 +529,10 @@ export const CachedFilesView: React.FC<CachedFilesViewProps> = ({
                       </h4>
                     </div>
                     <StatusBadge 
-                      status={getStatusColor(file.status)}
+                      status={file.status}
                       icon={getStatusIcon(file.status)}
                       size="sm"
-                    >
-                      {file.status}
-                    </StatusBadge>
+                    />
                   </div>
                   
                   <div className="space-y-2 text-xs text-gray-600 dark:text-gray-400">

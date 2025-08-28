@@ -67,6 +67,16 @@ export const Dashboard: React.FC<DashboardProps> = ({ className }) => {
     }
   }
 
+  const handleManualRefresh = async () => {
+    console.log('Manual refresh triggered')
+    try {
+      await refreshAll()
+      console.log('Manual refresh completed')
+    } catch (error) {
+      console.error('Manual refresh failed:', error)
+    }
+  }
+
   const handleRunTest = async () => {
     try {
       await runCacheOperation({ test_mode: true })
@@ -166,7 +176,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ className }) => {
 
               {/* Manual refresh */}
               <button
-                onClick={refreshAll}
+                onClick={handleManualRefresh}
                 disabled={isLoading}
                 className="btn btn-ghost p-2"
                 aria-label="Refresh data"

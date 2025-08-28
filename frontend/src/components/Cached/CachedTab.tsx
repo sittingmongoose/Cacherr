@@ -144,7 +144,7 @@ export const CachedTab: React.FC<CachedTabProps> = ({ className }) => {
   const files = cachedFiles.data?.files || []
   const pagination = cachedFiles.data?.pagination
   const statistics = cacheStatistics.data
-  const error = state.errors.cachedFiles || state.errors.cacheStatistics
+  const error = cachedFiles.error || cacheStatistics.error
 
   // Show loading state on initial load
   if (isLoading && !files.length && !statistics) {

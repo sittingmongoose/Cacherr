@@ -45,9 +45,10 @@ import {
 import { LoadingSpinner, CardLoader } from '@/components/common/LoadingSpinner'
 import { StatusBadge } from '@/components/common/StatusBadge'
 import { formatBytes, formatDuration, formatFilePath, classNames } from '@/utils/format'
-import useAPI from '@/hooks/useApi'
+import useAPI, { useOperationResults, useOperationDetails } from '@/hooks/useApi'
 import APIService from '@/services/api'
 import webSocketService from '@/services/websocket'
+import OperationCard from './OperationCard'
 
 /**
  * Main Results Tab Component
@@ -64,16 +65,13 @@ export const ResultsTab: React.FC<ResultsTabProps> = ({ className }) => {
   const [selectedOperation, setSelectedOperation] = useState<string | null>(null)
   const [isPollingEnabled, setIsPollingEnabled] = useState(true)
 
-  // API hooks - temporarily disabled for build
-  const operationsData = { operations: [], pagination: { limit: 20, offset: 0, total_count: 0, has_more: false } }
-  const operationsLoading = false
-  const operationsError = null
-  const fetchOperations = () => Promise.resolve()
+  // API hooks
+  const { data: operationsData, isLoading: operationsLoading, error: operationsError, refetch: fetchOperations } = useOperationResults({
+    autoRefresh: isPollingEnabled && activeTab === 'live',
+    refreshInterval: 5000
+  })
 
-  const operationDetails = null
-  const detailsLoading = false
-  const detailsError = null
-  const fetchOperationDetails = () => Promise.resolve()
+  const { data: operationDetails, isLoading: detailsLoading, error: detailsError, refetch: fetchOperationDetails } = useOperationDetails(selectedOperation)
 
   // Real-time updates
   useEffect(() => {
@@ -98,38 +96,19 @@ export const ResultsTab: React.FC<ResultsTabProps> = ({ className }) => {
     }
   }, [selectedOperation, fetchOperations, fetchOperationDetails])
 
-  // Polling for live updates
-  useEffect(() => {
-    if (!isPollingEnabled || activeTab !== 'live') return
-
-    const interval = setInterval(() => {
-      fetchOperations(`/api/results/operations?active_only=true&limit=20`)
-    }, 5000)
-
-    return () => clearInterval(interval)
-  }, [isPollingEnabled, activeTab, fetchOperations])
-
   // Load initial data
   useEffect(() => {
     if (activeTab === 'live') {
-      fetchOperations('/api/results/operations?active_only=true&limit=20')
+      fetchOperations()
     } else {
       loadHistoricalData()
     }
-  }, [activeTab])
+  }, [activeTab, fetchOperations])
 
   const loadHistoricalData = useCallback(() => {
-    const params = new URLSearchParams()
-    params.set('limit', '50')
-    params.set('offset', '0')
-    
-    if (filter.user_id) params.set('user_id', filter.user_id)
-    if (filter.operation_type) params.set('operation_type', filter.operation_type)
-    if (filter.start_date) params.set('start_date', filter.start_date)
-    if (filter.end_date) params.set('end_date', filter.end_date)
-
-    fetchOperations(`/api/results/operations?${params}`)
-  }, [filter, fetchOperations])
+    // The useOperationResults hook will handle the API call
+    fetchOperations()
+  }, [fetchOperations])
 
   // Handle filter changes
   useEffect(() => {
@@ -150,7 +129,7 @@ export const ResultsTab: React.FC<ResultsTabProps> = ({ className }) => {
       } else {
         newSet.add(operationId)
         setSelectedOperation(operationId)
-        fetchOperationDetails(`/api/results/operations/${operationId}`)
+        fetchOperationDetails()
       }
       return newSet
     })
@@ -197,7 +176,7 @@ export const ResultsTab: React.FC<ResultsTabProps> = ({ className }) => {
 
               {/* Refresh button */}
               <button
-                onClick={activeTab === 'live' ? () => fetchOperations('/api/results/operations?active_only=true&limit=20') : loadHistoricalData}
+                onClick={activeTab === 'live' ? () => fetchOperations() : loadHistoricalData}
                 disabled={operationsLoading}
                 className="btn btn-ghost btn-sm"
                 aria-label="Refresh data"

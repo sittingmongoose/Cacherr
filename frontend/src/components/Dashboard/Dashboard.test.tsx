@@ -249,11 +249,13 @@ describe('Dashboard Component', () => {
 
     it('shows live updates indicator when WebSocket is connected', async () => {
       // Mock connected WebSocket
-      const { default: mockWebSocket } = await vi.importMock('@/services/websocket')
-      vi.mocked(mockWebSocket.getStatus).mockReturnValue({
+      const mockWebSocket = await vi.importMock('@/services/websocket') as any
+      vi.mocked(mockWebSocket.default.getStatus).mockReturnValue({
         connected: true,
         reconnecting: false,
         lastConnectedAt: new Date(),
+        reconnectAttempts: 0,
+        maxReconnectAttempts: 10,
       })
 
       render(

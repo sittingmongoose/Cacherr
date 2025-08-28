@@ -19,21 +19,26 @@ export default defineConfig({
   server: {
     host: '0.0.0.0', // Required for Docker container access
     port: 3000,
+    strictPort: true, // Prevent Vite from choosing different ports
     proxy: {
       // Proxy API requests to Flask backend during development
       '/api': {
         target: 'http://localhost:5445',
         changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/api/, '/api')
       },
       '/health': {
         target: 'http://localhost:5445',
         changeOrigin: true,
+        secure: false
       },
       // WebSocket proxy for real-time updates
       '/ws': {
         target: 'ws://localhost:5445',
         ws: true,
         changeOrigin: true,
+        secure: false
       },
     },
   },
@@ -50,10 +55,5 @@ export default defineConfig({
         },
       },
     },
-  },
-  test: {
-    globals: true,
-    environment: 'jsdom',
-    setupFiles: ['./src/test-setup.ts'],
   },
 })

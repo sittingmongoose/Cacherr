@@ -32,6 +32,10 @@ export interface AppState {
     logs: boolean
     testResults: boolean
     operations: boolean
+    cachedFiles: boolean
+    cacheStatistics: boolean
+    userCacheStats: boolean
+    cachedFilesOperations: boolean
   }
   
   // Error states
@@ -41,6 +45,10 @@ export interface AppState {
     logs: string | null
     testResults: string | null
     operations: string | null
+    cachedFiles: string | null
+    cacheStatistics: string | null
+    userCacheStats: string | null
+    cachedFilesOperations: string | null
   }
   
   // Toast notifications
@@ -98,8 +106,8 @@ const initialState: AppState = {
   ui: {
     theme: 'auto',
     sidebarCollapsed: false,
-    refreshInterval: 5000,
-    autoRefresh: true,
+    refreshInterval: 60000, // 1 minute instead of 5 seconds
+    autoRefresh: true, // Keep enabled for initial data loading
     notifications: true,
   },
   
@@ -109,6 +117,10 @@ const initialState: AppState = {
     logs: false,
     testResults: false,
     operations: false,
+    cachedFiles: false,
+    cacheStatistics: false,
+    userCacheStats: false,
+    cachedFilesOperations: false,
   },
   
   errors: {
@@ -117,6 +129,10 @@ const initialState: AppState = {
     logs: null,
     testResults: null,
     operations: null,
+    cachedFiles: null,
+    cacheStatistics: null,
+    userCacheStats: null,
+    cachedFilesOperations: null,
   },
   
   toasts: [],
@@ -224,6 +240,10 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
           logs: null,
           testResults: null,
           operations: null,
+          cachedFiles: null,
+          cacheStatistics: null,
+          userCacheStats: null,
+          cachedFilesOperations: null,
         },
       }
     

@@ -159,7 +159,7 @@ def create_application_for_mode(mode: str) -> ApplicationContext:
 
 def run_web_server(app_context: ApplicationContext) -> None:
     """
-    Run the Flask web server.
+    Run the Flask web server with WebSocket support.
     
     Args:
         app_context: Application context containing the web app
@@ -174,14 +174,31 @@ def run_web_server(app_context: ApplicationContext) -> None:
     logger.info(f"Starting web server on {web_config.host}:{web_config.port}")
     
     try:
-        # Run the Flask application
-        web_app.run(
-            host=web_config.host,
-            port=web_config.port,
-            debug=web_config.debug,
-            use_reloader=False,  # Disable reloader to prevent issues with threading
-            threaded=True
-        )
+        # Check if WebSocket support is available
+        from src.web.app import WebApplicationFactory
+        factory = WebApplicationFactory(app_context.container)
+        
+        if hasattr(factory, 'socketio') and factory.socketio:
+            logger.info("Starting Flask-SocketIO server with WebSocket support")
+            # Run with SocketIO
+            factory.socketio.run(
+                web_app,
+                host=web_config.host,
+                port=web_config.port,
+                debug=web_config.debug,
+                use_reloader=False,
+                allow_unsafe_werkzeug=True  # Required for production
+            )
+        else:
+            logger.info("Starting standard Flask server (WebSocket not available)")
+            # Fallback to standard Flask
+            web_app.run(
+                host=web_config.host,
+                port=web_config.port,
+                debug=web_config.debug,
+                use_reloader=False,
+                threaded=True
+            )
     except Exception as e:
         logger.error(f"Web server failed to start: {e}")
         raise

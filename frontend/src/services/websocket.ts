@@ -1,13 +1,16 @@
 /**
- * WebSocket service for real-time updates
+ * Socket.IO service for real-time updates
  * 
  * Provides real-time communication with the backend for:
  * - System status updates
  * - Log streaming
  * - Operation progress
  * - Error notifications
+ * - Cache file updates
+ * - Statistics updates
  */
 
+import { io, Socket, SocketOptions } from 'socket.io-client'
 import {
   WebSocketMessage,
   StatusUpdateMessage,
@@ -27,7 +30,10 @@ export type WebSocketEventType =
   | 'cache_file_added'
   | 'cache_file_removed'
   | 'cache_statistics_updated'
+  | 'operation_file_update'
   | 'pong'
+  | 'connected'
+  | 'disconnected'
 
 export interface WebSocketEventHandler {
   (data: unknown): void
@@ -42,13 +48,11 @@ export interface WebSocketConnectionStatus {
 }
 
 /**
- * WebSocket service class
+ * Socket.IO service class
  */
 export class WebSocketService {
-  private ws: WebSocket | null = null
+  private socket: Socket | null = null
   private url: string
-  private reconnectTimer: NodeJS.Timeout | null = null
-  private pingTimer: NodeJS.Timeout | null = null
   private eventHandlers: Map<WebSocketEventType, Set<WebSocketEventHandler>> = new Map()
   private connectionHandlers: Set<(status: WebSocketConnectionStatus) => void> = new Set()
   
@@ -64,7 +68,6 @@ export class WebSocketService {
   private readonly reconnectDelay = 1000 // Start with 1 second
   private readonly maxReconnectDelay = 30000 // Max 30 seconds
   private readonly pingInterval = 30000 // Ping every 30 seconds
-  private readonly pongTimeout = 10000 // Wait 10 seconds for pong
 
   constructor(url?: string) {
     this.url = url || this.buildWebSocketURL()
@@ -78,7 +81,10 @@ export class WebSocketService {
       'cache_file_added',
       'cache_file_removed',
       'cache_statistics_updated',
-      'pong'
+      'operation_file_update',
+      'pong',
+      'connected',
+      'disconnected'
     ]
     eventTypes.forEach(type => {
       this.eventHandlers.set(type, new Set())
@@ -89,75 +95,212 @@ export class WebSocketService {
    * Build WebSocket URL from current location
    */
   private buildWebSocketURL(): string {
+    // Use the same host as the current page, but with Socket.IO protocol
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-    const host = window.location.host
+    const host = window.location.hostname
+    const port = window.location.port || (protocol === 'wss:' ? '443' : '80')
     
-    // In development, use the proxy configured in Vite
-    if (import.meta.env.DEV) {
-      return `${protocol}//${host}/ws`
+    // For development, use the backend port directly
+    if (process.env.NODE_ENV === 'development') {
+      return `http://${host}:5445`
     }
     
-    // In production, assume WebSocket is on the same host
-    return `${protocol}//${host}/ws`
+    return `${protocol}//${host}:${port}`
   }
 
   /**
-   * Connect to WebSocket
+   * Connect to WebSocket server
    */
   connect(): void {
-    if (this.ws?.readyState === WebSocket.OPEN) {
-      return // Already connected
+    if (this.socket?.connected) {
+      console.log('Already connected to WebSocket server')
+      return
     }
 
-    if (this.ws?.readyState === WebSocket.CONNECTING) {
-      return // Connection in progress
-    }
+    console.log('Connecting to WebSocket server:', this.url)
 
     try {
-      console.log('Connecting to WebSocket:', this.url)
-      this.ws = new WebSocket(this.url)
-      
-      this.ws.onopen = this.handleOpen.bind(this)
-      this.ws.onmessage = this.handleMessage.bind(this)
-      this.ws.onclose = this.handleClose.bind(this)
-      this.ws.onerror = this.handleError.bind(this)
+      // Socket.IO configuration
+      const options: SocketOptions = {}
+
+      // Create Socket.IO connection
+      this.socket = io(this.url, options)
+
+      // Set up event listeners
+      this._setupSocketEventListeners()
+
+      // Connect to the server
+      this.socket.connect()
 
     } catch (error) {
-      console.error('WebSocket connection failed:', error)
-      this.scheduleReconnect()
+      console.error('Failed to create WebSocket connection:', error)
+      this.updateStatus({ connected: false, reconnecting: false })
     }
   }
 
   /**
-   * Disconnect from WebSocket
+   * Set up Socket.IO event listeners
+   */
+  private _setupSocketEventListeners(): void {
+    if (!this.socket) return
+
+    // Connection events
+    this.socket.on('connect', () => {
+      console.log('Connected to WebSocket server')
+      this.updateStatus({
+        connected: true,
+        reconnecting: false,
+        lastConnectedAt: new Date(),
+        reconnectAttempts: 0,
+      })
+      
+      // Start ping interval
+      this.startPing()
+      
+      // Emit connected event to handlers
+      this._emitEvent('connected', {
+        timestamp: new Date().toISOString(),
+        message: 'Connected to Cacherr WebSocket server'
+      })
+    })
+
+    this.socket.on('disconnect', (reason: string) => {
+      console.log('Disconnected from WebSocket server:', reason)
+      this.updateStatus({ connected: false })
+      
+      // Emit disconnected event to handlers
+      this._emitEvent('disconnected', {
+        timestamp: new Date().toISOString(),
+        reason: reason
+      })
+      
+      // Clear ping timer
+      this.clearTimers()
+    })
+
+    this.socket.on('connect_error', (error: Error) => {
+      console.error('WebSocket connection error:', error)
+      this.updateStatus({ connected: false, reconnecting: true })
+    })
+
+    this.socket.on('reconnect', (attemptNumber: number) => {
+      console.log(`Reconnected to WebSocket server (attempt ${attemptNumber})`)
+      this.updateStatus({
+        connected: true,
+        reconnecting: false,
+        lastConnectedAt: new Date(),
+        reconnectAttempts: attemptNumber,
+      })
+    })
+
+    this.socket.on('reconnect_error', (error: Error) => {
+      console.error('WebSocket reconnection error:', error)
+      this.updateStatus({ reconnecting: true })
+    })
+
+    this.socket.on('reconnect_failed', () => {
+      console.error('WebSocket reconnection failed')
+      this.updateStatus({ reconnecting: false })
+    })
+
+    // Application-specific events
+    this.socket.on('status_update', (data: StatusUpdateMessage['data']) => {
+      this._emitEvent('status_update', data)
+    })
+
+    this.socket.on('log_entry', (data: LogUpdateMessage['data']) => {
+      this._emitEvent('log_entry', data)
+    })
+
+    this.socket.on('operation_progress', (data: OperationProgressMessage['data']) => {
+      this._emitEvent('operation_progress', data)
+    })
+
+    this.socket.on('error', (data: ErrorMessage['data']) => {
+      this._emitEvent('error', data)
+    })
+
+    this.socket.on('cache_file_added', (data: CacheFileAddedMessage['data']) => {
+      this._emitEvent('cache_file_added', data)
+    })
+
+    this.socket.on('cache_file_removed', (data: CacheFileRemovedMessage['data']) => {
+      this._emitEvent('cache_file_removed', data)
+    })
+
+    this.socket.on('cache_statistics_updated', (data: CacheStatisticsUpdatedMessage['data']) => {
+      this._emitEvent('cache_statistics_updated', data)
+    })
+
+    this.socket.on('operation_file_update', (data: any) => {
+      this._emitEvent('operation_file_update', data)
+    })
+
+    this.socket.on('pong', (data: any) => {
+      this._emitEvent('pong', data)
+    })
+  }
+
+  /**
+   * Emit event to registered handlers
+   */
+  private _emitEvent(type: WebSocketEventType, data: unknown): void {
+    const handlers = this.eventHandlers.get(type)
+    if (handlers) {
+      handlers.forEach(handler => {
+        try {
+          handler(data)
+        } catch (error) {
+          console.error(`Error in WebSocket event handler for ${type}:`, error)
+        }
+      })
+    }
+  }
+
+  /**
+   * Disconnect from WebSocket server
    */
   disconnect(): void {
     this.clearTimers()
     
-    if (this.ws) {
-      this.ws.onopen = null
-      this.ws.onmessage = null
-      this.ws.onclose = null
-      this.ws.onerror = null
-      
-      if (this.ws.readyState === WebSocket.OPEN) {
-        this.ws.close(1000, 'Client disconnect')
-      }
-      
-      this.ws = null
+    if (this.socket) {
+      this.socket.disconnect()
+      this.socket = null
     }
 
     this.updateStatus({ connected: false, reconnecting: false })
   }
 
   /**
-   * Send message to WebSocket
+   * Send message to WebSocket server
    */
   send(data: unknown): void {
-    if (this.ws?.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify(data))
+    if (this.socket?.connected) {
+      this.socket.emit('message', data)
     } else {
       console.warn('WebSocket not connected, cannot send message:', data)
+    }
+  }
+
+  /**
+   * Join a room for targeted messaging
+   */
+  joinRoom(room: string): void {
+    if (this.socket?.connected) {
+      this.socket.emit('join', { room })
+    } else {
+      console.warn('WebSocket not connected, cannot join room:', room)
+    }
+  }
+
+  /**
+   * Leave a room
+   */
+  leaveRoom(room: string): void {
+    if (this.socket?.connected) {
+      this.socket.emit('leave', { room })
+    } else {
+      console.warn('WebSocket not connected, cannot leave room:', room)
     }
   }
 
@@ -205,102 +348,34 @@ export class WebSocketService {
   }
 
   /**
-   * Handle WebSocket open event
+   * Check if currently connected
    */
-  private handleOpen(): void {
-    console.log('WebSocket connected')
-    this.updateStatus({
-      connected: true,
-      reconnecting: false,
-      lastConnectedAt: new Date(),
-      reconnectAttempts: 0,
-    })
-    
-    this.startPing()
+  isConnected(): boolean {
+    return this.socket?.connected || false
   }
 
   /**
-   * Handle WebSocket message event
+   * Start ping timer
    */
-  private handleMessage(event: MessageEvent): void {
-    try {
-      const message: WebSocketMessage = JSON.parse(event.data)
-      
-      // Ignore pong messages
-      if (message.type === 'pong') {
-        return
-      }
-      
-      // Dispatch to appropriate handlers
-      const handlers = this.eventHandlers.get(message.type as WebSocketEventType)
-      if (handlers) {
-        handlers.forEach(handler => {
-          try {
-            handler(message.data)
-          } catch (error) {
-            console.error(`Error in WebSocket event handler for ${message.type}:`, error)
-          }
-        })
-      } else {
-        console.warn('No handlers for WebSocket message type:', message.type)
-      }
-
-    } catch (error) {
-      console.error('Error parsing WebSocket message:', event.data, error)
-    }
-  }
-
-  /**
-   * Handle WebSocket close event
-   */
-  private handleClose(event: CloseEvent): void {
-    console.log('WebSocket closed:', event.code, event.reason)
+  private startPing(): void {
     this.clearTimers()
-    this.updateStatus({ connected: false })
     
-    // Don't reconnect if it was a normal closure
-    if (event.code !== 1000) {
-      this.scheduleReconnect()
-    }
+    // Send ping every 30 seconds to keep connection alive
+    this.pingTimer = setInterval(() => {
+      if (this.socket?.connected) {
+        this.socket.emit('ping')
+      }
+    }, this.pingInterval)
   }
 
   /**
-   * Handle WebSocket error event
+   * Clear all timers
    */
-  private handleError(error: Event): void {
-    console.error('WebSocket error:', error)
-    this.clearTimers()
-    this.scheduleReconnect()
-  }
-
-  /**
-   * Schedule reconnection attempt
-   */
-  private scheduleReconnect(): void {
-    if (this.status.reconnectAttempts >= this.status.maxReconnectAttempts) {
-      console.error('Max WebSocket reconnection attempts reached')
-      this.updateStatus({ reconnecting: false })
-      return
+  private clearTimers(): void {
+    if (this.pingTimer) {
+      clearInterval(this.pingTimer)
+      this.pingTimer = null
     }
-
-    if (this.reconnectTimer) {
-      return // Already scheduled
-    }
-
-    const delay = Math.min(
-      this.reconnectDelay * Math.pow(2, this.status.reconnectAttempts),
-      this.maxReconnectDelay
-    )
-
-    console.log(`Scheduling WebSocket reconnection in ${delay}ms (attempt ${this.status.reconnectAttempts + 1})`)
-    
-    this.updateStatus({ reconnecting: true })
-    
-    this.reconnectTimer = setTimeout(() => {
-      this.reconnectTimer = null
-      this.status.reconnectAttempts++
-      this.connect()
-    }, delay)
   }
 
   /**
@@ -318,31 +393,8 @@ export class WebSocketService {
     })
   }
 
-  /**
-   * Start ping timer
-   */
-  private startPing(): void {
-    this.pingTimer = setInterval(() => {
-      if (this.ws?.readyState === WebSocket.OPEN) {
-        this.send({ type: 'ping' })
-      }
-    }, this.pingInterval)
-  }
-
-  /**
-   * Clear all timers
-   */
-  private clearTimers(): void {
-    if (this.reconnectTimer) {
-      clearTimeout(this.reconnectTimer)
-      this.reconnectTimer = null
-    }
-    
-    if (this.pingTimer) {
-      clearInterval(this.pingTimer)
-      this.pingTimer = null
-    }
-  }
+  // Private properties
+  private pingTimer: NodeJS.Timeout | null = null
 }
 
 // Create singleton instance

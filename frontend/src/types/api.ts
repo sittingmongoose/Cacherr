@@ -43,6 +43,11 @@ export interface CacheStatistics {
   total_size_readable: string
   cache_hit_ratio?: number
   last_updated: string
+  active_files?: number
+  orphaned_files?: number
+  users_count?: number
+  oldest_cached_at?: string
+  most_accessed_file?: string
 }
 
 // Test Results Types
@@ -253,18 +258,6 @@ export interface CachedFileInfo {
   metadata?: Record<string, unknown>
 }
 
-export interface CacheStatistics {
-  total_files: number
-  total_size_bytes: number
-  total_size_readable: string
-  active_files: number
-  orphaned_files: number
-  users_count: number
-  oldest_cached_at?: string
-  most_accessed_file?: string
-  cache_hit_ratio: number
-}
-
 export interface CachedFilesFilter {
   search?: string
   user_id?: string
@@ -395,7 +388,7 @@ export interface SchedulerJob {
 
 // WebSocket Message Types
 export interface WebSocketMessage {
-  type: 'status_update' | 'log_entry' | 'operation_progress' | 'error'
+  type: 'status_update' | 'log_entry' | 'operation_progress' | 'error' | 'cache_file_added' | 'cache_file_removed' | 'cache_statistics_updated' | 'operation_file_update' | 'pong'
   data: unknown
   timestamp: string
 }
@@ -639,29 +632,17 @@ export interface CachedFileInfo {
   filename: string
   original_path: string
   cached_path: string
-  cache_method: string
+  cache_method: 'atomic_symlink' | 'atomic_copy' | 'symlink' | 'hardlink' | 'copy'
   file_size_bytes: number
   file_size_readable: string
   cached_at: string
   last_accessed?: string
   access_count: number
   triggered_by_user?: string
-  triggered_by_operation: string
+  triggered_by_operation: 'watchlist' | 'ondeck' | 'trakt' | 'manual' | 'continue_watching' | 'real_time_watch' | 'active_watching'
   status: 'active' | 'orphaned' | 'pending_removal' | 'removed'
   users: string[]
   metadata?: Record<string, unknown>
-}
-
-export interface CacheStatistics {
-  total_files: number
-  total_size_bytes: number
-  total_size_readable: string
-  active_files: number
-  orphaned_files: number
-  users_count: number
-  oldest_cached_at?: string
-  most_accessed_file?: string
-  cache_hit_ratio: number
 }
 
 export interface UserCacheStatistics {
@@ -671,7 +652,7 @@ export interface UserCacheStatistics {
   active_files: number
   total_size_bytes: number
   total_size_readable: string
-  most_common_operation: string
+  most_common_operation?: string
   recent_files: Array<{
     filename: string
     cached_at: string
@@ -684,7 +665,7 @@ export interface CachedFilesFilter {
   search?: string
   user_id?: string
   status?: CachedFileInfo['status']
-  triggered_by_operation?: string
+  triggered_by_operation?: 'watchlist' | 'ondeck' | 'trakt' | 'manual' | 'continue_watching' | 'real_time_watch' | 'active_watching'
   size_min?: number
   size_max?: number
   cached_since?: string

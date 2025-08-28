@@ -26,7 +26,7 @@ import {
 
 import {
   BatchOperation,
-  OperationDetails,
+  type OperationDetails,
   FileOperation
 } from '@/types/api'
 

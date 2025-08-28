@@ -16,6 +16,7 @@ export interface LoadingProps {
   size?: 'sm' | 'md' | 'lg'
   color?: string
   text?: string
+  className?: string
 }
 
 export interface ErrorProps {

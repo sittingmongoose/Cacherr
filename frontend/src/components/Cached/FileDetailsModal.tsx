@@ -232,11 +232,9 @@ export const FileDetailsModal: React.FC<FileDetailsModalProps> = ({
                       </div>
                     </div>
                     <StatusBadge 
-                      status={getStatusColor(fileDetails.status)}
+                      status={fileDetails.status}
                       icon={getStatusIcon(fileDetails.status)}
-                    >
-                      {fileDetails.status}
-                    </StatusBadge>
+                    />
                   </div>
 
                   {/* Quick Stats */}

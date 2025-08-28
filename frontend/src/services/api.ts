@@ -25,10 +25,12 @@ import {
   CacheCleanupRequest,
   CacheCleanupResponse,
   RemoveCachedFileRequest,
+  OperationsResponse,
+  OperationDetails,
 } from '@/types/api'
 
 // API configuration
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
+const API_BASE_URL = '' // Always use relative URLs to go through Vite proxy
 const DEFAULT_TIMEOUT = 10000 // 10 seconds
 
 // Custom error class for API errors

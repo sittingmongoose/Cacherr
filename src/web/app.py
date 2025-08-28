@@ -47,10 +47,12 @@ from pathlib import Path
 
 from flask import Flask, request, g, jsonify
 from flask_cors import CORS
+from flask_socketio import SocketIO
 from pydantic import BaseModel, Field
 
 from ..core.container import DIContainer, IServiceProvider
 from ..core.interfaces import CacheService, MediaService, FileService, NotificationService
+from ..core.websocket_manager import WebSocketManager, set_websocket_manager
 from ..config.settings import Config
 
 
@@ -94,6 +96,7 @@ class WebApplicationFactory:
             
         self.container = container
         self.logger = logging.getLogger(__name__)
+        self.socketio: Optional[SocketIO] = None
     
     def create_app(self, config: Optional[FlaskAppConfig] = None) -> Flask:
         """
@@ -136,6 +139,9 @@ class WebApplicationFactory:
             
             # Setup logging
             self._setup_logging(app, config.log_level)
+            
+            # Initialize WebSocket support
+            self._setup_websocket(app)
             
             self.logger.info("Flask application created successfully")
             return app
@@ -295,6 +301,29 @@ class WebApplicationFactory:
         werkzeug_logger.setLevel(logging.WARNING)
         
         self.logger.debug(f"Logging configured with level: {log_level}")
+    
+    def _setup_websocket(self, app: Flask) -> None:
+        """Setup WebSocket support using Flask-SocketIO."""
+        try:
+            # Initialize SocketIO with the Flask app
+            self.socketio = SocketIO(
+                app,
+                cors_allowed_origins="*",
+                async_mode='threading',
+                logger=True,
+                engineio_logger=True
+            )
+            
+            # Create and set the WebSocket manager
+            websocket_manager = WebSocketManager(self.socketio)
+            set_websocket_manager(websocket_manager)
+            
+            self.logger.info("WebSocket support initialized successfully")
+            
+        except Exception as e:
+            self.logger.error(f"Failed to initialize WebSocket support: {e}")
+            # Don't fail the entire app if WebSocket fails
+            self.socketio = None
 
 
 def create_app(container: DIContainer, 
