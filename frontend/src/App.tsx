@@ -123,7 +123,7 @@ const PageLoader: React.FC = () => (
 
 // Lazy load components for better performance and code splitting
 const Dashboard = React.lazy(() => import('@/components/Dashboard'))
-const Cached = React.lazy(() => import('@/components/Cached'))
+const CachedTab = React.lazy(() => import('@/components/Cached'))
 
 // Route components wrapper with Suspense for lazy loading
 const DashboardPage: React.FC = () => (
@@ -134,7 +134,7 @@ const DashboardPage: React.FC = () => (
 
 const CachedPage: React.FC = () => (
   <React.Suspense fallback={<PageLoader />}>
-    <Cached />
+    <CachedTab />
   </React.Suspense>
 )
 

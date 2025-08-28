@@ -130,7 +130,18 @@ def react_app(path=None):
             # Fallback to current working directory for development
             app_root = Path.cwd()
         
-        frontend_dist = app_root / 'frontend' / 'dist'
+        # Check multiple possible locations for the frontend
+        possible_paths = [
+            app_root / 'frontend' / 'dist',  # Docker path
+            Path.cwd() / 'frontend' / 'dist',  # Current working directory
+            Path('/mnt/user/Cursor/Cacherr/frontend/dist'),  # Absolute path for current setup
+        ]
+        
+        frontend_dist = None
+        for path in possible_paths:
+            if path.exists():
+                frontend_dist = path
+                break
         
         if not frontend_dist.exists():
             logger.error(f"Frontend build directory not found at: {frontend_dist}")
@@ -189,7 +200,22 @@ def react_assets(filename):
         if not app_root.exists():
             app_root = Path.cwd()
         
-        frontend_dist = app_root / 'frontend' / 'dist'
+        # Check multiple possible locations for the frontend
+        possible_paths = [
+            app_root / 'frontend' / 'dist',  # Docker path
+            Path.cwd() / 'frontend' / 'dist',  # Current working directory
+            Path('/mnt/user/Cursor/Cacherr/frontend/dist'),  # Absolute path for current setup
+        ]
+        
+        frontend_dist = None
+        for path in possible_paths:
+            if path.exists():
+                frontend_dist = path
+                break
+        
+        if not frontend_dist:
+            return "Frontend not found", 404
+            
         assets_dir = frontend_dist / 'assets'
         
         if not assets_dir.exists():
