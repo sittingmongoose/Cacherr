@@ -17,20 +17,21 @@ export default defineConfig({
     },
   },
   server: {
+    host: '0.0.0.0', // Required for Docker container access
     port: 3000,
     proxy: {
       // Proxy API requests to Flask backend during development
       '/api': {
-        target: 'http://localhost:5000',
+        target: 'http://localhost:5445',
         changeOrigin: true,
       },
       '/health': {
-        target: 'http://localhost:5000',
+        target: 'http://localhost:5445',
         changeOrigin: true,
       },
       // WebSocket proxy for real-time updates
       '/ws': {
-        target: 'ws://localhost:5000',
+        target: 'ws://localhost:5445',
         ws: true,
         changeOrigin: true,
       },
