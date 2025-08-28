@@ -9,19 +9,19 @@ services:
     container_name: cacherr-unraid
     restart: unless-stopped
     ports:
-      - "5444:5445"
+      - "5445:5445"
     environment:
       # Plex Configuration
       - PLEX_URL=${PLEX_URL}
       - PLEX_TOKEN=${PLEX_TOKEN}
       
       # Path Configuration (matched to your Plex setup)
-      - CONFIG_DIR=/config
-      - REAL_SOURCE=/media
-      - PLEX_SOURCE=/media
-      - CACHE_DESTINATION=/cache
-      - ADDITIONAL_SOURCES=/Nas1
-      - ADDITIONAL_PLEX_SOURCES=/Nas1
+      - CONFIG_DIR=${CONFIG_DIR:-/config}
+      - REAL_SOURCE=${REAL_SOURCE:-/media}
+      - PLEX_SOURCE=${PLEX_SOURCE:-/media}
+      - CACHE_DESTINATION=${CACHE_DESTINATION:-/cache}
+      - ADDITIONAL_SOURCES=${ADDITIONAL_SOURCES:-[]}
+      - ADDITIONAL_PLEX_SOURCES=${ADDITIONAL_PLEX_SOURCES:-[]}
       
       # Media Settings
       - NUMBER_EPISODES=${NUMBER_EPISODES:-5}
@@ -80,7 +80,7 @@ services:
       - NOTIFICATION_TYPE=${NOTIFICATION_TYPE:-webhook}
       
       # Container Configuration
-      - TZ=${TZ:-UTC}
+      - TZ=${TZ:-America/New_York}
     volumes:
       # SOLUTION: Use same mount paths as Plex for compatibility
       # This ensures cacherr and Plex see files through identical paths
