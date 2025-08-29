@@ -22,6 +22,20 @@ except ImportError:
 
 print("*** PlexCache ***")
 
+# Parse command line arguments
+import argparse
+
+parser = argparse.ArgumentParser(description='PlexCache - Media Caching Tool')
+parser.add_argument('--web', action='store_true', help='Run in web server mode with WebSocket support')
+parser.add_argument('--host', default='0.0.0.0', help='Host to bind the web server to (default: 0.0.0.0)')
+parser.add_argument('--port', type=int, default=5000, help='Port to bind the web server to (default: 5000)')
+parser.add_argument('--debug', action='store_true', help='Enable debug mode')
+
+args = parser.parse_args()
+
+# Check if running in web mode
+WEB_MODE = args.web or WEBSOCKET_AVAILABLE
+
 script_folder = "/mnt/user/system/plexcache/" # Folder path for the PlexCache script storing the settings, watchlist & watched cache files
 logs_folder = script_folder # Change this if you want your logs in a different folder
 log_level = "" # Set the desired logging level for webhook notifications. Defaults to INFO when left empty. (Options: debug, info, warning, error, critical)
@@ -1743,9 +1757,43 @@ logger.log(SUMMARY, summary_message)
 print(f"Execution time of the script: {execution_time}")
 logging.info(f"Execution time of the script: {execution_time}")
 
-print("Thank you for using bexem's script: \nhttps://github.com/bexem/PlexCache")
-logging.info("Thank you for using bexem's script: https://github.com/bexem/PlexCache")
-logging.info("Also special thanks to: - /u/teshiburu2020 - /u/planesrfun - /u/trevski13 - /u/extrobe - /u/dsaunier-sunlight")
-logging.info("*** The End ***")
-logging.shutdown()
-print("*** The End ***")
+# Web Server Mode
+if WEB_MODE and WEBSOCKET_AVAILABLE:
+    print("\n🚀 Starting PlexCache Web Server...")
+    logging.info("Starting PlexCache Web Server with WebSocket support")
+
+    try:
+        # Create web server instance
+        # Create a minimal instance to pass to the web server
+        class PlexCacheInstance:
+            def __init__(self):
+                self.logger = logger
+
+        plexcache_instance = PlexCacheInstance()
+        web_server = PlexCacheWebServer(plexcache_instance=plexcache_instance)
+
+        print(f"🌐 Web server will be available at http://{args.host}:{args.port}")
+        print("📊 WebSocket real-time monitoring enabled")
+        print("🎛️  Web interface: http://{args.host}:{args.port}")
+        print("🔗 API endpoints: http://{args.host}:{args.port}/api/*")
+        print("\nPress Ctrl+C to stop the server")
+
+        # Start the web server (this will block)
+        web_server.run(host=args.host, port=args.port, debug=args.debug)
+
+    except KeyboardInterrupt:
+        print("\n🛑 Web server stopped by user")
+        logging.info("Web server stopped by user")
+    except Exception as e:
+        print(f"❌ Web server error: {e}")
+        logging.error(f"Web server error: {e}")
+        if not args.debug:
+            exit(1)
+else:
+    # Traditional command-line mode
+    print("Thank you for using bexem's script: \nhttps://github.com/bexem/PlexCache")
+    logging.info("Thank you for using bexem's script: https://github.com/bexem/PlexCache")
+    logging.info("Also special thanks to: - /u/teshiburu2020 - /u/planesrfun - /u/trevski13 - /u/extrobe - /u/dsaunier-sunlight")
+    logging.info("*** The End ***")
+    logging.shutdown()
+    print("*** The End ***")
