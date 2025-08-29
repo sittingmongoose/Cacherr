@@ -147,7 +147,7 @@ const initialState: AppState = {
 // Load persisted UI state from localStorage
 const loadPersistedUIState = (): Partial<UIState> => {
   try {
-    const stored = localStorage.getItem('plexcacheultra-ui-state')
+    const stored = localStorage.getItem('cacherr-ui-state')
     return stored ? JSON.parse(stored) : {}
   } catch {
     return {}
@@ -157,7 +157,7 @@ const loadPersistedUIState = (): Partial<UIState> => {
 // Save UI state to localStorage
 const saveUIState = (uiState: UIState) => {
   try {
-    localStorage.setItem('plexcacheultra-ui-state', JSON.stringify(uiState))
+    localStorage.setItem('cacherr-ui-state', JSON.stringify(uiState))
   } catch {
     // Ignore storage errors
   }

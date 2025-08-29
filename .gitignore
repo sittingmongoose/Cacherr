@@ -150,10 +150,22 @@ logs/
 .env
 .env.local
 .env.production
+.env.development
+.env.staging
 *.env
 config.ini
 config.json
 secrets.json
+credentials.json
+auth.json
+tokens.json
+keys.json
+
+# Plex specific sensitive data
+plex_token
+plex_api_key
+plex_credentials
+*plex*tokens*
 
 # But allow source code configuration
 !src/config/
@@ -182,8 +194,6 @@ frontend/out/
 
 # Test and temporary files
 final_test.py
-QWEN.md
-CLAUDE.md
 
 # Python cache directories (more comprehensive)
 **/__pycache__/

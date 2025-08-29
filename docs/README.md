@@ -1,6 +1,6 @@
-# PlexCacheUltra Documentation
+# Cacherr Documentation
 
-Welcome to the PlexCacheUltra documentation. This directory contains comprehensive documentation for the PlexCacheUltra project, covering architecture, development, deployment, and usage.
+Welcome to the Cacherr documentation. This directory contains comprehensive documentation for the Cacherr project, covering architecture, development, deployment, and usage.
 
 ## Documentation Structure
 

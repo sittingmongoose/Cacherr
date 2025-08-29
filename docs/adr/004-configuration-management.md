@@ -169,9 +169,9 @@ class PathConfiguration(BaseModel):
         if self.environment == EnvironmentType.DOCKER:
             return Path("/cache")
         elif self.environment == EnvironmentType.DEVELOPMENT:
-            return Path.home() / ".plexcache" / "cache"
+            return Path.home() / ".cacherr" / "cache"
         elif self.environment == EnvironmentType.TEST:
-            return Path(tempfile.gettempdir()) / "plexcache_test" / "cache"
+            return Path(tempfile.gettempdir()) / "cacherr_test" / "cache"
         else:
             return self.base_directory / "cache"
 ```
@@ -276,8 +276,8 @@ log_level: INFO
 ### Development Environment
 ```yaml
 environment: development
-cache_directory: ~/.plexcache/cache
-array_directory: ~/.plexcache/array
+cache_directory: ~/.cacherr/cache
+array_directory: ~/.cacherr/array
 plex_url: http://localhost:32400
 log_level: DEBUG
 enable_debugging: true
@@ -286,8 +286,8 @@ enable_debugging: true
 ### Test Environment
 ```yaml
 environment: test
-cache_directory: /tmp/plexcache_test/cache
-array_directory: /tmp/plexcache_test/array
+cache_directory: /tmp/cacherr_test/cache
+array_directory: /tmp/cacherr_test/array
 plex_url: http://mock-plex:32400
 dry_run: true
 log_level: DEBUG

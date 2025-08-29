@@ -599,6 +599,70 @@ Cacherr/
 4. Add tests if applicable
 5. Submit a pull request
 
+## 🔧 Troubleshooting & Debugging
+
+### Quick Start Commands
+
+```bash
+# Development Mode (Best for debugging)
+./dev-start.sh
+
+# Production Debugging
+./debug-production.sh
+
+# Stop Development
+docker-compose -f docker-compose.dev.yml down
+
+# Stop Production
+docker-compose down
+```
+
+### Access URLs
+
+| Mode | Frontend | Backend | Notes |
+|------|----------|---------|-------|
+| **Development** | http://localhost:3000 | http://localhost:5445 | Hot reload, source maps |
+| **Production** | http://localhost:5445 | http://localhost:5445 | Built frontend served by Flask |
+
+### Common Issues
+
+#### Web GUI Issues
+- **Problem**: Web GUI redirects to malformed URLs like `@https://192.168.50.119:1444/5444`
+- **Solution**: Check your reverse proxy configuration and ensure proper URL rewriting
+
+#### Docker Health Checks
+- **Problem**: Container fails health checks
+- **Solution**: Ensure all required environment variables are set and paths are accessible
+
+#### File Permissions
+- **Problem**: Files not moving between cache and array
+- **Solution**: Verify Docker user has read/write permissions on all configured paths
+
+### Chrome DevTools Shortcuts
+
+| Action | Shortcut |
+|--------|----------|
+| Open DevTools | `F12` or `Ctrl+Shift+I` |
+| Network Tab | `Ctrl+Shift+J` |
+| Console Tab | `Ctrl+Shift+K` |
+| Sources Tab | `Ctrl+Shift+S` |
+
+### Logs and Monitoring
+
+```bash
+# View container logs
+docker-compose logs -f cacherr
+
+# View specific service logs
+docker-compose logs -f cacherr-dev
+
+# Check container health
+docker ps
+
+# View health endpoint
+curl http://localhost:5445/health
+```
+
 ## 📝 License
 
 This project is licensed under the MIT License - see the LICENSE file for details.

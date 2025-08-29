@@ -1,6 +1,6 @@
 # Mount Problem Tracking
 
-This document tracks mount-related problems and troubleshooting attempts for the PlexCacheUltra project.
+This document tracks mount-related problems and troubleshooting attempts for the Cacherr project.
 
 ## Problem Description
 **Core Issue**: Cacherr stops Plex from seeing media shares while still maintaining the ability to move or copy files.

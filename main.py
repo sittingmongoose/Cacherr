@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-PlexCacheUltra - Docker-optimized Plex media caching system
+Cacherr - Docker-optimized Plex media caching system
 Main application entry point using modular architecture with dependency injection
 """
 

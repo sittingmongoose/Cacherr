@@ -31,7 +31,7 @@ class TestConfig:
     
     # Test directories
     TEST_DATA_DIR = Path(__file__).parent / "fixtures" / "data"
-    TEST_TEMP_DIR = Path(tempfile.gettempdir()) / "plexcache_tests"
+    TEST_TEMP_DIR = Path(tempfile.gettempdir()) / "cacherr_tests"
     
     # Test timeouts
     DEFAULT_TIMEOUT = 30
@@ -52,7 +52,7 @@ def test_config() -> TestConfig:
 @pytest.fixture(scope="function")
 def temp_dir() -> Generator[Path, None, None]:
     """Provide a temporary directory for each test."""
-    temp_path = Path(tempfile.mkdtemp(prefix="plexcache_test_"))
+    temp_path = Path(tempfile.mkdtemp(prefix="cacherr_test_"))
     try:
         yield temp_path
     finally:

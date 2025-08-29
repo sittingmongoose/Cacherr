@@ -551,7 +551,7 @@ class TempFileCleanupTask:
         # Clean up various temp locations
         temp_locations = [
             Path("/config/temp"),  # Application temp directory
-            Path("/tmp/plexcacheultra"),  # App-specific temp
+            Path("/tmp/cacherr"),  # App-specific temp
             Path.cwd() / "temp"  # Local temp directory
         ]
         
