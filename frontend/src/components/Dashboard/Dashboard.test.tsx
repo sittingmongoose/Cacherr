@@ -296,7 +296,7 @@ describe('Dashboard Component', () => {
       )
 
       await waitFor(() => {
-        expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument() // PlexCacheUltra title
+        expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument() // Cacherr title
         expect(screen.getByRole('heading', { level: 2 })).toBeInTheDocument() // Dashboard title
       })
     })

@@ -181,14 +181,14 @@ New environment variables for enhanced configuration:
 
 ```bash
 # Environment detection (optional - auto-detected)
-PLEXCACHE_ENVIRONMENT=development|production|test|docker
+CACHERR_ENVIRONMENT=development|production|test|docker
 
 # Override default paths (optional)
-PLEXCACHE_CONFIG_DIR=/custom/config
-PLEXCACHE_DATA_DIR=/custom/data
+CACHERR_CONFIG_DIR=/custom/config
+CACHERR_DATA_DIR=/custom/data
 
 # Enable debug features
-PLEXCACHE_DEBUG=true
+CACHERR_DEBUG=true
 ```
 
 ## Code Migration Patterns
@@ -346,7 +346,7 @@ The existing Docker configuration continues to work, but now uses the new applic
 
 **Environment Variables:**
 ```dockerfile
-ENV PLEXCACHE_ENVIRONMENT=docker
+ENV CACHERR_ENVIRONMENT=docker
 ENV PYTHONPATH=/app/src
 ```
 

@@ -673,7 +673,7 @@ class TestSecurityIntegration:
             user_context=user_context,
             operation_reason="watchlist",
             ip_address="192.168.1.100",
-            user_agent="PlexCacheUltra/1.0"
+            user_agent="Cacherr/1.0"
         )
         
         cached_episode = service.add_cached_file(
@@ -684,7 +684,7 @@ class TestSecurityIntegration:
             user_context=user_context,
             operation_reason="ondeck",
             ip_address="192.168.1.100",
-            user_agent="PlexCacheUltra/1.0"
+            user_agent="Cacherr/1.0"
         )
         
         # Verify files were cached

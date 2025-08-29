@@ -498,7 +498,7 @@ class MockNotificationService(NotificationService):
         self.enabled = enabled
         self.sent_notifications = []  # Track sent notifications
     
-    def send_notification(self, message: str, title: str = "PlexCacheUltra",
+    def send_notification(self, message: str, title: str = "Cacherr",
                          priority: str = "normal", **kwargs) -> bool:
         """Send a notification."""
         self.call_count += 1
@@ -529,7 +529,7 @@ class MockNotificationService(NotificationService):
     def send_test_notification(self) -> bool:
         """Send a test notification."""
         return self.send_notification(
-            message="This is a test notification from PlexCacheUltra",
+            message="This is a test notification from Cacherr",
             title="Test Notification",
             priority="low"
         )

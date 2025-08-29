@@ -1,5 +1,5 @@
 """
-Cleanup task implementations for PlexCacheUltra scheduler.
+Cleanup task implementations for Cacherr scheduler.
 
 This module provides task implementations for various cleanup operations
 including cache cleanup, log file management, temporary file removal,
@@ -597,7 +597,7 @@ class TempFileCleanupTask:
             cutoff_time = datetime.now() - timedelta(hours=self.max_age_hours)
             
             # Only clean files with our app-specific patterns to avoid system issues
-            app_patterns = ["plexcache*", "cacherr*"]
+            app_patterns = ["cacherr*"]
             
             for pattern in app_patterns:
                 for temp_file in system_temp.glob(pattern):

@@ -1,8 +1,8 @@
 """
-Pytest configuration and shared fixtures for PlexCacheUltra tests.
+Pytest configuration and shared fixtures for Cacherr tests.
 
 This module provides shared fixtures, test configuration, and utilities
-used across all test suites in the PlexCacheUltra project.
+used across all test suites in the Cacherr project.
 """
 
 import pytest

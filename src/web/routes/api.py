@@ -1,7 +1,7 @@
 """
-API routes for PlexCacheUltra web application.
+API routes for Cacherr web application.
 
-This module provides RESTful API endpoints for interacting with the PlexCacheUltra
+This module provides RESTful API endpoints for interacting with the Cacherr
 system programmatically. Includes endpoints for cache operations, scheduler control,
 configuration management, and system monitoring.
 
@@ -1560,7 +1560,7 @@ def api_export_operation(operation_id: str):
         batch_op, file_ops = results_service.get_operation_details(operation_id)
         
         # Generate export data
-        export_data = f"PlexCacheUltra Operation Export\n"
+        export_data = f"Cacherr Operation Export\n"
         export_data += f"Generated: {datetime.now().isoformat()}\n\n"
         export_data += f"Operation ID: {batch_op.id}\n"
         export_data += f"Type: {batch_op.operation_type}\n"
@@ -2260,7 +2260,7 @@ def api_export_cached_files():
         else:  # txt format
             # Text export
             export_lines = []
-            export_lines.append("PlexCacheUltra Cached Files Export")
+            export_lines.append("Cacherr Cached Files Export")
             export_lines.append(f"Generated: {datetime.now(timezone.utc).isoformat()}")
             export_lines.append(f"Total Files: {len(cached_files)}")
             export_lines.append("")

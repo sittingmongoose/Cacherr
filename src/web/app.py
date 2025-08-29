@@ -1,5 +1,5 @@
 """
-Flask application factory for PlexCacheUltra.
+Flask application factory for Cacherr.
 
 This module implements the Flask application factory pattern, providing a clean
 way to create and configure Flask applications with dependency injection support.

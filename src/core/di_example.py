@@ -1,5 +1,5 @@
 """
-Example usage of the Dependency Injection system for PlexCacheUltra.
+Example usage of the Dependency Injection system for Cacherr.
 
 This module demonstrates how to use the various DI components including
 container setup, service registration, lifecycle management, and service location.

@@ -1,9 +1,9 @@
 """
-Application bootstrap and dependency wiring for PlexCacheUltra.
+Application bootstrap and dependency wiring for Cacherr.
 
 This module provides the main application factory and dependency injection
 configuration. It serves as the central bootstrap point that wires together
-all components of the PlexCacheUltra system using dependency injection patterns.
+all components of the Cacherr system using dependency injection patterns.
 
 Key Features:
 - Centralized dependency injection container configuration
@@ -171,7 +171,7 @@ class ApplicationContext:
         Initialize application context.
         
         Args:
-            config: PlexCacheUltra configuration
+            config: Cacherr configuration
             app_config: Application bootstrap configuration
         """
         self.config = config
@@ -207,7 +207,7 @@ class ApplicationContext:
             return True
         
         start_time = datetime.now()
-        self.logger.info("Starting PlexCacheUltra application...")
+        self.logger.info("Starting Cacherr application...")
         
         try:
             # Setup logging if configured
@@ -280,7 +280,7 @@ class ApplicationContext:
             self.logger.info("Application is not started, nothing to shutdown")
             return True
         
-        self.logger.info("Shutting down PlexCacheUltra application...")
+        self.logger.info("Shutting down Cacherr application...")
         shutdown_success = True
         
         try:

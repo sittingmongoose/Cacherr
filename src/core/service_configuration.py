@@ -314,7 +314,7 @@ class FileServiceConfigurationProvider(IServiceConfigurationProvider):
 class EnvironmentServiceConfigurationProvider(IServiceConfigurationProvider):
     """Service configuration provider that loads from environment variables."""
     
-    def __init__(self, prefix: str = "PLEXCACHEULTRA_SERVICE_", 
+    def __init__(self, prefix: str = "CACHERR_SERVICE_", 
                  environment_provider: Optional[EnvironmentConfig] = None):
         """
         Initialize the environment configuration provider.
@@ -426,7 +426,7 @@ class ServiceConfigurationBuilder:
         self._providers.append(provider)
         return self
     
-    def from_environment(self, prefix: str = "PLEXCACHEULTRA_SERVICE_",
+    def from_environment(self, prefix: str = "CACHERR_SERVICE_",
                         environment_provider: Optional[EnvironmentConfig] = None) -> 'ServiceConfigurationBuilder':
         """
         Add an environment variable configuration provider.

@@ -1,5 +1,5 @@
 """
-Example usage of the PlexCacheUltra Command Pattern system.
+Example usage of the Cacherr Command Pattern system.
 
 This module demonstrates how to use the command system for cache operations,
 including setting up the dependency injection container, creating commands,
@@ -243,7 +243,7 @@ def demonstrate_configuration_options():
 
 def run_complete_demo():
     """Run the complete command system demonstration."""
-    logger.info("Starting PlexCacheUltra Command System Demo")
+    logger.info("Starting Cacherr Command System Demo")
     logger.info("=" * 50)
     
     success_count = 0
