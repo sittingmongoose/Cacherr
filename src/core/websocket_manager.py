@@ -38,90 +38,92 @@ class WebSocketManager:
     def _register_event_handlers(self):
         """Register Socket.IO event handlers with proper function signatures."""
 
-        @self.socketio.on('connect')
-        def handle_connect(sid):
-            """
-            Handle client connection with proper Socket.IO v4 signature.
+        # Register event handlers using method references
+        self.socketio.on_event('connect', self._handle_connect)
+        self.socketio.on_event('disconnect', self._handle_disconnect)
+        self.socketio.on_event('ping', self._handle_ping)
+        self.socketio.on_event('status', self._handle_status_request)
 
-            This function now accepts the 'sid' parameter that Socket.IO v4
-            automatically passes to event handlers, fixing the signature errors.
+    def _handle_connect(self, sid):
+        """
+        Handle client connection with proper Socket.IO v4 signature.
 
-            Args:
-                sid: Session ID provided by Socket.IO
-            """
-            # Use sid parameter directly instead of trying to access server.eio.sid
-            self.logger.info(f"Client connected: {sid}")
+        This function now accepts the 'sid' parameter that Socket.IO v4
+        automatically passes to event handlers, fixing the signature errors.
 
-            # Store connection info
-            self.connected_clients[sid] = {
-                'connected_at': datetime.utcnow(),
-                'last_seen': datetime.utcnow(),
-                'user_agent': None,  # Can be populated from request headers if needed
-                'ip_address': None   # Can be populated from request if needed
-            }
+        Args:
+            sid: Session ID provided by Socket.IO
+        """
+        # Use sid parameter directly instead of trying to access server.eio.sid
+        self.logger.info(f"Client connected: {sid}")
 
-            # Emit welcome message to the connected client
-            emit('connection_ack', {
-                'sid': sid,
-                'message': 'Successfully connected to PlexCacheUltra',
-                'timestamp': datetime.utcnow().isoformat()
-            })
+        # Store connection info
+        self.connected_clients[sid] = {
+            'connected_at': datetime.utcnow(),
+            'last_seen': datetime.utcnow(),
+            'user_agent': None,  # Can be populated from request headers if needed
+            'ip_address': None   # Can be populated from request if needed
+        }
 
-            self.logger.info(f"Connection established for client {sid}. Total clients: {len(self.connected_clients)}")
+        # Emit welcome message to the connected client
+        self.socketio.emit('connection_ack', {
+            'sid': sid,
+            'message': 'Successfully connected to PlexCacheUltra',
+            'timestamp': datetime.utcnow().isoformat()
+        })
 
-        @self.socketio.on('disconnect')
-        def handle_disconnect(sid):
-            """
-            Handle client disconnection with proper Socket.IO v4 signature.
+        self.logger.info(f"Connection established for client {sid}. Total clients: {len(self.connected_clients)}")
 
-            This function now accepts the 'sid' parameter that Socket.IO v4
-            automatically passes to event handlers, fixing the signature errors.
+    def _handle_disconnect(self, sid):
+        """
+        Handle client disconnection with proper Socket.IO v4 signature.
 
-            Args:
-                sid: Session ID provided by Socket.IO
-            """
-            # Use sid parameter directly instead of trying to access server.eio.sid
-            self.logger.info(f"Client disconnected: {sid}")
+        This function now accepts the 'sid' parameter that Socket.IO v4
+        automatically passes to event handlers, fixing the signature errors.
 
-            # Clean up connection info
-            if sid in self.connected_clients:
-                connection_info = self.connected_clients[sid]
-                connection_duration = datetime.utcnow() - connection_info['connected_at']
-                self.logger.info(f"Client {sid} was connected for {connection_duration}")
-                del self.connected_clients[sid]
+        Args:
+            sid: Session ID provided by Socket.IO
+        """
+        # Use sid parameter directly instead of trying to access server.eio.sid
+        self.logger.info(f"Client disconnected: {sid}")
 
-            self.logger.info(f"Disconnection handled for client {sid}. Remaining clients: {len(self.connected_clients)}")
+        # Clean up connection info
+        if sid in self.connected_clients:
+            connection_info = self.connected_clients[sid]
+            connection_duration = datetime.utcnow() - connection_info['connected_at']
+            self.logger.info(f"Client {sid} was connected for {connection_duration}")
+            del self.connected_clients[sid]
 
-        @self.socketio.on('ping')
-        def handle_ping(sid, data=None):
-            """
-            Handle ping messages from clients.
+        self.logger.info(f"Disconnection handled for client {sid}. Remaining clients: {len(self.connected_clients)}")
 
-            Args:
-                sid: Session ID
-                data: Optional ping data
-            """
-            self.logger.debug(f"Ping received from client {sid}")
-            emit('pong', {'timestamp': datetime.utcnow().isoformat()})
+    def _handle_ping(self, sid, data=None):
+        """
+        Handle ping messages from clients.
 
-        @self.socketio.on('status')
-        def handle_status_request(sid):
-            """
-            Handle status requests from clients.
+        Args:
+            sid: Session ID
+            data: Optional ping data
+        """
+        self.logger.debug(f"Ping received from client {sid}")
+        self.socketio.emit('pong', {'timestamp': datetime.utcnow().isoformat()})
 
-            Args:
-                sid: Session ID
-            """
-            self.logger.debug(f"Status request from client {sid}")
+    def _handle_status_request(self, sid):
+        """
+        Handle status requests from clients.
 
-            status_info = {
-                'connected_clients': len(self.connected_clients),
-                'server_status': 'operational',
-                'timestamp': datetime.utcnow().isoformat(),
-                'client_sid': sid
-            }
+        Args:
+            sid: Session ID
+        """
+        self.logger.debug(f"Status request from client {sid}")
 
-            emit('status_response', status_info)
+        status_info = {
+            'connected_clients': len(self.connected_clients),
+            'server_status': 'operational',
+            'timestamp': datetime.utcnow().isoformat(),
+            'client_sid': sid
+        }
+
+        self.socketio.emit('status_response', status_info)
 
     def get_connected_clients_count(self) -> int:
         """Get the number of currently connected clients."""

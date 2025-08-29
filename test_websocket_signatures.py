@@ -30,10 +30,10 @@ def test_function_signatures():
         with open(websocket_file, 'r') as f:
             source = f.read()
 
-        # Check for correct function signatures (nested functions without self)
+        # Check for correct function signatures (class methods with self)
         tests = [
-            ('handle_connect', 'def handle_connect(sid):'),
-            ('handle_disconnect', 'def handle_disconnect(sid):'),
+            ('_handle_connect', 'def _handle_connect(self, sid):'),
+            ('_handle_disconnect', 'def _handle_disconnect(self, sid):'),
         ]
 
         all_passed = True
@@ -81,12 +81,12 @@ def test_event_handler_structure():
         with open(websocket_file, 'r') as f:
             source = f.read()
 
-        # Check for proper event handler decorators and signatures
+        # Check for proper event handler registration and signatures
         patterns = [
-            (r'@self\.socketio\.on\(\\?\'connect\\?\'\)', 'connect decorator'),
-            (r'@self\.socketio\.on\(\\?\'disconnect\\?\'\)', 'disconnect decorator'),
-            (r'def handle_connect\(sid\):', 'handle_connect signature'),
-            (r'def handle_disconnect\(sid\):', 'handle_disconnect signature'),
+            (r'self\.socketio\.on_event\(\\?\'connect\\?\',', 'connect event registration'),
+            (r'self\.socketio\.on_event\(\\?\'disconnect\\?\',', 'disconnect event registration'),
+            (r'def _handle_connect\(self, sid\):', '_handle_connect signature'),
+            (r'def _handle_disconnect\(self, sid\):', '_handle_disconnect signature'),
         ]
 
         all_passed = True
