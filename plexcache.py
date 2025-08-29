@@ -10,6 +10,16 @@ from plexapi.myplex import MyPlexAccount
 from plexapi.exceptions import NotFound
 from plexapi.exceptions import BadRequest
 
+# WebSocket server imports (only imported when web mode is enabled)
+try:
+    import threading
+    from flask import Flask, jsonify, request
+    from flask_cors import CORS
+    from flask_socketio import SocketIO, emit
+    WEBSOCKET_AVAILABLE = True
+except ImportError:
+    WEBSOCKET_AVAILABLE = False
+
 print("*** PlexCache ***")
 
 script_folder = "/mnt/user/system/plexcache/" # Folder path for the PlexCache script storing the settings, watchlist & watched cache files
@@ -46,6 +56,364 @@ SUMMARY = logging.WARNING + 1
 logging.addLevelName(SUMMARY, 'SUMMARY')
 
 start_time = time.time()  # record start time
+
+# WebSocket Manager Class (only defined if WebSocket libraries are available)
+if WEBSOCKET_AVAILABLE:
+    class PlexCacheWebSocketManager:
+        """
+        WebSocket Manager for PlexCache with real-time monitoring and control.
+
+        This class provides WebSocket functionality to monitor and control
+        the PlexCache operations in real-time.
+        """
+
+        def __init__(self, socketio, logger):
+            self.socketio = socketio
+            self.logger = logger
+            self.connected_clients = {}
+            self.caching_active = False
+            self.last_cache_stats = {}
+            self._register_event_handlers()
+
+        def _register_event_handlers(self):
+            """Register Socket.IO event handlers."""
+
+            self.socketio.on_event('connect', self._handle_connect)
+            self.socketio.on_event('disconnect', self._handle_disconnect)
+            self.socketio.on_event('ping', self._handle_ping)
+            self.socketio.on_event('get_status', self._handle_get_status)
+            self.socketio.on_event('start_cache', self._handle_start_cache)
+            self.socketio.on_event('stop_cache', self._handle_stop_cache)
+
+        def _handle_connect(self, sid):
+            """Handle client connection."""
+            self.logger.info(f"WebSocket client connected: {sid}")
+            self.connected_clients[sid] = {
+                'connected_at': datetime.utcnow(),
+                'last_seen': datetime.utcnow()
+            }
+
+            self.socketio.emit('connection_ack', {
+                'sid': sid,
+                'message': 'Successfully connected to PlexCache',
+                'timestamp': datetime.utcnow().isoformat()
+            })
+
+            # Send current status
+            self._send_status_update()
+
+        def _handle_disconnect(self, sid):
+            """Handle client disconnection."""
+            self.logger.info(f"WebSocket client disconnected: {sid}")
+            if sid in self.connected_clients:
+                del self.connected_clients[sid]
+
+        def _handle_ping(self, sid, data=None):
+            """Handle ping from client."""
+            self.logger.debug(f"Ping received from client {sid}")
+            self.socketio.emit('pong', {'timestamp': datetime.utcnow().isoformat()})
+
+        def _handle_get_status(self, sid):
+            """Handle status request."""
+            self.logger.debug(f"Status request from client {sid}")
+            self._send_status_update()
+
+        def _handle_start_cache(self, sid):
+            """Handle start cache request."""
+            self.logger.info(f"Cache start requested by client {sid}")
+            self.caching_active = True
+            self.socketio.emit('cache_started', {
+                'message': 'Cache operation started',
+                'timestamp': datetime.utcnow().isoformat()
+            })
+
+        def _handle_stop_cache(self, sid):
+            """Handle stop cache request."""
+            self.logger.info(f"Cache stop requested by client {sid}")
+            self.caching_active = False
+            self.socketio.emit('cache_stopped', {
+                'message': 'Cache operation stopped',
+                'timestamp': datetime.utcnow().isoformat()
+            })
+
+        def _send_status_update(self):
+            """Send status update to all connected clients."""
+            status = {
+                'caching_active': self.caching_active,
+                'connected_clients': len(self.connected_clients),
+                'last_cache_stats': self.last_cache_stats,
+                'timestamp': datetime.utcnow().isoformat()
+            }
+            self.socketio.emit('status_update', status)
+
+        def update_cache_stats(self, stats):
+            """Update cache statistics and notify clients."""
+            self.last_cache_stats = stats
+            self._send_status_update()
+
+        def broadcast_message(self, event, data):
+            """Broadcast a message to all connected clients."""
+            self.socketio.emit(event, data)
+            self.logger.info(f"Broadcasted '{event}' to {len(self.connected_clients)} clients")
+
+    class PlexCacheWebServer:
+        """
+        Web server for PlexCache with WebSocket support.
+
+        This class provides a web interface and WebSocket API for
+        monitoring and controlling PlexCache operations.
+        """
+
+        def __init__(self, plexcache_instance):
+            self.plexcache = plexcache_instance
+            self.app = Flask(__name__)
+            self.app.config['SECRET_KEY'] = 'plexcache-secret-key'
+
+            # Enable CORS
+            CORS(self.app)
+
+            # Configure Socket.IO
+            self.socketio = SocketIO(
+                self.app,
+                cors_allowed_origins="*",
+                logger=True,
+                engineio_logger=True,
+                async_mode='threading'
+            )
+
+            # Initialize WebSocket manager
+            self.websocket_manager = PlexCacheWebSocketManager(self.socketio, self.plexcache.logger)
+
+            # Register routes
+            self._register_routes()
+
+        def _register_routes(self):
+            """Register Flask routes."""
+
+            @self.app.route('/')
+            def index():
+                """Serve the main web interface."""
+                return '''
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlexCache Control Panel</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .active { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .inactive { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        button { background-color: #007bff; color: white; border: none; padding: 10px 20px; margin: 5px; border-radius: 5px; cursor: pointer; }
+        button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #6c757d; cursor: not-allowed; }
+        .stats { background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .log { background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 10px; height: 300px; overflow-y: auto; font-family: monospace; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <h1>PlexCache Control Panel</h1>
+
+    <div id="status" class="status inactive">Status: Disconnected</div>
+
+    <div class="stats">
+        <h3>Cache Statistics</h3>
+        <div id="stats">Loading...</div>
+    </div>
+
+    <div>
+        <button id="connectBtn">Connect</button>
+        <button id="startCacheBtn" disabled>Start Cache</button>
+        <button id="stopCacheBtn" disabled>Stop Cache</button>
+        <button id="refreshBtn" disabled>Refresh Status</button>
+        <button id="clearLogBtn">Clear Log</button>
+    </div>
+
+    <h3>Activity Log</h3>
+    <div id="log" class="log"></div>
+
+    <script>
+        let socket;
+        let logElement = document.getElementById('log');
+        let statusElement = document.getElementById('status');
+        let statsElement = document.getElementById('stats');
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.innerHTML = `[${timestamp}] ${message}`;
+
+            if (type === 'error') {
+                logEntry.style.color = 'red';
+            } else if (type === 'success') {
+                logEntry.style.color = 'green';
+            }
+
+            logElement.appendChild(logEntry);
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        function updateStatus(connected, caching_active = false) {
+            if (connected) {
+                statusElement.className = 'status ' + (caching_active ? 'active' : 'inactive');
+                statusElement.textContent = `Status: Connected (${caching_active ? 'Caching Active' : 'Idle'})`;
+                document.getElementById('connectBtn').disabled = true;
+                document.getElementById('startCacheBtn').disabled = false;
+                document.getElementById('stopCacheBtn').disabled = false;
+                document.getElementById('refreshBtn').disabled = false;
+            } else {
+                statusElement.className = 'status inactive';
+                statusElement.textContent = 'Status: Disconnected';
+                document.getElementById('connectBtn').disabled = false;
+                document.getElementById('startCacheBtn').disabled = true;
+                document.getElementById('stopCacheBtn').disabled = true;
+                document.getElementById('refreshBtn').disabled = true;
+            }
+        }
+
+        function updateStats(data) {
+            statsElement.innerHTML = `
+                <p><strong>Connected Clients:</strong> ${data.connected_clients}</p>
+                <p><strong>Caching Active:</strong> ${data.caching_active ? 'Yes' : 'No'}</p>
+                <p><strong>Last Update:</strong> ${new Date(data.timestamp).toLocaleString()}</p>
+            `;
+        }
+
+        function connect() {
+            if (socket && socket.connected) {
+                log('Already connected', 'warning');
+                return;
+            }
+
+            log('Connecting to WebSocket server...');
+            socket = io('http://localhost:5000');
+
+            socket.on('connect', () => {
+                log('Connected successfully!', 'success');
+                updateStatus(true);
+            });
+
+            socket.on('disconnect', () => {
+                log('Disconnected from server', 'warning');
+                updateStatus(false);
+            });
+
+            socket.on('connection_ack', (data) => {
+                log(`Connection acknowledged: ${data.sid}`, 'success');
+            });
+
+            socket.on('status_update', (data) => {
+                log('Status update received');
+                updateStatus(true, data.caching_active);
+                updateStats(data);
+            });
+
+            socket.on('cache_started', (data) => {
+                log('Cache operation started', 'success');
+                updateStatus(true, true);
+            });
+
+            socket.on('cache_stopped', (data) => {
+                log('Cache operation stopped');
+                updateStatus(true, false);
+            });
+
+            socket.on('pong', (data) => {
+                log('Pong received');
+            });
+
+            socket.on('connect_error', (error) => {
+                log(`Connection error: ${error}`, 'error');
+                updateStatus(false);
+            });
+        }
+
+        function startCache() {
+            if (socket && socket.connected) {
+                log('Starting cache operation...');
+                socket.emit('start_cache');
+            }
+        }
+
+        function stopCache() {
+            if (socket && socket.connected) {
+                log('Stopping cache operation...');
+                socket.emit('stop_cache');
+            }
+        }
+
+        function refreshStatus() {
+            if (socket && socket.connected) {
+                log('Refreshing status...');
+                socket.emit('get_status');
+            }
+        }
+
+        function clearLog() {
+            logElement.innerHTML = '';
+        }
+
+        // Event listeners
+        document.getElementById('connectBtn').addEventListener('click', connect);
+        document.getElementById('startCacheBtn').addEventListener('click', startCache);
+        document.getElementById('stopCacheBtn').addEventListener('click', stopCache);
+        document.getElementById('refreshBtn').addEventListener('click', refreshStatus);
+        document.getElementById('clearLogBtn').addEventListener('click', clearLog);
+
+        // Initialize
+        log('PlexCache Control Panel loaded. Click "Connect" to start.');
+        updateStatus(false);
+    </script>
+</body>
+</html>
+                '''
+
+            @self.app.route('/api/health')
+            def health():
+                """Health check endpoint."""
+                return jsonify({
+                    'status': 'healthy',
+                    'websocket_clients': len(self.websocket_manager.connected_clients),
+                    'caching_active': self.websocket_manager.caching_active,
+                    'timestamp': datetime.utcnow().isoformat()
+                })
+
+            @self.app.route('/api/status')
+            def status():
+                """Get current status."""
+                return jsonify({
+                    'caching_active': self.websocket_manager.caching_active,
+                    'connected_clients': len(self.websocket_manager.connected_clients),
+                    'last_cache_stats': self.websocket_manager.last_cache_stats,
+                    'timestamp': datetime.utcnow().isoformat()
+                })
+
+            @self.app.route('/api/start-cache', methods=['POST'])
+            def start_cache():
+                """Start cache operation."""
+                self.websocket_manager.caching_active = True
+                self.websocket_manager.broadcast_message('cache_started', {
+                    'message': 'Cache operation started',
+                    'timestamp': datetime.utcnow().isoformat()
+                })
+                return jsonify({'status': 'started'})
+
+            @self.app.route('/api/stop-cache', methods=['POST'])
+            def stop_cache():
+                """Stop cache operation."""
+                self.websocket_manager.caching_active = False
+                self.websocket_manager.broadcast_message('cache_stopped', {
+                    'message': 'Cache operation stopped',
+                    'timestamp': datetime.utcnow().isoformat()
+                })
+                return jsonify({'status': 'stopped'})
+
+        def run(self, host='0.0.0.0', port=5000, debug=False):
+            """Run the web server."""
+            self.plexcache.logger.info(f"Starting PlexCache Web Server on {host}:{port}")
+            self.socketio.run(self.app, host=host, port=port, debug=debug)
 
 class UnraidHandler(logging.Handler):
     SUMMARY = SUMMARY
