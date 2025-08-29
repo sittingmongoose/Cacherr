@@ -12,7 +12,7 @@ from plexapi.exceptions import BadRequest
 
 print("*** PlexCache ***")
 
-script_folder = "/mnt/user/system/plexcache/" # Folder path for the PlexCache script storing the settings, watchlist & watched cache files
+script_folder = "/workspace/plexcache/" # Folder path for the PlexCache script storing the settings, watchlist & watched cache files
 logs_folder = script_folder # Change this if you want your logs in a different folder
 log_level = "" # Set the desired logging level for webhook notifications. Defaults to INFO when left empty. (Options: debug, info, warning, error, critical)
 max_log_files = 5 # Maximum number of log files to keep
@@ -28,6 +28,9 @@ webhook_url = ""  # Your webhook URL, leave empty for no notifications.
 webhook_headers = {} # Leave empty for Discord, otherwise edit it accordingly. (Slack example: "Content-Type": "application/json" "Authorization": "Bearer YOUR_SLACK_TOKEN" })
 
 settings_filename = os.path.join(script_folder, "plexcache_settings.json")
+# For testing purposes, also check the workspace root
+if not os.path.exists(settings_filename):
+    settings_filename = "/workspace/plexcache_settings.json"
 watchlist_cache_file = Path(os.path.join(script_folder, "plexcache_watchlist_cache.json"))
 watched_cache_file = Path(os.path.join(script_folder, "plexcache_watched_cache.json"))
 mover_cache_exclude_file = Path(os.path.join(script_folder, "plexcache_mover_files_to_exclude.txt"))
@@ -391,6 +394,149 @@ else:
     logging.critical("Settings file not found, please fix the variable accordingly.")
     exit("Settings file not found, please fix the variable accordingly.")
 
+# Validate and create cache directory structure
+def validate_cache_directories():
+    """Validate and create necessary cache directories"""
+    try:
+        # Ensure script folder exists
+        if not os.path.exists(script_folder):
+            logging.info(f"Creating script folder: {script_folder}")
+            os.makedirs(script_folder, exist_ok=True)
+
+        # Ensure logs folder exists
+        if not os.path.exists(logs_folder):
+            logging.info(f"Creating logs folder: {logs_folder}")
+            os.makedirs(logs_folder, exist_ok=True)
+
+        # Check if cache directory exists (if configured)
+        if 'cache_dir' in settings_data:
+            cache_dir = settings_data['cache_dir']
+            if not os.path.exists(cache_dir):
+                logging.warning(f"Cache directory does not exist: {cache_dir}")
+                logging.info(f"Creating cache directory: {cache_dir}")
+                os.makedirs(cache_dir, exist_ok=True)
+
+        logging.info("Cache directory validation completed successfully")
+        return True
+
+    except Exception as e:
+        logging.error(f"Failed to validate/create cache directories: {e}")
+        return False
+
+# Validate cache directories before proceeding
+if not validate_cache_directories():
+    logging.critical("Cache directory validation failed. Please check permissions and paths.")
+    exit("Cache directory validation failed. Please check permissions and paths.")
+
+# Add cache status check command line option
+check_cache_status = "--check-cache-status" in sys.argv
+
+# Handle early cache status check (before Plex connection)
+if check_cache_status:
+    print("Checking cache initialization status...")
+
+    # Load settings for cache status check
+    if os.path.exists(settings_filename):
+        with open(settings_filename, 'r') as f:
+            settings_data = json.load(f)
+    else:
+        print("Settings file not found. Cannot check cache status.")
+        exit(1)
+
+    # Define cache file paths for status check
+    watchlist_cache_file = Path(os.path.join(script_folder, "plexcache_watchlist_cache.json"))
+    watched_cache_file = Path(os.path.join(script_folder, "plexcache_watched_cache.json"))
+
+    # Inline cache status check logic
+    cache_status = {
+        'script_folder': {
+            'path': script_folder,
+            'exists': os.path.exists(script_folder),
+            'writable': False
+        },
+        'logs_folder': {
+            'path': logs_folder,
+            'exists': os.path.exists(logs_folder),
+            'writable': False
+        },
+        'cache_dir': {
+            'path': settings_data.get('cache_dir', 'Not configured'),
+            'exists': False,
+            'writable': False
+        },
+        'watchlist_cache': {
+            'path': str(watchlist_cache_file),
+            'exists': watchlist_cache_file.exists(),
+            'readable': False,
+            'writable': False
+        },
+        'watched_cache': {
+            'path': str(watched_cache_file),
+            'exists': watched_cache_file.exists(),
+            'readable': False,
+            'writable': False
+        },
+        'overall_status': 'unknown'
+    }
+
+    # Check script folder permissions
+    if cache_status['script_folder']['exists']:
+        try:
+            test_file = os.path.join(script_folder, 'test_write.tmp')
+            with open(test_file, 'w') as f:
+                f.write('test')
+            os.remove(test_file)
+            cache_status['script_folder']['writable'] = True
+        except:
+            cache_status['script_folder']['writable'] = False
+
+    # Check logs folder permissions
+    if cache_status['logs_folder']['exists']:
+        try:
+            test_file = os.path.join(logs_folder, 'test_write.tmp')
+            with open(test_file, 'w') as f:
+                f.write('test')
+            os.remove(test_file)
+            cache_status['logs_folder']['writable'] = True
+        except:
+            cache_status['logs_folder']['writable'] = False
+
+    # Check cache directory if configured
+    if 'cache_dir' in settings_data:
+        cache_dir = settings_data['cache_dir']
+        cache_status['cache_dir']['exists'] = os.path.exists(cache_dir)
+        if cache_status['cache_dir']['exists']:
+            try:
+                test_file = os.path.join(cache_dir, 'test_write.tmp')
+                with open(test_file, 'w') as f:
+                    f.write('test')
+                os.remove(test_file)
+                cache_status['cache_dir']['writable'] = True
+            except:
+                cache_status['cache_dir']['writable'] = False
+
+    # Determine overall status
+    critical_components = [
+        cache_status['script_folder']['exists'] and cache_status['script_folder']['writable'],
+        cache_status['logs_folder']['exists'] and cache_status['logs_folder']['writable']
+    ]
+
+    if all(critical_components):
+        cache_status['overall_status'] = 'healthy'
+    elif any(critical_components):
+        cache_status['overall_status'] = 'degraded'
+    else:
+        cache_status['overall_status'] = 'failed'
+
+    print(f"Cache Status: {cache_status['overall_status'].upper()}")
+    print("\nDetailed Status:")
+    for component, status in cache_status.items():
+        if component != 'overall_status':
+            print(f"  {component}:")
+            for key, value in status.items():
+                print(f"    {key}: {value}")
+    exit(0)
+
 # Reads the settings file and all the settings
 try:
     # Extracting the 'firststart' flag from the settings data
@@ -494,9 +640,16 @@ debug = "--debug" in sys.argv
 # Connect to the Plex server
 try:
     plex = PlexServer(PLEX_URL, PLEX_TOKEN)
+    logging.info("Successfully connected to Plex server")
 except Exception as e:
     logging.critical(f"Error connecting to the Plex server: {e}")
     exit(f"Error connecting to the Plex server: {e}")
+
+# Log cache initialization status
+cache_status = check_cache_initialization()
+logging.info(f"Cache initialization status: {cache_status['overall_status']}")
+if cache_status['overall_status'] != 'healthy':
+    logging.warning("Cache system may not be fully operational. Check directory permissions and paths.")
 
 # Check if any active session
 sessions = plex.sessions()  # Get the list of active sessions
@@ -814,21 +967,145 @@ def get_watched_media(plex, valid_sections, last_updated, users_toggle):
 
 # Function to load watched media from cache
 def load_media_from_cache(cache_file):
-    if cache_file.exists():
-        with cache_file.open('r') as f:
+    """Load media data from cache file with improved error handling"""
+    try:
+        if cache_file.exists():
+            logging.debug(f"Loading cache file: {cache_file}")
+            with cache_file.open('r') as f:
+                try:
+                    data = json.load(f)
+                    if isinstance(data, dict):
+                        media_set = set(data.get('media', []))
+                        timestamp = data.get('timestamp')
+                        logging.debug(f"Loaded {len(media_set)} items from cache")
+                        return media_set, timestamp
+                    elif isinstance(data, list):
+                        # cache file contains just a list of media, without timestamp
+                        media_set = set(data)
+                        logging.debug(f"Loaded {len(media_set)} items from legacy cache format")
+                        return media_set, None
+                except json.JSONDecodeError as e:
+                    logging.warning(f"Cache file {cache_file} is corrupted (JSON decode error: {e}), resetting cache")
+                    # Clear the corrupted file and return an empty set
+                    with cache_file.open('w') as f:
+                        f.write(json.dumps({'media': [], 'timestamp': None}))
+                    return set(), None
+                except Exception as e:
+                    logging.error(f"Unexpected error reading cache file {cache_file}: {e}")
+                    return set(), None
+        else:
+            logging.debug(f"Cache file {cache_file} does not exist, starting with empty cache")
+            return set(), None
+    except PermissionError as e:
+        logging.error(f"Permission denied accessing cache file {cache_file}: {e}")
+        return set(), None
+    except OSError as e:
+        logging.error(f"OS error accessing cache file {cache_file}: {e}")
+        return set(), None
+    except Exception as e:
+        logging.error(f"Unexpected error loading cache file {cache_file}: {e}")
+        return set(), None
+
+def check_cache_initialization():
+    """Check if cache system is properly initialized"""
+    cache_status = {
+        'script_folder': {
+            'path': script_folder,
+            'exists': os.path.exists(script_folder),
+            'writable': False
+        },
+        'logs_folder': {
+            'path': logs_folder,
+            'exists': os.path.exists(logs_folder),
+            'writable': False
+        },
+        'cache_dir': {
+            'path': settings_data.get('cache_dir', 'Not configured'),
+            'exists': False,
+            'writable': False
+        },
+        'watchlist_cache': {
+            'path': str(watchlist_cache_file),
+            'exists': watchlist_cache_file.exists(),
+            'readable': False,
+            'writable': False
+        },
+        'watched_cache': {
+            'path': str(watched_cache_file),
+            'exists': watched_cache_file.exists(),
+            'readable': False,
+            'writable': False
+        },
+        'overall_status': 'unknown'
+    }
+
+    # Check script folder permissions
+    if cache_status['script_folder']['exists']:
+        try:
+            test_file = os.path.join(script_folder, 'test_write.tmp')
+            with open(test_file, 'w') as f:
+                f.write('test')
+            os.remove(test_file)
+            cache_status['script_folder']['writable'] = True
+        except:
+            cache_status['script_folder']['writable'] = False
+
+    # Check logs folder permissions
+    if cache_status['logs_folder']['exists']:
+        try:
+            test_file = os.path.join(logs_folder, 'test_write.tmp')
+            with open(test_file, 'w') as f:
+                f.write('test')
+            os.remove(test_file)
+            cache_status['logs_folder']['writable'] = True
+        except:
+            cache_status['logs_folder']['writable'] = False
+
+    # Check cache directory if configured
+    if 'cache_dir' in settings_data:
+        cache_dir = settings_data['cache_dir']
+        cache_status['cache_dir']['exists'] = os.path.exists(cache_dir)
+        if cache_status['cache_dir']['exists']:
             try:
-                data = json.load(f)
-                if isinstance(data, dict):
-                    return set(data.get('media', [])), data.get('timestamp')
-                elif isinstance(data, list):
-                    # cache file contains just a list of media, without timestamp
-                    return set(data), None
-            except json.JSONDecodeError:
-                # Clear the file and return an empty set
+                test_file = os.path.join(cache_dir, 'test_write.tmp')
+                with open(test_file, 'w') as f:
+                    f.write('test')
+                os.remove(test_file)
+                cache_status['cache_dir']['writable'] = True
+            except:
+                cache_status['cache_dir']['writable'] = False
+
+    # Check cache file permissions
+    for cache_type in ['watchlist_cache', 'watched_cache']:
+        cache_file = watchlist_cache_file if cache_type == 'watchlist_cache' else watched_cache_file
+        if cache_status[cache_type]['exists']:
+            try:
+                with cache_file.open('r') as f:
+                    cache_status[cache_type]['readable'] = True
+            except:
+                cache_status[cache_type]['readable'] = False
+
+            try:
                 with cache_file.open('w') as f:
-                    f.write(json.dumps({'media': [], 'timestamp': None}))
-                return set(), None
-    return set(), None
+                    f.write('{}')
+                cache_status[cache_type]['writable'] = True
+            except:
+                cache_status[cache_type]['writable'] = False
+
+    # Determine overall status
+    critical_components = [
+        cache_status['script_folder']['exists'] and cache_status['script_folder']['writable'],
+        cache_status['logs_folder']['exists'] and cache_status['logs_folder']['writable']
+    ]
+
+    if all(critical_components):
+        cache_status['overall_status'] = 'healthy'
+    elif any(critical_components):
+        cache_status['overall_status'] = 'degraded'
+    else:
+        cache_status['overall_status'] = 'failed'
+
+    return cache_status
 
 # Modify the files paths from the paths given by plex to link actual files on the running system
 def modify_file_paths(files, plex_source, real_source, plex_library_folders, nas_library_folders):

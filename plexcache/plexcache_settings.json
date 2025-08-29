@@ -1,5 +1,4 @@
 {
-    "firststart": true,
     "PLEX_URL": "https://plex.domain.ext",
     "PLEX_TOKEN": "YourPlexTokenGoesHere",
     "plex_source": "/media/",
