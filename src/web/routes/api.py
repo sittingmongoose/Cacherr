@@ -309,15 +309,15 @@ def api_test_results():
 
 
 # Configuration Management
-@api_bp.route('/settings', methods=['GET'])
+@api_bp.route('/config/current', methods=['GET'])
 @handle_api_error
-def api_get_settings():
+def api_get_config_current():
     """
-    Get current configuration settings.
-    
-    Returns the complete configuration as a JSON object,
-    including all sections and their current values.
-    
+    Get current application configuration.
+
+    Returns the current configuration settings in a structured format
+    that can be consumed by the Settings page frontend.
+
     Returns:
         JSON response with current configuration
     """
@@ -328,36 +328,61 @@ def api_get_settings():
             error="Configuration not initialized"
         )
         return jsonify(response.model_dump()), 500
-    
+
     try:
-        config_dict = config.to_dict()
-        
+        # Return configuration in the format expected by Settings page
+        config_data = {
+            'plex': {
+                'url': config.plex.url,
+                'token': '***MASKED***' if config.plex.token else '',
+                'username': config.plex.username or '',
+                'password': '***MASKED***' if config.plex.password else ''
+            },
+            'media': {
+                'exit_if_active_session': config.media.exit_if_active_session,
+                'watched_move': config.media.watched_move,
+                'users_toggle': config.media.users_toggle,
+                'watchlist_toggle': config.media.watchlist_toggle,
+                'days_to_monitor': config.media.days_to_monitor,
+                'number_episodes': config.media.number_episodes,
+                'watchlist_episodes': config.media.watchlist_episodes,
+                'copy_to_cache': config.media.copy_to_cache,
+                'delete_from_cache_when_done': config.media.delete_from_cache_when_done
+            },
+            'performance': {
+                'max_concurrent_operations': config.performance.max_concurrent_moves_cache,
+                'cache_check_interval': config.real_time_watch.get('check_interval', 30) if isinstance(config.real_time_watch, dict) else 30,
+                'max_concurrent_local_transfers': config.performance.max_concurrent_local_transfers,
+                'log_level': getattr(config.logging.level, 'value', config.logging.level)
+            }
+        }
+
         response = APIResponse(
             success=True,
-            data=config_dict
+            data=config_data
         )
         return jsonify(response.model_dump())
-        
+
     except Exception as e:
-        logger.error(f"Failed to get settings: {e}")
+        logger.error(f"Failed to get current configuration: {e}")
         response = APIResponse(
             success=False,
-            error=f"Failed to get settings: {str(e)}"
+            error=f"Failed to retrieve configuration: {str(e)}"
         )
         return jsonify(response.model_dump()), 500
 
 
-@api_bp.route('/settings', methods=['POST'])
+@api_bp.route('/config/update', methods=['POST'])
 @handle_api_error
-def api_update_settings():
+def api_update_config():
     """
-    Update configuration settings using modern Pydantic v2 validation.
-    
-    Accepts JSON payload with settings to update. Uses Pydantic validation
-    to ensure all updates are type-safe and within valid ranges.
-    
+    Update application configuration.
+
+    Accepts partial configuration updates and validates them using
+    Pydantic models before applying changes.
+
     Returns:
-        JSON response with update results
+        JSON response with updated configuration
     """
     config = get_config()
     if not config:
@@ -366,113 +391,61 @@ def api_update_settings():
             error="Configuration not initialized"
         )
         return jsonify(response.model_dump()), 500
-    
+
     try:
         data = request.get_json()
         if not data:
             response = APIResponse(
                 success=False,
-                error="No settings data provided"
+                error="No configuration data provided"
             )
             return jsonify(response.model_dump()), 400
-        
-        # Filter out restricted settings (environment-only configurations)
-        filtered_data = {}
-        for key, value in data.items():
-            if key == 'paths':
-                # Only allow user-configurable path settings
-                filtered_paths = {}
-                if 'plex_source' in value:
-                    filtered_paths['plex_source'] = value['plex_source']
-                if 'cache_destination' in value:
-                    filtered_paths['cache_destination'] = value['cache_destination']
-                # additional_sources are environment-only for security
-                if filtered_paths:
-                    filtered_data['paths'] = filtered_paths
-            elif key not in ['logging']:  # logging is system-managed
-                filtered_data[key] = value
-        
-        # Remove empty values to preserve existing settings
-        def clean_empty_values(obj):
-            if isinstance(obj, dict):
-                return {k: clean_empty_values(v) for k, v in obj.items() 
-                       if v != '' and v is not None}
-            return obj
-        
-        filtered_data = clean_empty_values(filtered_data)
-        
-        if not filtered_data:
-            response = APIResponse(
-                success=True,
-                message="No valid settings to update"
-            )
-            return jsonify(response.model_dump())
-        
-        # Use new Pydantic-based save_updates method
-        config.save_updates(filtered_data)
-        
+
+        # Update configuration using the configuration system
+        updated_config = config.save_updates(data)
+
         # Log successful update
-        logger.info(f"Configuration updated successfully: {list(filtered_data.keys())}")
-        
-        # Reinitialize engine if Plex settings were updated
-        if 'plex' in filtered_data and (filtered_data['plex'].get('url') or filtered_data['plex'].get('token')):
-            try:
-                # This would require access to the global engine instance
-                # For now, we'll log that reinitialization is needed
-                logger.info("Plex settings updated - engine reinitialization may be required")
-            except Exception as e:
-                logger.warning(f"Failed to reinitialize engine with new Plex credentials: {e}")
-        
-        # Reload watchers if real-time watching or Trakt settings were updated
-        if 'real_time_watch' in filtered_data or 'trakt' in filtered_data:
-            try:
-                engine = get_engine()
-                if engine:
-                    engine.reload_watchers()
-                    logger.info("Watchers reloaded due to configuration changes")
-            except Exception as e:
-                logger.warning(f"Failed to reload watchers: {e}")
-        
+        logger.info(f"Configuration updated successfully: {list(data.keys())}")
+
         response = APIResponse(
             success=True,
-            message="Settings updated successfully",
+            message="Configuration updated successfully",
             data={
-                "updated_sections": list(filtered_data.keys()),
+                "updated_sections": list(data.keys()),
                 "validation_summary": config.get_summary()
             }
         )
         return jsonify(response.model_dump())
-        
-    except ValueError as e:
-        # Pydantic validation error
-        logger.error(f"Settings validation failed: {e}")
+
+    except ValidationError as e:
         response = APIResponse(
             success=False,
-            error=f"Invalid settings: {str(e)}"
+            error="Configuration validation failed",
+            data={"validation_errors": e.errors()}
         )
-        return jsonify(response.model_dump()), 400
-        
+        return jsonify(response.model_dump()), 422
+
     except Exception as e:
-        logger.error(f"Failed to update settings: {e}")
+        logger.error(f"Failed to update configuration: {e}")
         response = APIResponse(
             success=False,
-            error=f"Failed to update settings: {str(e)}"
+            error=f"Failed to update configuration: {str(e)}"
         )
         return jsonify(response.model_dump()), 500
 
 
-@api_bp.route('/settings/validate', methods=['POST'])
+@api_bp.route('/config/validate', methods=['POST'])
 @handle_api_error
-def api_validate_settings():
+def api_validate_config():
     """
-    Validate configuration settings using Pydantic v2 validation.
-    
+    Validate configuration settings.
+
     Performs comprehensive validation including:
     - Type checking and constraint validation
     - Cross-field validation (e.g., path matching)
     - Business logic validation
     - Range and format validation
-    
+
     Returns:
         JSON response with detailed validation results
     """
@@ -483,7 +456,7 @@ def api_validate_settings():
             error="Configuration not initialized"
         )
         return jsonify(response.model_dump()), 500
-    
+
     try:
         data = request.get_json()
         if not data:
@@ -508,15 +481,15 @@ def api_validate_settings():
                     'sections': {},
                     'message': f'Validation failed: {str(e)}'
                 }
-        
+
         response = APIResponse(
             success=True,
             data=validation_results
         )
         return jsonify(response.model_dump())
-        
+
     except Exception as e:
-        logger.error(f"Settings validation failed: {e}")
+        logger.error(f"Configuration validation failed: {e}")
         response = APIResponse(
             success=False,
             error=f"Validation failed: {str(e)}"
@@ -524,15 +497,15 @@ def api_validate_settings():
         return jsonify(response.model_dump()), 500
 
 
-@api_bp.route('/settings/reset', methods=['POST'])
+@api_bp.route('/config/reset', methods=['POST'])
 @handle_api_error
-def api_reset_settings():
+def api_reset_config():
     """
-    Reset configuration to default values using Pydantic v2 defaults.
-    
+    Reset configuration to default values.
+
     Resets all configurable settings to their Pydantic model defaults.
     This operation cannot be undone, so use with caution.
-    
+
     Returns:
         JSON response with reset operation results
     """
@@ -543,12 +516,12 @@ def api_reset_settings():
             error="Configuration not initialized"
         )
         return jsonify(response.model_dump()), 500
-    
+
     try:
         # Reset to Pydantic model defaults
         default_settings = {
             'media': {
-                'copy_to_cache': True,  # New default
+                'copy_to_cache': True,
                 'delete_from_cache_when_done': True,
                 'watched_move': True,
                 'users_toggle': True,
@@ -561,7 +534,7 @@ def api_reset_settings():
                 'watched_cache_expiry': 48
             },
             'performance': {
-                'max_concurrent_moves_cache': 3,  # Updated defaults
+                'max_concurrent_moves_cache': 3,
                 'max_concurrent_moves_array': 1,
                 'max_concurrent_local_transfers': 3,
                 'max_concurrent_network_transfers': 1
@@ -588,13 +561,13 @@ def api_reset_settings():
                 'check_interval': 3600
             }
         }
-        
+
         # Apply default settings using the new configuration system
         config.save_updates(default_settings)
-        
+
         # Reload configuration to ensure all changes are applied
         config.reload()
-        
+
         response = APIResponse(
             success=True,
             message="Configuration reset to default values",
@@ -604,12 +577,12 @@ def api_reset_settings():
             }
         )
         return jsonify(response.model_dump())
-        
+
     except Exception as e:
-        logger.error(f"Failed to reset settings: {e}")
+        logger.error(f"Failed to reset configuration: {e}")
         response = APIResponse(
             success=False,
-            error=f"Failed to reset settings: {str(e)}"
+            error=f"Failed to reset configuration: {str(e)}"
         )
         return jsonify(response.model_dump()), 500
 
@@ -678,84 +651,56 @@ def api_scheduler_stop():
 
 
 # Plex Validation
-@api_bp.route('/validate-plex', methods=['POST'])
+@api_bp.route('/config/test-plex', methods=['POST'])
 @handle_api_error
-def api_validate_plex():
+def api_test_plex_connection():
     """
-    Validate Plex server connection and token.
-    
-    Tests connectivity to the specified Plex server using provided
-    credentials. Verifies both server availability and token validity.
-    
+    Test Plex server connection with provided credentials.
+
     Returns:
-        JSON response with validation results
+        JSON response with connection test result
     """
     try:
         data = request.get_json()
         if not data:
             response = APIResponse(
                 success=False,
-                error="No validation data provided"
+                error="No test data provided"
             )
             return jsonify(response.model_dump()), 400
-        
+
         plex_url = data.get('url', '').strip()
         plex_token = data.get('token', '').strip()
-        use_stored_token = data.get('use_stored_token', False)
-        
-        if not plex_url:
+
+        if not plex_url or not plex_token:
             response = APIResponse(
                 success=False,
-                error="Plex URL is required"
+                error="Both URL and token are required"
             )
             return jsonify(response.model_dump()), 400
-        
-        # Handle token - either provided or use stored one
-        if use_stored_token:
-            # Get stored token from configuration
-            config = get_config()
-            if not config:
-                response = APIResponse(
-                    success=False,
-                    error="Configuration not available"
-                )
-                return jsonify(response.model_dump()), 500
-            
-            plex_token = config.plex.token
-            if not plex_token:
-                response = APIResponse(
-                    success=False,
-                    error="No stored Plex token found"
-                )
-                return jsonify(response.model_dump()), 400
-        elif not plex_token:
-            response = APIResponse(
-                success=False,
-                error="Plex token is required"
-            )
-            return jsonify(response.model_dump()), 400
-        
-        # Import PlexAPI for validation
-        from plexapi.server import PlexServer
-        import requests
-        
-        # Clean up URL format
-        if not plex_url.startswith(('http://', 'https://')):
-            plex_url = f'http://{plex_url}'
-        
-        # Test connection with timeout
+
+        # Test Plex connection using existing service
+        # This should use the actual Plex service from the container
         try:
+            # Import PlexAPI for validation
+            from plexapi.server import PlexServer
+
+            # Clean up URL format
+            if not plex_url.startswith(('http://', 'https://')):
+                plex_url = f'http://{plex_url}'
+
+            # Test connection with timeout
             plex = PlexServer(plex_url, plex_token, timeout=10)
             # Try to get server info to verify connection
             server_name = plex.friendlyName
             version = plex.version
-            
+
             response = APIResponse(
                 success=True,
                 message=f"Connected to {server_name} (v{version})"
             )
-            return jsonify(response.model_dump()), 200
-            
+            return jsonify(response.model_dump())
+
         except Exception as plex_error:
             error_msg = str(plex_error)
             if "401" in error_msg or "Unauthorized" in error_msg:
@@ -766,25 +711,378 @@ def api_validate_plex():
                 error_msg = "Cannot resolve hostname - check Plex URL"
             else:
                 error_msg = f"Connection failed: {error_msg}"
-                
+
             response = APIResponse(
                 success=False,
                 error=error_msg
             )
             return jsonify(response.model_dump()), 400
-            
+
     except ImportError:
         response = APIResponse(
             success=False,
             error="PlexAPI library not available"
         )
         return jsonify(response.model_dump()), 500
-        
+
     except Exception as e:
-        logger.error(f"Plex validation error: {str(e)}")
+        logger.error(f"Plex connection test failed: {str(e)}")
         response = APIResponse(
             success=False,
-            error=f"Validation failed: {str(e)}"
+            error=f"Connection test failed: {str(e)}"
+        )
+        return jsonify(response.model_dump()), 500
+
+
+@api_bp.route('/config/export', methods=['GET'])
+@handle_api_error
+def api_export_config():
+    """
+    Export current configuration as JSON.
+
+    Returns the complete configuration in a downloadable JSON format
+    that can be used for backup or migration purposes.
+
+    Returns:
+        JSON file download with current configuration
+    """
+    config = get_config()
+    if not config:
+        response = APIResponse(
+            success=False,
+            error="Configuration not initialized"
+        )
+        return jsonify(response.model_dump()), 500
+
+    try:
+        # Get current configuration
+        config_dict = config.to_dict()
+
+        # Mask sensitive data
+        if 'plex' in config_dict and 'token' in config_dict['plex']:
+            config_dict['plex']['token'] = '***MASKED***'
+
+        # Convert to JSON string
+        import json
+        config_json = json.dumps(config_dict, indent=2)
+
+        # Return as downloadable file
+        from flask import Response
+        response = Response(
+            config_json,
+            mimetype='application/json',
+            headers={
+                'Content-Disposition': f'attachment; filename="cacherr_config_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json"'
+            }
+        )
+        return response
+
+    except Exception as e:
+        logger.error(f"Failed to export configuration: {e}")
+        response = APIResponse(
+            success=False,
+            error=f"Failed to export configuration: {str(e)}"
+        )
+        return jsonify(response.model_dump()), 500
+
+
+@api_bp.route('/config/import', methods=['POST'])
+@handle_api_error
+def api_import_config():
+    """
+    Import configuration from JSON data.
+
+    Accepts JSON configuration data and applies it to the system
+    after validation. This will overwrite existing configuration.
+
+    Request body (JSON):
+        Configuration data in the same format as export
+
+    Returns:
+        JSON response with import results
+    """
+    config = get_config()
+    if not config:
+        response = APIResponse(
+            success=False,
+            error="Configuration not initialized"
+        )
+        return jsonify(response.model_dump()), 500
+
+    try:
+        data = request.get_json()
+        if not data:
+            response = APIResponse(
+                success=False,
+                error="No configuration data provided"
+            )
+            return jsonify(response.model_dump()), 400
+
+        # Validate the imported configuration
+        try:
+            config._validate_updates(data)
+        except ValueError as e:
+            response = APIResponse(
+                success=False,
+                error=f"Invalid configuration data: {str(e)}"
+            )
+            return jsonify(response.model_dump()), 400
+
+        # Apply the imported configuration
+        config.save_updates(data)
+
+        response = APIResponse(
+            success=True,
+            message="Configuration imported successfully",
+            data={
+                "imported_sections": list(data.keys()),
+                "validation_summary": config.get_summary()
+            }
+        )
+        return jsonify(response.model_dump())
+
+    except Exception as e:
+        logger.error(f"Failed to import configuration: {e}")
+        response = APIResponse(
+            success=False,
+            error=f"Failed to import configuration: {str(e)}"
+        )
+        return jsonify(response.model_dump()), 500
+
+
+@api_bp.route('/config/schema', methods=['GET'])
+@handle_api_error
+def api_get_config_schema():
+    """
+    Get configuration schema information.
+
+    Returns detailed schema information including field types,
+    validation rules, default values, and descriptions for all
+    configuration sections.
+
+    Returns:
+        JSON response with configuration schema
+    """
+    config = get_config()
+    if not config:
+        response = APIResponse(
+            success=False,
+            error="Configuration not initialized"
+        )
+        return jsonify(response.model_dump()), 500
+
+    try:
+        # Build schema from Pydantic models - using actual PlexConfig attributes
+        schema = {
+            'plex': {
+                'url': {
+                    'type': 'string',
+                    'description': 'Plex server URL including protocol and port',
+                    'example': 'http://192.168.1.100:32400',
+                    'validation': 'Must be a valid HTTP/HTTPS URL'
+                },
+                'token': {
+                    'type': 'string',
+                    'description': 'Plex authentication token',
+                    'sensitive': True,
+                    'validation': 'Must be a valid Plex token'
+                },
+                'username': {
+                    'type': 'string',
+                    'description': 'Plex username (optional for token auth)',
+                    'default': None,
+                    'validation': 'Optional username for authentication'
+                },
+                'password': {
+                    'type': 'string',
+                    'description': 'Plex password (optional for token auth)',
+                    'sensitive': True,
+                    'default': None,
+                    'validation': 'Optional password for authentication'
+                }
+            },
+            'media': {
+                'exit_if_active_session': {
+                    'type': 'boolean',
+                    'description': 'Exit if Plex sessions are active',
+                    'default': False
+                },
+                'watched_move': {
+                    'type': 'boolean',
+                    'description': 'Move watched content to array',
+                    'default': True
+                },
+                'users_toggle': {
+                    'type': 'boolean',
+                    'description': 'Enable per-user processing',
+                    'default': True
+                },
+                'watchlist_toggle': {
+                    'type': 'boolean',
+                    'description': 'Enable watchlist processing',
+                    'default': True
+                },
+                'days_to_monitor': {
+                    'type': 'integer',
+                    'description': 'Days to monitor content',
+                    'default': 99,
+                    'min': 1,
+                    'max': 999
+                },
+                'number_episodes': {
+                    'type': 'integer',
+                    'description': 'Number of episodes to cache per series',
+                    'default': 5,
+                    'min': 1,
+                    'max': 100
+                },
+                'watchlist_episodes': {
+                    'type': 'integer',
+                    'description': 'Episodes to cache from watchlists',
+                    'default': 1,
+                    'min': 1,
+                    'max': 100
+                },
+                'copy_to_cache': {
+                    'type': 'boolean',
+                    'description': 'Use copy mode instead of move (preserves originals)',
+                    'default': True
+                },
+                'delete_from_cache_when_done': {
+                    'type': 'boolean',
+                    'description': 'Delete from cache when done',
+                    'default': True
+                }
+            },
+            'performance': {
+                'max_concurrent_operations': {
+                    'type': 'integer',
+                    'description': 'Maximum number of concurrent cache operations',
+                    'default': 3,
+                    'min': 1,
+                    'max': 10
+                },
+                'cache_check_interval': {
+                    'type': 'integer',
+                    'description': 'Interval between cache checks in seconds',
+                    'default': 30,
+                    'min': 10,
+                    'max': 3600
+                },
+                'cleanup_interval': {
+                    'type': 'integer',
+                    'description': 'Interval between cleanup operations in hours',
+                    'default': 24,
+                    'min': 1,
+                    'max': 168
+                },
+                'log_level': {
+                    'type': 'string',
+                    'description': 'Logging level',
+                    'enum': ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
+                    'default': 'INFO'
+                }
+            }
+        }
+
+        response = APIResponse(
+            success=True,
+            data={
+                'schema': schema,
+                'version': '2.0',
+                'last_updated': datetime.now().isoformat()
+            }
+        )
+        return jsonify(response.model_dump())
+
+    except Exception as e:
+        logger.error(f"Failed to get configuration schema: {e}")
+        response = APIResponse(
+            success=False,
+            error=f"Failed to get configuration schema: {str(e)}"
+        )
+        return jsonify(response.model_dump()), 500
+
+
+@api_bp.route('/config/validate-persistence', methods=['GET'])
+@handle_api_error
+def api_validate_persistence():
+    """
+    Validate that settings persistence is working correctly.
+
+    Checks that configuration files exist, are accessible, and can be
+    read/written. This is critical for ensuring settings survive
+    container restarts.
+
+    Returns:
+        JSON response with persistence validation results
+    """
+    config = get_config()
+    if not config:
+        response = APIResponse(
+            success=False,
+            error="Configuration not initialized"
+        )
+        return jsonify(response.model_dump()), 500
+
+    try:
+        # Check configuration directory
+        from pathlib import Path
+        config_dir = Path(config.settings.config_dir)
+        config_dir_exists = config_dir.exists()
+        config_dir_writable = False
+        config_files = []
+
+        if config_dir_exists:
+            config_dir_writable = os.access(config_dir, os.W_OK)
+            config_files = list(config_dir.glob('*.json'))
+
+        # Check if current configuration can be saved
+        persistence_test = False
+        try:
+            # Test persistence by saving a temporary backup
+            test_backup = config_dir / f"persistence_test_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+            test_data = {"test": True, "timestamp": datetime.now().isoformat()}
+
+            with open(test_backup, 'w') as f:
+                import json
+                json.dump(test_data, f)
+
+            # Verify we can read it back
+            with open(test_backup, 'r') as f:
+                read_data = json.load(f)
+
+            persistence_test = read_data.get('test') == True
+
+            # Clean up test file
+            test_backup.unlink(missing_ok=True)
+
+        except Exception as e:
+            logger.warning(f"Persistence test failed: {e}")
+
+        response = APIResponse(
+            success=True,
+            data={
+                'persistence': {
+                    'config_dir_exists': config_dir_exists,
+                    'config_dir_writable': config_dir_writable,
+                    'config_files': [str(f) for f in config_files],
+                    'config_dir_path': str(config_dir),
+                    'persistence_test_passed': persistence_test
+                },
+                'config_file_path': str(config.config_file),
+                'config_file_exists': config.config_file.exists(),
+                'config_file_writable': config.config_file.exists() and os.access(config.config_file, os.W_OK),
+                'last_modified': config.config_file.stat().st_mtime if config.config_file.exists() else None
+            }
+        )
+        return jsonify(response.model_dump())
+
+    except Exception as e:
+        logger.error(f"Failed to validate persistence: {e}")
+        response = APIResponse(
+            success=False,
+            error=f"Failed to validate persistence: {str(e)}"
         )
         return jsonify(response.model_dump()), 500
 
@@ -865,13 +1163,13 @@ def api_logs():
 def api_watcher_start():
     """Start real-time Plex watching."""
     try:
-        engine = get_engine()
+        engine = get_cache_engine()
         if not engine:
             response = APIResponse(
                 success=False,
-                error="Engine not initialized"
+                error="Cache engine not available"
             )
-            return jsonify(response.model_dump()), 500
+            return jsonify(response.model_dump()), 503
         
         if not engine.config.real_time_watch.enabled:
             response = APIResponse(
@@ -908,13 +1206,13 @@ def api_watcher_start():
 def api_watcher_stop():
     """Stop real-time Plex watching."""
     try:
-        engine = get_engine()
+        engine = get_cache_engine()
         if not engine:
             response = APIResponse(
                 success=False,
-                error="Engine not initialized"
+                error="Cache engine not available"
             )
-            return jsonify(response.model_dump()), 500
+            return jsonify(response.model_dump()), 503
         
         success = engine.stop_real_time_watching()
         if success:
@@ -952,13 +1250,13 @@ def api_watcher_status():
     - Safety information about non-interrupting operations
     """
     try:
-        engine = get_engine()
+        engine = get_cache_engine()
         if not engine:
             response = APIResponse(
                 success=False,
-                error="Engine not initialized"
+                error="Cache engine not available"
             )
-            return jsonify(response.model_dump()), 500
+            return jsonify(response.model_dump()), 503
         
         # Get type-safe status from Pydantic model
         if engine.plex_watcher:
@@ -1017,13 +1315,13 @@ def api_watcher_status():
 def api_watcher_clear_history():
     """Clear real-time watcher history."""
     try:
-        engine = get_engine()
+        engine = get_cache_engine()
         if not engine:
             response = APIResponse(
                 success=False,
-                error="Engine not initialized"
+                error="Cache engine not available"
             )
-            return jsonify(response.model_dump()), 500
+            return jsonify(response.model_dump()), 503
         
         if not engine.plex_watcher:
             response = APIResponse(

@@ -220,7 +220,7 @@ def run_cli_mode() -> None:
     # Parse command line arguments for CLI operations
     import argparse
     
-    parser = argparse.ArgumentParser(description='PlexCacheUltra CLI Operations')
+    parser = argparse.ArgumentParser(description='Cacherr CLI Operations')
     parser.add_argument('--run-cache', action='store_true', help='Run cache operation once and exit')
     parser.add_argument('--test-mode', action='store_true', help='Run in test mode (dry run)')
     parser.add_argument('--cleanup', action='store_true', help='Run cache cleanup operation')
@@ -296,7 +296,7 @@ def main():
         
         # Determine run mode
         run_mode = determine_run_mode()
-        print(f"Starting PlexCacheUltra in {run_mode} mode...")
+        print(f"Starting Cacherr in {run_mode} mode...")
         
         # Create application context
         app_context = create_application_for_mode(run_mode)
@@ -308,7 +308,7 @@ def main():
         
         # Print startup information
         status = app_context.get_status()
-        print(f"PlexCacheUltra started successfully!")
+        print(f"Cacherr started successfully!")
         print(f"Web interface: http://{app_context.app_config.web.host}:{app_context.app_config.web.port}")
         print(f"Uptime: {status['uptime_seconds']:.1f} seconds")
         
@@ -324,7 +324,7 @@ def main():
         logger.info("Application interrupted by user")
     except Exception as e:
         logger.error(f"Application failed: {e}", exc_info=True)
-        print(f"Failed to start PlexCacheUltra: {e}")
+        print(f"Failed to start Cacherr: {e}")
         sys.exit(1)
     finally:
         # Ensure cleanup

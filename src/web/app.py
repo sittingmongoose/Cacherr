@@ -182,6 +182,22 @@ class WebApplicationFactory:
                     g.cached_files_service = self.container.try_resolve(CachedFilesService)
                 except ImportError:
                     g.cached_files_service = None
+                
+                # Validate essential services and attach if available (non-fatal on failure)
+                try:
+                    # Attach configuration instance if registered
+                    g.config = g.get('config', None) or self.container.try_resolve(Config)
+                except Exception as e:
+                    self.logger.warning(f"Config service resolution failed: {e}")
+                
+                try:
+                    # Attach cache engine if available; do not fail when missing
+                    from ..core.plex_cache_engine import CacherrEngine
+                    engine = self.container.try_resolve(CacherrEngine)
+                    if engine is not None and not getattr(g, 'cache_engine', None):
+                        g.cache_engine = engine
+                except Exception as e:
+                    self.logger.warning(f"Cache engine resolution failed: {e}")
             except Exception as e:
                 self.logger.warning(f"Failed to pre-resolve services: {e}")
         

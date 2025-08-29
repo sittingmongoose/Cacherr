@@ -1,6 +1,6 @@
 """
-PlexCacheUltra - Docker-optimized Plex media caching system
+Cacherr - Docker-optimized Plex media caching system
 """
 
 __version__ = "1.0.0"
-__author__ = "PlexCacheUltra Team"
+__author__ = "Cacherr Team"

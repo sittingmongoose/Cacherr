@@ -9,7 +9,7 @@
   <Privileged>false</Privileged>
   <Support>https://github.com/sittingmongoose/cacherr</Support>
   <Project>https://github.com/sittingmongoose/cacherr</Project>
-  <Overview>PlexCacheUltra - Advanced Plex media caching system with WebGUI management. &#xD;
+  <Overview>Cacherr - Advanced Plex media caching system with WebGUI management. &#xD;
 &#xD;
 &#x26A0;&#xFE0F; CRITICAL SECURITY WARNING: This container modifies file permissions on startup. ONLY use dedicated directories for cache and config paths. NEVER mount system directories like /mnt/cache, /mnt/user, or any Plex config directories directly. Doing so can break your entire Unraid system.&#xD;
 &#xD;

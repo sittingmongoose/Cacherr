@@ -4,9 +4,29 @@
 # Target: <200MB final image
 # ===========================================
 
+# Stage 1: Build React Frontend
+FROM node:18-alpine AS frontend-builder
+
+# Set working directory for frontend
+WORKDIR /app/frontend
+
+# Copy package files for better layer caching
+COPY frontend/package*.json ./
+
+# Install dependencies (production only to reduce size)
+RUN npm ci --only=production && npm cache clean --force
+
+# Copy frontend source code
+COPY frontend/ ./
+
+# Build production frontend
+RUN npm run build
+
+# Verify build output exists
+RUN ls -la dist/
+
 # ===========================================
-# Production Dockerfile for Cacherr
-# Uses pre-built frontend for faster builds
+# Stage 2: Python Production Backend
 # ===========================================
 
 FROM python:3.11-slim AS production
@@ -29,7 +49,6 @@ RUN apt-get update && apt-get install -y \
     curl \
     ca-certificates \
     tzdata \
-    gosu \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
@@ -44,11 +63,8 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# Copy pre-built frontend assets (built during development)
-COPY frontend/dist ./frontend/dist
-
-# Verify frontend assets exist
-RUN ls -la frontend/dist/
+# Copy built frontend assets from first stage
+COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
 
 # Copy application source code
 COPY src/ ./src/
@@ -60,6 +76,9 @@ RUN mkdir -p /config /logs /cache && \
     chown -R cacherr:cacherr /app /config /logs /cache && \
     chmod +x /app/entrypoint.sh
 
+# Switch to non-root user
+USER cacherr
+
 # Expose port
 EXPOSE 5445
 
@@ -68,8 +87,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:5445/api/health || exit 1
 
 # Use entrypoint script for proper startup and permission handling
-# Note: Entrypoint runs as root initially, then switches to cacherr user
 ENTRYPOINT ["/app/entrypoint.sh"]
 
-# Default command for production (runs web server)
-CMD ["python", "main.py"]
+# Default command for production
+CMD ["python", "main.py", "--mode", "production"]

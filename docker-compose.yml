@@ -1,118 +1,117 @@
+# ===========================================
+# Docker Compose Configuration for Cacherr
+# Production-ready with profiles for different environments
+# ===========================================
+
 version: '3.8'
 
 services:
+  # ===========================================
+  # PRODUCTION SERVICE
+  # ===========================================
   cacherr:
-    build: 
+    build:
       context: .
-      dockerfile: Dockerfile.dev
-    image: sittingmongoose/cacher:dev
-    container_name: cacherr
+      dockerfile: Dockerfile
+    image: sittingmongoose/cacherr:latest
+    container_name: cacherr-prod
     restart: unless-stopped
+    profiles: ["production"]
     env_file:
       - .env
     ports:
-      - "5445:5445"  # Backend API
-      - "3000:3000"  # Frontend dev server
+      - "5445:5445"  # Web interface and API
     environment:
-      # Development settings
-      - DEBUG=true
-      - LOG_LEVEL=DEBUG
-      - RUN_MODE=development
-      
-      # Plex Configuration
-      - PLEX_URL=${PLEX_URL}
-      - PLEX_TOKEN=${PLEX_TOKEN}
-      
-      # Path Configuration (matched to your Plex setup)
-      - CONFIG_DIR=${CONFIG_DIR:-/config}
-      - REAL_SOURCE=${REAL_SOURCE:-/media}
-      - PLEX_SOURCE=${PLEX_SOURCE:-/media}
-      - CACHE_DESTINATION=${CACHE_DESTINATION:-/cache}
-      - ADDITIONAL_SOURCES=${ADDITIONAL_SOURCES:-[]}
-      - ADDITIONAL_PLEX_SOURCES=${ADDITIONAL_PLEX_SOURCES:-[]}
-      
-      # Media Settings
-      - NUMBER_EPISODES=${NUMBER_EPISODES:-5}
-      - DAYS_TO_MONITOR=${DAYS_TO_MONITOR:-99}
-      - WATCHLIST_TOGGLE=${WATCHLIST_TOGGLE:-true}
-      - WATCHLIST_EPISODES=${WATCHLIST_EPISODES:-1}
-      - WATCHLIST_CACHE_EXPIRY=${WATCHLIST_CACHE_EXPIRY:-6}
-      - WATCHED_MOVE=${WATCHED_MOVE:-true}
-      - WATCHED_CACHE_EXPIRY=${WATCHED_CACHE_EXPIRY:-48}
-      - USERS_TOGGLE=${USERS_TOGGLE:-true}
-      - EXIT_IF_ACTIVE_SESSION=${EXIT_IF_ACTIVE_SESSION:-false}
-      
-      # Cache Behavior (Unraid optimized)
-      - COPY_TO_CACHE=${COPY_TO_CACHE:-true}
-      - DELETE_FROM_CACHE_WHEN_DONE=${DELETE_FROM_CACHE_WHEN_DONE:-true}
-      
-      # Performance Settings (Unraid optimized)
-      - MAX_CONCURRENT_MOVES_CACHE=${MAX_CONCURRENT_MOVES_CACHE:-3}
-      - MAX_CONCURRENT_MOVES_ARRAY=${MAX_CONCURRENT_MOVES_ARRAY:-1}
-      - MAX_CONCURRENT_LOCAL_TRANSFERS=${MAX_CONCURRENT_LOCAL_TRANSFERS:-3}
-      - MAX_CONCURRENT_NETWORK_TRANSFERS=${MAX_CONCURRENT_NETWORK_TRANSFERS:-1}
-      
-      # Real-time Watching
-      - REAL_TIME_WATCH_ENABLED=${REAL_TIME_WATCH_ENABLED:-false}
-      - REAL_TIME_WATCH_CHECK_INTERVAL=${REAL_TIME_WATCH_CHECK_INTERVAL:-30}
-      - REAL_TIME_WATCH_AUTO_CACHE_ON_WATCH=${REAL_TIME_WATCH_AUTO_CACHE_ON_WATCH:-true}
-      - REAL_TIME_WATCH_CACHE_ON_COMPLETE=${REAL_TIME_WATCH_CACHE_ON_COMPLETE:-true}
-      - REAL_TIME_WATCH_RESPECT_EXISTING_RULES=${REAL_TIME_WATCH_RESPECT_EXISTING_RULES:-true}
-      - REAL_TIME_WATCH_MAX_CONCURRENT_WATCHES=${REAL_TIME_WATCH_MAX_CONCURRENT_WATCHES:-5}
-      - REAL_TIME_WATCH_REMOVE_FROM_CACHE_AFTER_HOURS=${REAL_TIME_WATCH_REMOVE_FROM_CACHE_AFTER_HOURS:-24}
-      - REAL_TIME_WATCH_RESPECT_OTHER_USERS_WATCHLISTS=${REAL_TIME_WATCH_RESPECT_OTHER_USERS_WATCHLISTS:-true}
-      - REAL_TIME_WATCH_EXCLUDE_INACTIVE_USERS_DAYS=${REAL_TIME_WATCH_EXCLUDE_INACTIVE_USERS_DAYS:-30}
-      
-      # Trakt.tv Integration
-      - TRAKT_ENABLED=${TRAKT_ENABLED:-false}
-      - TRAKT_CLIENT_ID=${TRAKT_CLIENT_ID:-}
-      - TRAKT_CLIENT_SECRET=${TRAKT_CLIENT_SECRET:-}
-      - TRAKT_TRENDING_MOVIES_COUNT=${TRAKT_TRENDING_MOVIES_COUNT:-10}
-      - TRAKT_CHECK_INTERVAL=${TRAKT_CHECK_INTERVAL:-3600}
-      
-      # Test Mode
-      - TEST_MODE=${TEST_MODE:-false}
-      - TEST_SHOW_FILE_SIZES=${TEST_SHOW_FILE_SIZES:-true}
-      - TEST_SHOW_TOTAL_SIZE=${TEST_SHOW_TOTAL_SIZE:-true}
-      
-      # Web Interface
-      - WEB_HOST=${WEB_HOST:-0.0.0.0}
-      - WEB_PORT=${WEB_PORT:-5445}
-      - PORT=${PORT:-5445}
-      - ENABLE_SCHEDULER=${ENABLE_SCHEDULER:-false}
-      
-      # Notifications
-      - WEBHOOK_URL=${WEBHOOK_URL:-}
-      - NOTIFICATION_TYPE=${NOTIFICATION_TYPE:-webhook}
-      
-      # Container Configuration
-      - TZ=${TZ:-America/New_York}
+      # Minimal environment variables - prefer web UI configuration
+      - CACHERR_ENVIRONMENT=production
+      - CACHERR_LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - TZ=${TZ:-UTC}
+      # Legacy support (will be removed in future)
+      - PLEX_URL=${PLEX_URL:-}
+      - PLEX_TOKEN=${PLEX_TOKEN:-}
     volumes:
-      # Development: Mount frontend source for hot reloading
-      - ./frontend:/app/frontend:rw
-      - ./frontend/node_modules:/app/frontend/node_modules:rw
-      
-      # Cache destination (where files are moved for performance)
-      - ${CACHE_DESTINATION:-/mnt/transcode}:/cache:rw
-      
-      # PRIMARY MEDIA: Mount exactly like Plex does
+      # Configuration (persistent settings)
+      - ${CONFIG_DIR:-./config}:/config:rw
+
+      # Cache destination for media files
+      - ${CACHE_DESTINATION:-./cache}:/cache:rw
+
+      # Media sources (Unraid-specific paths)
       - /mnt/user/Media:/media:rw
-      
-      # REMOTE MEDIA: Mount NAS exactly like Plex does  
-      - /mnt/remotes/NAS1_Media2:/Nas1:rw
-      
-      # PLEX-COMPATIBLE PATHS: cacherr will create hardlinks/symlinks here
-      # These should point to subdirectories within the same mount as cache
-      - /mnt/user/Media:/plexmedia:rw
-      - /mnt/remotes/NAS1_Media2:/plexnas:rw
-      
-      # Application data (persistent)
-      - ${CONFIG_DIR:-/mnt/user/appdata/cacherr/config}:/config:rw
+      - /mnt/remotes/NAS1_Media2:/remote-media:rw
     networks:
       - cacherr-network
     security_opt:
       - no-new-privileges:true
-    read_only: false
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5445/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          memory: 512M  # Reduced for production efficiency
+          cpus: '0.5'
+        reservations:
+          memory: 128M
+          cpus: '0.25'
+
+  # ===========================================
+  # DEVELOPMENT SERVICE
+  # ===========================================
+  cacherr-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    image: sittingmongoose/cacherr:dev
+    container_name: cacherr-dev
+    restart: unless-stopped
+    profiles: ["development"]
+    env_file:
+      - .env
+    ports:
+      - "5445:5445"  # Backend API
+      - "3000:3000"  # Frontend dev server (hot reloading)
+    environment:
+      # Development-specific settings
+      - CACHERR_ENVIRONMENT=development
+      - CACHERR_DEBUG=true
+      - CACHERR_LOG_LEVEL=DEBUG
+      - TZ=${TZ:-UTC}
+
+      # Legacy environment variables for compatibility
+      - PLEX_URL=${PLEX_URL:-}
+      - PLEX_TOKEN=${PLEX_TOKEN:-}
+      - CONFIG_DIR=${CONFIG_DIR:-/config}
+      - CACHE_DESTINATION=${CACHE_DESTINATION:-/cache}
+    volumes:
+      # Mount source code for hot reloading
+      - ./src:/app/src:rw
+      - ./main.py:/app/main.py:rw
+      - ./requirements.txt:/app/requirements.txt:rw
+
+      # Frontend hot reloading
+      - ./frontend:/app/frontend:rw
+      - /app/frontend/node_modules  # Named volume for node_modules
+
+      # Configuration and data
+      - ${CONFIG_DIR:-./config}:/config:rw
+      - ${CACHE_DESTINATION:-./cache}:/cache:rw
+
+      # Media sources
+      - /mnt/user/Media:/media:rw
+      - /mnt/remotes/NAS1_Media2:/remote-media:rw
+    networks:
+      - cacherr-network
+    security_opt:
+      - no-new-privileges:true
     tmpfs:
       - /tmp:noexec,nosuid,size=100m
     healthcheck:
@@ -126,14 +125,65 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-    deploy:
-      resources:
-        limits:
-          memory: 1G
-          cpus: '1.0'
-        reservations:
-          memory: 256M
-          cpus: '0.25'
+
+  # ===========================================
+  # TESTING SERVICE (Playwright)
+  # ===========================================
+  cacherr-test:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    image: sittingmongoose/cacherr:test
+    container_name: cacherr-test
+    profiles: ["testing"]
+    environment:
+      - CI=true
+      - CACHERR_ENVIRONMENT=testing
+    volumes:
+      # Mount test files
+      - ./e2e:/app/e2e:rw
+      - ./playwright.config.js:/app/playwright.config.js:rw
+      - ./playwright-report:/app/playwright-report:rw
+
+      # Configuration for tests
+      - ${CONFIG_DIR:-./config}:/config:rw
+    networks:
+      - cacherr-network
+    working_dir: /app
+    command: npx playwright test
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ===========================================
+  # PLAYWRIGHT UI SERVICE (Interactive Testing)
+  # ===========================================
+  playwright-ui:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: cacherr-playwright-ui
+    profiles: ["testing"]
+    ports:
+      - "9323:9323"  # Playwright UI port
+    environment:
+      - CI=false
+    volumes:
+      # Mount test files
+      - ./e2e:/app/e2e:rw
+      - ./playwright.config.js:/app/playwright.config.js:rw
+      - ./playwright-report:/app/playwright-report:rw
+    networks:
+      - cacherr-network
+    working_dir: /app
+    command: npx playwright test --ui --ui-host=0.0.0.0
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 networks:
   cacherr-network:
@@ -141,3 +191,22 @@ networks:
     ipam:
       config:
         - subnet: 172.20.0.0/16
+
+# ===========================================
+# USAGE EXAMPLES
+# ===========================================
+#
+# Production deployment:
+#   docker-compose --profile production up -d
+#
+# Development with hot reloading:
+#   docker-compose --profile development up
+#
+# Run tests:
+#   docker-compose --profile testing up cacherr-test
+#
+# Interactive testing:
+#   docker-compose --profile testing up playwright-ui
+#
+# Stop all services:
+#   docker-compose --profile production,development,testing down

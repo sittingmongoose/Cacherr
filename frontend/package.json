@@ -2,7 +2,7 @@
   "name": "cacherr-frontend",
   "version": "1.0.0",
   "type": "module",
-  "description": "Modern React frontend for PlexCacheUltra dashboard",
+  "description": "Modern React frontend for Cacherr dashboard",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

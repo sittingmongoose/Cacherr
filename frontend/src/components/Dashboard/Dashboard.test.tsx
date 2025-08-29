@@ -82,7 +82,7 @@ describe('Dashboard Component', () => {
       expect(screen.getByRole('contentinfo')).toBeInTheDocument() // footer
 
       // Check for title
-      expect(screen.getByText('PlexCacheUltra')).toBeInTheDocument()
+      expect(screen.getByText('Cacherr')).toBeInTheDocument()
 
       // Wait for initial data loading
       await waitFor(() => {
@@ -97,7 +97,7 @@ describe('Dashboard Component', () => {
         </TestWrapper>
       )
 
-      expect(screen.getByText('Loading PlexCacheUltra Dashboard...')).toBeInTheDocument()
+      expect(screen.getByText('Loading Cacherr Dashboard...')).toBeInTheDocument()
     })
 
     it('displays error message when API fails', async () => {
