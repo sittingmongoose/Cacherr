@@ -631,7 +631,7 @@ class ApplicationContext:
                 self.logger.warning(f"Found {len(non_writable_dirs)} non-writable cache directories: {', '.join(non_writable_dirs)}")
                 self.startup_errors.append(f"Non-writable cache directories: {', '.join(non_writable_dirs)}")
 
-                except Exception as e:
+        except Exception as e:
             self.logger.error(f"Error validating cache directories: {e}")
             self.startup_errors.append(f"Cache directory validation failed: {e}")
 
