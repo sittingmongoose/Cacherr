@@ -424,21 +424,84 @@ class ApplicationContext:
             self.startup_errors.append(f"Logging setup failed: {e}")
     
     def _create_required_directories(self) -> None:
-        """Create required directories for the application."""
-        required_dirs = [
+        """Create required directories for the application with enhanced cache support."""
+        # Core application directories
+        core_dirs = [
             Path("/config"),
             Path("/config/logs"),
-            Path("/config/temp")
+            Path("/config/temp"),
+            Path("/config/data")
         ]
-        
-        for directory in required_dirs:
+
+        # Cache-related directories
+        cache_dirs = [
+            Path("/workspace/cache"),  # Default cache directory
+            Path("/mnt/cache"),        # Alternative cache mount
+            Path("/tmp/cache")         # Fallback cache directory
+        ]
+
+        all_dirs = core_dirs + cache_dirs
+
+        for directory in all_dirs:
             try:
                 directory.mkdir(parents=True, exist_ok=True)
                 self.logger.debug(f"Ensured directory exists: {directory}")
             except Exception as e:
                 self.logger.warning(f"Failed to create directory {directory}: {e}")
                 self.startup_errors.append(f"Directory creation failed: {directory}")
-    
+
+        # Validate cache directory permissions
+        self._validate_cache_directories()
+
+    def _verify_directory_permissions(self, directory: Path) -> bool:
+        """Test if a directory is writable by attempting to create and delete a temporary file."""
+        if not directory.exists():
+            return False
+
+        test_file = directory / ".write_test"
+        try:
+            # Try to create a temporary file
+            with open(test_file, 'w') as f:
+                f.write("test")
+            # Try to delete it
+            test_file.unlink()
+            return True
+        except (OSError, IOError, PermissionError):
+            return False
+
+    def _validate_cache_directories(self) -> None:
+        """Validate the existence and writability of configured cache directories."""
+        try:
+            cache_dirs = [
+                Path("/workspace/cache"),
+                Path("/mnt/cache"),
+                Path("/tmp/cache")
+            ]
+
+            writable_dirs = []
+            non_writable_dirs = []
+
+            for directory in cache_dirs:
+                if directory.exists():
+                    if self._verify_directory_permissions(directory):
+                        writable_dirs.append(str(directory))
+                        self.logger.debug(f"Cache directory is writable: {directory}")
+                    else:
+                        non_writable_dirs.append(str(directory))
+                        self.logger.warning(f"Cache directory exists but is not writable: {directory}")
+                else:
+                    self.logger.debug(f"Cache directory does not exist: {directory}")
+
+            if writable_dirs:
+                self.logger.info(f"Found {len(writable_dirs)} writable cache directories: {', '.join(writable_dirs)}")
+            if non_writable_dirs:
+                self.logger.warning(f"Found {len(non_writable_dirs)} non-writable cache directories: {', '.join(non_writable_dirs)}")
+                self.startup_errors.append(f"Non-writable cache directories: {', '.join(non_writable_dirs)}")
+
+        except Exception as e:
+            self.logger.error(f"Error validating cache directories: {e}")
+            self.startup_errors.append(f"Cache directory validation failed: {e}")
+
     def _validate_configuration(self) -> bool:
         """Validate the application configuration."""
         try:
@@ -485,45 +548,85 @@ class ApplicationContext:
             if self.app_config.enable_cache_engine:
                 self.container.register_singleton(CacherrEngine, CacherrEngine)
             
-            # Register CachedFilesService for tracking cached files
+            # Register CachedFilesService for tracking cached files with enhanced error recovery
             try:
                 from .core.cached_files_service import CachedFilesService
                 import os
                 from pathlib import Path
-                
+
                 # Try multiple database paths in order of preference
                 db_paths = [
                     "/config/data/cached_files.db",  # Preferred: in data subdirectory
                     "/config/cached_files.db",       # Secondary: in config root
+                    "/workspace/cached_files.db",    # Tertiary: workspace directory
                     "/tmp/cached_files.db"           # Fallback: temp directory
                 ]
-                
+
                 db_path = None
+                cached_files_service = None
                 last_error = None
-                
+
                 for path in db_paths:
                     try:
                         # Ensure parent directory exists
                         parent_dir = Path(path).parent
                         parent_dir.mkdir(parents=True, exist_ok=True)
-                        
-                        # Test write access by attempting to create the service
-                        test_service = CachedFilesService(database_path=path)
-                        db_path = path
-                        cached_files_service = test_service
-                        break
-                        
+
+                        # Check if database file exists and is corrupted
+                        db_file = Path(path)
+                        if db_file.exists():
+                            # Test if database is readable by attempting to connect
+                            try:
+                                test_service = CachedFilesService(database_path=path)
+                                # Try a simple operation to verify database integrity
+                                test_service._ensure_tables_exist()  # Assuming this method exists
+                                cached_files_service = test_service
+                                db_path = path
+                                self.logger.info(f"Successfully connected to existing database: {path}")
+                                break
+                            except Exception as db_error:
+                                # Database might be corrupted, try to remove it and recreate
+                                self.logger.warning(f"Database at {path} appears corrupted: {db_error}")
+                                try:
+                                    db_file.unlink()
+                                    self.logger.info(f"Removed corrupted database file: {path}")
+                                except Exception as remove_error:
+                                    self.logger.error(f"Failed to remove corrupted database file {path}: {remove_error}")
+
+                        # Create new database or retry after removal
+                        try:
+                            test_service = CachedFilesService(database_path=path)
+                            # Initialize database schema
+                            test_service._ensure_tables_exist()  # Assuming this method exists
+                            cached_files_service = test_service
+                            db_path = path
+                            self.logger.info(f"Successfully created new database: {path}")
+                            break
+                        except Exception as create_error:
+                            self.logger.debug(f"Failed to create database at {path}: {create_error}")
+                            last_error = create_error
+                            continue
+
                     except Exception as e:
                         last_error = e
                         self.logger.debug(f"Database path {path} failed: {e}")
                         continue
-                
-                if db_path:
+
+                if cached_files_service and db_path:
                     self.container.register_instance(CachedFilesService, cached_files_service)
                     self.logger.info(f"CachedFilesService registered successfully using database: {db_path}")
+
+                    # Test basic database operations
+                    self._test_database_operations(cached_files_service)
                 else:
-                    raise Exception(f"Failed to initialize database at any location. Last error: {last_error}")
-                    
+                    error_msg = f"Failed to initialize CachedFilesService database at any location"
+                    if last_error:
+                        error_msg += f". Last error: {last_error}"
+                    self.logger.error(error_msg)
+                    self.startup_errors.append(error_msg)
+                    # Don't fail startup for this service - it's not critical
+                    self.logger.warning("Continuing startup without CachedFilesService")
+
             except ImportError as e:
                 self.logger.warning(f"Failed to import CachedFilesService: {e}")
                 self.startup_errors.append(f"CachedFilesService import failed: {e}")
