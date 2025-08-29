@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  playwright:
+    build: .
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - CI=true
+    working_dir: /app
+    command: npx playwright test
+
+  playwright-ui:
+    build: .
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - CI=false
+    working_dir: /app
+    ports:
+      - "9323:9323"
+    command: npx playwright test --ui --ui-host=0.0.0.0
+
+  websocket-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+    ports:
+      - "5000:5000"
+    environment:
+      - DEBUG=true
+    volumes:
+      - ./src:/app/src
+    working_dir: /app
+    command: python3 src/main.py
