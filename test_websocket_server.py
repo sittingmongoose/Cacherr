@@ -20,7 +20,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 def test_server_health():
     """Test that the server health endpoint is working."""
     try:
-        response = requests.get('http://localhost:5000/health', timeout=5)
+        response = requests.get('http://localhost:5445/health', timeout=5)
         if response.status_code == 200:
             data = response.json()
             print("✅ Server health check PASSED")
@@ -37,7 +37,7 @@ def test_server_health():
 def test_api_endpoint():
     """Test the API info endpoint."""
     try:
-        response = requests.get('http://localhost:5000/api', timeout=5)
+        response = requests.get('http://localhost:5445/api', timeout=5)
         if response.status_code == 200:
             data = response.json()
             print("✅ API endpoint test PASSED")
@@ -98,7 +98,7 @@ def test_websocket_connection():
 
         # Connect to the server
         print("🔌 Connecting to WebSocket server...")
-        sio.connect('http://localhost:5000')
+        sio.connect('http://localhost:5445')
 
         # Wait a bit for connection
         time.sleep(2)
@@ -176,8 +176,8 @@ def test_broadcast_functionality():
 
         # Connect both clients
         print("🔌 Connecting two WebSocket clients for broadcast test...")
-        sio1.connect('http://localhost:5000')
-        sio2.connect('http://localhost:5000')
+        sio1.connect('http://localhost:5445')
+        sio2.connect('http://localhost:5445')
 
         # Wait for connections
         time.sleep(3)
@@ -185,7 +185,7 @@ def test_broadcast_functionality():
         # Send broadcast via API
         if broadcast_results['client1_connected'] and broadcast_results['client2_connected']:
             try:
-                response = requests.post('http://localhost:5000/broadcast', json={
+                response = requests.post('http://localhost:5445/broadcast', json={
                     'event': 'test_broadcast',
                     'data': {'message': 'Test broadcast message', 'timestamp': time.time()}
                 }, timeout=5)
@@ -234,7 +234,7 @@ def test_broadcast_functionality():
 
 def main():
     """Main test function."""
-    print("🧪 Testing PlexCacheUltra WebSocket Server")
+    print("🧪 Testing Cacherr WebSocket Server")
     print("=" * 50)
 
     # Give server time to start if it's starting up

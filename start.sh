@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# PlexCacheUltra Integrated Docker Startup Script
+# Cacherr Integrated Docker Startup Script
 
 set -e
 
@@ -14,7 +14,7 @@ NC='\033[0m' # No Color
 # Function to print colored output
 print_header() {
     echo -e "${BLUE}================================================${NC}"
-    echo -e "${BLUE}  PlexCacheUltra - Integrated Docker Setup${NC}"
+    echo -e "${BLUE}  Cacherr - Integrated Docker Setup${NC}"
     echo -e "${BLUE}================================================${NC}"
 }
 
@@ -66,16 +66,16 @@ check_config() {
 
 # Function to start web server
 start_web() {
-    print_info "Starting PlexCacheUltra Web Server..."
+    print_info "Starting Cacherr Web Server..."
     print_info "This will start the web interface with WebSocket support"
 
     docker-compose up --build -d plexcache
 
     print_success "Web server started!"
     echo ""
-    echo "🌐 Web Interface: http://localhost:5000"
-    echo "🔗 API Endpoints: http://localhost:5000/api/*"
-    echo "📊 WebSocket: ws://localhost:5000"
+    echo "🌐 Web Interface: http://localhost:5445"
+    echo "🔗 API Endpoints: http://localhost:5445/api/*"
+    echo "📊 WebSocket: ws://localhost:5445"
     echo ""
     print_info "To view logs: docker-compose logs -f plexcache"
     print_info "To stop: docker-compose down"
@@ -83,7 +83,7 @@ start_web() {
 
 # Function to start CLI mode
 start_cli() {
-    print_info "Starting PlexCacheUltra in CLI mode..."
+    print_info "Starting Cacherr in CLI mode..."
     print_info "This will run a one-time caching operation"
 
     docker-compose --profile cli up --build plexcache-cli
@@ -93,7 +93,7 @@ start_cli() {
 
 # Function to run tests
 run_tests() {
-    print_info "Running PlexCacheUltra tests..."
+    print_info "Running Cacherr tests..."
 
     # Start the web server first
     print_info "Starting web server for testing..."
@@ -103,7 +103,7 @@ run_tests() {
     print_info "Waiting for server to be healthy..."
     timeout=60
     while [ $timeout -gt 0 ]; do
-        if docker-compose exec -T plexcache curl -f http://localhost:5000/api/health > /dev/null 2>&1; then
+        if docker-compose exec -T plexcache curl -f http://localhost:5445/api/health > /dev/null 2>&1; then
             break
         fi
         sleep 2
@@ -126,11 +126,11 @@ run_tests() {
 
 # Function to show status
 show_status() {
-    print_info "PlexCacheUltra Status:"
+    print_info "Cacherr Status:"
 
     if docker-compose ps | grep -q "plexcache"; then
         print_success "Web server is running"
-        echo "🌐 http://localhost:5000"
+        echo "🌐 http://localhost:5445"
     else
         print_warning "Web server is not running"
     fi
@@ -144,14 +144,14 @@ show_status() {
 
 # Function to stop all services
 stop_all() {
-    print_info "Stopping all PlexCacheUltra services..."
+    print_info "Stopping all Cacherr services..."
     docker-compose down
     print_success "All services stopped"
 }
 
 # Function to show help
 show_help() {
-    echo "PlexCacheUltra - Integrated Docker Management Script"
+    echo "Cacherr - Integrated Docker Management Script"
     echo ""
     echo "Usage: $0 [command]"
     echo ""

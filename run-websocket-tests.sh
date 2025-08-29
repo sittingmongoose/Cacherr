@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# WebSocket Testing Script for PlexCacheUltra
+# WebSocket Testing Script for Cacherr
 # This script provides easy commands to test the WebSocket functionality
 
 set -e
@@ -57,7 +57,7 @@ run_signature_tests() {
 start_server() {
     print_info "Starting WebSocket server..."
     docker-compose up -d websocket-server
-    print_success "WebSocket server started on http://localhost:5000"
+    print_success "WebSocket server started on http://localhost:5445"
 }
 
 # Function to stop WebSocket server
@@ -102,7 +102,7 @@ run_all_tests() {
     sleep 5
 
     # Test server health
-    if curl -f http://localhost:5000/health > /dev/null 2>&1; then
+    if curl -f http://localhost:5445/health > /dev/null 2>&1; then
         print_success "Server is responding"
     else
         print_error "Server is not responding"
@@ -121,7 +121,7 @@ run_all_tests() {
 
 # Function to show help
 show_help() {
-    echo "WebSocket Testing Script for PlexCacheUltra"
+    echo "WebSocket Testing Script for Cacherr"
     echo ""
     echo "Usage: $0 [command]"
     echo ""

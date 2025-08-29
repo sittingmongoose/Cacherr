@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Main entry point for PlexCacheUltra WebSocket Server.
+Main entry point for Cacherr WebSocket Server.
 
 This module starts the Flask-Socket.IO web server with proper
 WebSocket event handling for real-time communication.
@@ -29,7 +29,7 @@ def main():
     )
 
     logger = logging.getLogger(__name__)
-    logger.info("Initializing PlexCacheUltra WebSocket Server...")
+    logger.info("Initializing Cacherr WebSocket Server...")
 
     try:
         # Create the Flask app with Socket.IO
@@ -37,7 +37,7 @@ def main():
 
         # Get server configuration from environment
         host = os.environ.get('HOST', '0.0.0.0')
-        port = int(os.environ.get('PORT', '5000'))
+        port = int(os.environ.get('PORT', '5445'))
         debug = os.environ.get('DEBUG', 'false').lower() == 'true'
 
         logger.info(f"Starting server on {host}:{port}")

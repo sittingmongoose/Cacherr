@@ -4,7 +4,7 @@ services:
   plexcache:
     build: .
     ports:
-      - "5000:5000"  # Web interface and WebSocket
+      - "5445:5445"  # Web interface and WebSocket
     volumes:
       - ./plexcache_settings.json:/app/plexcache_settings.json
       - /mnt/user/system/plexcache:/mnt/user/system/plexcache  # Mount PlexCache folder
@@ -13,12 +13,12 @@ services:
       - DEBUG=false
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:5445/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
-    command: ["python3", "plexcache.py", "--web", "--host", "0.0.0.0", "--port", "5000"]
+    command: ["python3", "plexcache.py", "--web", "--host", "0.0.0.0", "--port", "5445"]
 
   # Optional: Run in CLI mode for one-time caching operations
   plexcache-cli:

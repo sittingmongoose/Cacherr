@@ -13,7 +13,7 @@ test.describe('WebSocket Event Handler Signature Tests', () => {
 
   test.beforeEach(async ({ page }) => {
     // Navigate to the WebSocket test page
-    await page.goto('http://localhost:5000');
+    await page.goto('http://localhost:5445');
 
     // Wait for the page to load
     await page.waitForLoadState('networkidle');
@@ -21,7 +21,7 @@ test.describe('WebSocket Event Handler Signature Tests', () => {
 
   test('should test WebSocket connectivity and identify issues', async ({ page }) => {
     // Test basic API health
-    const healthResponse = await page.request.get('http://localhost:5000/health');
+    const healthResponse = await page.request.get('http://localhost:5445/health');
     expect(healthResponse.ok()).toBeTruthy();
 
     const healthData = await healthResponse.json();
@@ -32,7 +32,7 @@ test.describe('WebSocket Event Handler Signature Tests', () => {
       return new Promise((resolve, reject) => {
         try {
           // Create Socket.IO client connection
-          const socket = (window as any).io('http://localhost:5000');
+          const socket = (window as any).io('http://localhost:5445');
 
           let connectionResult = {
             connected: false,
@@ -94,7 +94,7 @@ test.describe('WebSocket Event Handler Signature Tests', () => {
 
   test('should validate WebSocket event handler signatures', async ({ page }) => {
     // Test that the server properly handles WebSocket events
-    const statsResponse = await page.request.get('http://localhost:5000/stats');
+    const statsResponse = await page.request.get('http://localhost:5445/stats');
     expect(statsResponse.ok()).toBeTruthy();
 
     const initialStats = await statsResponse.json();
@@ -103,7 +103,7 @@ test.describe('WebSocket Event Handler Signature Tests', () => {
     // Test WebSocket connection and validate server-side handling
     const connectionTest = await page.evaluate(async () => {
       return new Promise((resolve) => {
-        const socket = (window as any).io('http://localhost:5000');
+        const socket = (window as any).io('http://localhost:5445');
 
         socket.on('connect', () => {
           // Connection successful - this validates handle_connect signature
@@ -135,7 +135,7 @@ test.describe('WebSocket Event Handler Signature Tests', () => {
 
       for (let i = 0; i < connections; i++) {
         const result = await new Promise((resolve) => {
-          const socket = (window as any).io('http://localhost:5000');
+          const socket = (window as any).io('http://localhost:5445');
 
           socket.on('connect', () => {
             setTimeout(() => {
@@ -166,8 +166,8 @@ test.describe('WebSocket Event Handler Signature Tests', () => {
     // Test broadcast functionality
     const broadcastTest = await page.evaluate(async () => {
       return new Promise((resolve) => {
-        const socket1 = (window as any).io('http://localhost:5000');
-        const socket2 = (window as any).io('http://localhost:5000');
+        const socket1 = (window as any).io('http://localhost:5445');
+        const socket2 = (window as any).io('http://localhost:5445');
 
         let receivedMessages = [];
 
@@ -187,7 +187,7 @@ test.describe('WebSocket Event Handler Signature Tests', () => {
             // Both connected, now test broadcast
             setTimeout(async () => {
               // Send broadcast via API
-              const response = await fetch('http://localhost:5000/broadcast', {
+              const response = await fetch('http://localhost:5445/broadcast', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -226,7 +226,7 @@ test.describe('WebSocket Event Handler Signature Tests', () => {
 
       for (let i = 0; i < connectionCount; i++) {
         const promise = new Promise((resolve) => {
-          const socket = (window as any).io('http://localhost:5000');
+          const socket = (window as any).io('http://localhost:5445');
 
           socket.on('connect', () => {
             setTimeout(() => {
@@ -259,7 +259,7 @@ test.describe('WebSocket Event Handler Signature Tests', () => {
 
   test('should test WebSocket status and statistics', async ({ page }) => {
     // Test the stats endpoint
-    const statsResponse = await page.request.get('http://localhost:5000/stats');
+    const statsResponse = await page.request.get('http://localhost:5445/stats');
     expect(statsResponse.ok()).toBeTruthy();
 
     const stats = await statsResponse.json();
@@ -269,7 +269,7 @@ test.describe('WebSocket Event Handler Signature Tests', () => {
     // Test WebSocket status request
     const statusTest = await page.evaluate(async () => {
       return new Promise((resolve) => {
-        const socket = (window as any).io('http://localhost:5000');
+        const socket = (window as any).io('http://localhost:5445');
 
         socket.on('connect', () => {
           socket.emit('status');

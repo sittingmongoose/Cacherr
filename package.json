@@ -1,7 +1,7 @@
 {
-  "name": "plexcache-websocket-tests",
+  "name": "cacherr-websocket-tests",
   "version": "1.0.0",
-  "description": "WebSocket testing for PlexCacheUltra",
+  "description": "WebSocket testing for Cacherr",
   "main": "index.js",
   "scripts": {
     "test": "playwright test",

@@ -1,5 +1,5 @@
 """
-WebSocket Manager for PlexCacheUltra
+WebSocket Manager for Cacherr
 Handles Socket.IO v4 event connections and disconnections with proper function signatures.
 """
 
@@ -68,7 +68,7 @@ class WebSocketManager:
         # Emit welcome message to the connected client
         self.socketio.emit('connection_ack', {
             'sid': sid,
-            'message': 'Successfully connected to PlexCacheUltra',
+            'message': 'Successfully connected to Cacherr',
             'timestamp': datetime.utcnow().isoformat()
         })
 

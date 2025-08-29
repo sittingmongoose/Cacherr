@@ -1,5 +1,5 @@
 """
-Flask application with Socket.IO integration for PlexCacheUltra.
+Flask application with Socket.IO integration for Cacherr.
 
 This module sets up the web server with proper Socket.IO v4 configuration
 and integrates the WebSocket manager for handling client connections.
@@ -47,7 +47,7 @@ def index():
 def api_info():
     """Serve basic API information."""
     return jsonify({
-        'name': 'PlexCacheUltra WebSocket API',
+        'name': 'Cacherr WebSocket API',
         'version': '1.0.0',
         'status': 'operational',
         'websocket_clients': websocket_manager.get_connected_clients_count()
@@ -99,10 +99,10 @@ def create_app():
 
 if __name__ == '__main__':
     # For development/testing
-    logger.info("Starting PlexCacheUltra WebSocket server...")
+    logger.info("Starting Cacherr WebSocket server...")
     socketio.run(
         app,
         host='0.0.0.0',
-        port=int(os.environ.get('PORT', 5000)),
+        port=int(os.environ.get('PORT', 5445)),
         debug=os.environ.get('DEBUG', 'false').lower() == 'true'
     )

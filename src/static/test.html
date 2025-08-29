@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PlexCacheUltra WebSocket Test</title>
+    <title>Cacherr WebSocket Test</title>
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <style>
         body {
@@ -60,7 +60,7 @@
     </style>
 </head>
 <body>
-    <h1>PlexCacheUltra WebSocket Test</h1>
+    <h1>Cacherr WebSocket Test</h1>
 
     <div id="status" class="status disconnected">
         Status: Disconnected
@@ -126,7 +126,7 @@
             }
 
             log('Connecting to WebSocket server...');
-            socket = io('http://localhost:5000');
+            socket = io('http://localhost:5445');
 
             socket.on('connect', () => {
                 log(`Connected successfully! SID: ${socket.id}`, 'success');

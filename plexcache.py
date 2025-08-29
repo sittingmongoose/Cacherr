@@ -25,10 +25,10 @@ print("*** PlexCache ***")
 # Parse command line arguments
 import argparse
 
-parser = argparse.ArgumentParser(description='PlexCache - Media Caching Tool')
+parser = argparse.ArgumentParser(description='Cacherr - Media Caching Tool')
 parser.add_argument('--web', action='store_true', help='Run in web server mode with WebSocket support')
 parser.add_argument('--host', default='0.0.0.0', help='Host to bind the web server to (default: 0.0.0.0)')
-parser.add_argument('--port', type=int, default=5000, help='Port to bind the web server to (default: 5000)')
+parser.add_argument('--port', type=int, default=5445, help='Port to bind the web server to (default: 5445)')
 parser.add_argument('--debug', action='store_true', help='Enable debug mode')
 
 args = parser.parse_args()
@@ -73,9 +73,9 @@ start_time = time.time()  # record start time
 
 # WebSocket Manager Class (only defined if WebSocket libraries are available)
 if WEBSOCKET_AVAILABLE:
-    class PlexCacheWebSocketManager:
+    class CacherrWebSocketManager:
         """
-        WebSocket Manager for PlexCache with real-time monitoring and control.
+        WebSocket Manager for Cacherr with real-time monitoring and control.
 
         This class provides WebSocket functionality to monitor and control
         the PlexCache operations in real-time.
@@ -170,9 +170,9 @@ if WEBSOCKET_AVAILABLE:
             self.socketio.emit(event, data)
             self.logger.info(f"Broadcasted '{event}' to {len(self.connected_clients)} clients")
 
-    class PlexCacheWebServer:
+    class CacherrWebServer:
         """
-        Web server for PlexCache with WebSocket support.
+        Web server for Cacherr with WebSocket support.
 
         This class provides a web interface and WebSocket API for
         monitoring and controlling PlexCache operations.
@@ -196,7 +196,7 @@ if WEBSOCKET_AVAILABLE:
             )
 
             # Initialize WebSocket manager
-            self.websocket_manager = PlexCacheWebSocketManager(self.socketio, self.plexcache.logger)
+            self.websocket_manager = CacherrWebSocketManager(self.socketio, self.plexcache.logger)
 
             # Register routes
             self._register_routes()
@@ -213,7 +213,7 @@ if WEBSOCKET_AVAILABLE:
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PlexCache Control Panel</title>
+    <title>Cacherr Control Panel</title>
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
@@ -228,7 +228,7 @@ if WEBSOCKET_AVAILABLE:
     </style>
 </head>
 <body>
-    <h1>PlexCache Control Panel</h1>
+    <h1>Cacherr Control Panel</h1>
 
     <div id="status" class="status inactive">Status: Disconnected</div>
 
@@ -302,7 +302,7 @@ if WEBSOCKET_AVAILABLE:
             }
 
             log('Connecting to WebSocket server...');
-            socket = io('http://localhost:5000');
+            socket = io('http://localhost:5445');
 
             socket.on('connect', () => {
                 log('Connected successfully!', 'success');
@@ -377,7 +377,7 @@ if WEBSOCKET_AVAILABLE:
         document.getElementById('clearLogBtn').addEventListener('click', clearLog);
 
         // Initialize
-        log('PlexCache Control Panel loaded. Click "Connect" to start.');
+        log('Cacherr Control Panel loaded. Click "Connect" to start.');
         updateStatus(false);
     </script>
 </body>
@@ -424,7 +424,7 @@ if WEBSOCKET_AVAILABLE:
                 })
                 return jsonify({'status': 'stopped'})
 
-        def run(self, host='0.0.0.0', port=5000, debug=False):
+        def run(self, host='0.0.0.0', port=5445, debug=False):
             """Run the web server."""
             self.plexcache.logger.info(f"Starting PlexCache Web Server on {host}:{port}")
             self.socketio.run(self.app, host=host, port=port, debug=debug)
@@ -1759,8 +1759,8 @@ logging.info(f"Execution time of the script: {execution_time}")
 
 # Web Server Mode
 if WEB_MODE and WEBSOCKET_AVAILABLE:
-    print("\n🚀 Starting PlexCache Web Server...")
-    logging.info("Starting PlexCache Web Server with WebSocket support")
+    print("\n🚀 Starting Cacherr Web Server...")
+    logging.info("Starting Cacherr Web Server with WebSocket support")
 
     try:
         # Create web server instance
@@ -1770,7 +1770,7 @@ if WEB_MODE and WEBSOCKET_AVAILABLE:
                 self.logger = logger
 
         plexcache_instance = PlexCacheInstance()
-        web_server = PlexCacheWebServer(plexcache_instance=plexcache_instance)
+        web_server = CacherrWebServer(plexcache_instance=plexcache_instance)
 
         print(f"🌐 Web server will be available at http://{args.host}:{args.port}")
         print("📊 WebSocket real-time monitoring enabled")

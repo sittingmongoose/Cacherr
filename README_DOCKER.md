@@ -1,4 +1,4 @@
-# PlexCacheUltra - Integrated Docker Setup
+# Cacherr - Integrated Docker Setup
 
 This Docker setup provides a complete PlexCache solution with web interface, WebSocket real-time monitoring, and automated testing.
 

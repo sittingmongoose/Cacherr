@@ -31,11 +31,11 @@ RUN mkdir -p /mnt/user/system/plexcache /app/logs
 RUN chmod +x plexcache.py
 
 # Expose port for web interface
-EXPOSE 5000
+EXPOSE 5445
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:5000/api/health || exit 1
+    CMD curl -f http://localhost:5445/api/health || exit 1
 
 # Default command - run in web server mode
-CMD ["python3", "plexcache.py", "--web", "--host", "0.0.0.0", "--port", "5000"]
+CMD ["python3", "plexcache.py", "--web", "--host", "0.0.0.0", "--port", "5445"]
