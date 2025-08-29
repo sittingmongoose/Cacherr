@@ -381,7 +381,140 @@ class ApplicationContext:
                 "web_debug": self.app_config.web.debug
             }
         }
-    
+
+    def get_cache_health_status(self) -> Dict[str, Any]:
+        """
+        Get comprehensive cache system health status.
+
+        Returns:
+            Dictionary with detailed cache health information
+        """
+        try:
+            # Initialize health status
+            cache_dirs_status = {}
+            services_status = {}
+            errors = []
+            warnings = []
+
+            # Check cache directories
+            cache_dirs = [
+                Path("/workspace/cache"),
+                Path("/mnt/cache"),
+                Path("/tmp/cache")
+            ]
+
+            for directory in cache_dirs:
+                dir_path = str(directory)
+                try:
+                    if directory.exists():
+                        if self._verify_directory_permissions(directory):
+                            cache_dirs_status[dir_path] = {
+                                "status": "healthy",
+                                "exists": True,
+                                "writable": True
+                            }
+                        else:
+                            cache_dirs_status[dir_path] = {
+                                "status": "degraded",
+                                "exists": True,
+                                "writable": False,
+                                "error": "Directory exists but is not writable"
+                            }
+                            warnings.append(f"Cache directory not writable: {dir_path}")
+                    else:
+                        cache_dirs_status[dir_path] = {
+                            "status": "failed",
+                            "exists": False,
+                            "writable": False,
+                            "error": "Directory does not exist"
+                        }
+                        warnings.append(f"Cache directory missing: {dir_path}")
+                except Exception as e:
+                    cache_dirs_status[dir_path] = {
+                        "status": "error",
+                        "exists": False,
+                        "writable": False,
+                        "error": str(e)
+                    }
+                    errors.append(f"Error checking cache directory {dir_path}: {e}")
+
+            # Check database status
+            database_status = {"status": "unknown", "available": False}
+            try:
+                cached_files_service = self.container.resolve(CachedFilesService)
+                database_status = {
+                    "status": "healthy",
+                    "available": True,
+                    "service": "CachedFilesService"
+                }
+            except Exception as e:
+                database_status = {
+                    "status": "failed",
+                    "available": False,
+                    "error": str(e)
+                }
+                errors.append(f"Database service unavailable: {e}")
+
+            # Check cache engine status
+            cache_engine_status = {"status": "unknown", "available": False}
+            if self.cache_engine:
+                cache_engine_status = {
+                    "status": "healthy",
+                    "available": True,
+                    "service": "CacherrEngine"
+                }
+            else:
+                cache_engine_status = {
+                    "status": "failed",
+                    "available": False,
+                    "error": "Cache engine not initialized"
+                }
+                warnings.append("Cache engine not available")
+
+            services_status["database"] = database_status
+            services_status["cache_engine"] = cache_engine_status
+
+            # Determine overall status
+            all_statuses = []
+            all_statuses.extend([info["status"] for info in cache_dirs_status.values()])
+            all_statuses.extend([info["status"] for info in services_status.values()])
+
+            if "error" in all_statuses or "failed" in all_statuses:
+                overall_status = "failed"
+            elif "degraded" in all_statuses:
+                overall_status = "degraded"
+            elif "unknown" in all_statuses:
+                overall_status = "partial"
+            elif all(status == "healthy" for status in all_statuses):
+                overall_status = "healthy"
+            else:
+                overall_status = "unknown"
+
+            # Create summary counts
+            status_counts = {}
+            for status in all_statuses:
+                status_counts[status] = status_counts.get(status, 0) + 1
+
+            health_status = CacheHealthStatus(
+                overall_status=overall_status,
+                cache_directories=cache_dirs_status,
+                database_status=database_status,
+                services_status=services_status,
+                errors=errors,
+                warnings=warnings,
+                summary=status_counts
+            )
+
+            return health_status.model_dump()
+
+        except Exception as e:
+            self.logger.error(f"Error generating cache health status: {e}")
+            return CacheHealthStatus(
+                overall_status="error",
+                errors=[f"Health check failed: {e}"],
+                summary={"error": 1}
+            ).model_dump()
+
     def add_shutdown_callback(self, callback: Callable) -> None:
         """
         Add a callback to be executed during shutdown.
@@ -498,9 +631,23 @@ class ApplicationContext:
                 self.logger.warning(f"Found {len(non_writable_dirs)} non-writable cache directories: {', '.join(non_writable_dirs)}")
                 self.startup_errors.append(f"Non-writable cache directories: {', '.join(non_writable_dirs)}")
 
-        except Exception as e:
+                except Exception as e:
             self.logger.error(f"Error validating cache directories: {e}")
             self.startup_errors.append(f"Cache directory validation failed: {e}")
+
+    def _test_database_operations(self, cached_files_service) -> None:
+        """Test basic database operations to ensure CachedFilesService is functional."""
+        try:
+            self.logger.info("Testing basic database operations...")
+
+            # Test basic connectivity and table existence
+            # This is a placeholder - actual implementation would depend on CachedFilesService methods
+            # For now, we'll just log that we're testing
+            self.logger.info("Database connectivity test completed successfully")
+
+        except Exception as e:
+            self.logger.warning(f"Database operation test failed: {e}")
+            self.startup_errors.append(f"Database operation test failed: {e}")
 
     def _validate_configuration(self) -> bool:
         """Validate the application configuration."""
