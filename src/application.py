@@ -54,7 +54,7 @@ from typing import Dict, Any, Optional, List, Callable
 from datetime import datetime
 from contextlib import contextmanager
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict, field_validator, ValidationError
 from flask import Flask
 
 from .config.settings import Config
@@ -75,36 +75,75 @@ logger = logging.getLogger(__name__)
 
 class ApplicationConfig(BaseModel):
     """Configuration model for application bootstrap."""
-    
+
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+
     # Web application configuration
     web: FlaskAppConfig = Field(default_factory=FlaskAppConfig, description="Flask web app configuration")
-    
+
     # Scheduler configuration
     scheduler: SchedulerConfig = Field(default_factory=SchedulerConfig, description="Task scheduler configuration")
     enable_scheduler: bool = Field(default=True, description="Whether to enable task scheduler")
     auto_start_scheduler: bool = Field(default=False, description="Whether to start scheduler automatically")
-    
+
     # Service configuration
     enable_cache_engine: bool = Field(default=True, description="Whether to enable cache engine")
     enable_notifications: bool = Field(default=True, description="Whether to enable notification service")
     enable_real_time_watcher: bool = Field(default=False, description="Whether to enable real-time Plex watcher")
-    
+
     # Startup configuration
     validate_config_on_startup: bool = Field(default=True, description="Validate configuration during startup")
     initialize_services_on_startup: bool = Field(default=True, description="Initialize services during startup")
     create_required_directories: bool = Field(default=True, description="Create required directories on startup")
-    
+
     # Logging configuration
     setup_logging: bool = Field(default=True, description="Whether to setup application logging")
     log_level: str = Field(default="INFO", description="Application log level")
     log_file: Optional[str] = Field(default=None, description="Log file path (None for default)")
-    
+
     # Health and monitoring
     enable_health_checks: bool = Field(default=True, description="Enable health check endpoints")
     startup_timeout_seconds: int = Field(default=60, description="Startup timeout in seconds")
-    
-    class Config:
-        extra = "forbid"
+
+    @field_validator('log_level')
+    @classmethod
+    def validate_log_level(cls, v: str) -> str:
+        """Validate log level is one of the expected values."""
+        allowed_levels = {'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'}
+        if v.upper() not in allowed_levels:
+            raise ValueError(f'log_level must be one of: {allowed_levels}')
+        return v.upper()
+
+
+class CacheHealthStatus(BaseModel):
+    """Cache system health status using Pydantic v2.5."""
+
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+
+    overall_status: str = Field(..., description="Overall cache system status")
+    cache_directories: Dict[str, Dict[str, Any]] = Field(default_factory=dict, description="Cache directory statuses")
+    database_status: Dict[str, Any] = Field(default_factory=dict, description="Database service status")
+    services_status: Dict[str, Dict[str, Any]] = Field(default_factory=dict, description="Cache services status")
+    errors: List[str] = Field(default_factory=list, description="List of errors encountered")
+    warnings: List[str] = Field(default_factory=list, description="List of warnings")
+    summary: Dict[str, int] = Field(default_factory=dict, description="Status summary counts")
+
+    @field_validator('overall_status')
+    @classmethod
+    def validate_overall_status(cls, v: str) -> str:
+        """Validate overall status is one of the expected values."""
+        allowed_statuses = {'healthy', 'degraded', 'failed', 'partial', 'error', 'unknown'}
+        if v not in allowed_statuses:
+            raise ValueError(f'overall_status must be one of: {allowed_statuses}')
+        return v
 
 
 class ServiceRegistrationError(Exception):

@@ -124,6 +124,7 @@ const PageLoader: React.FC = () => (
 // Lazy load components for better performance and code splitting
 const Dashboard = React.lazy(() => import('@/components/Dashboard'))
 const CachedTab = React.lazy(() => import('@/components/Cached'))
+const LogsPage = React.lazy(() => import('@/components/Logs'))
 
 // Route components wrapper with Suspense for lazy loading
 const DashboardPage: React.FC = () => (
@@ -135,6 +136,12 @@ const DashboardPage: React.FC = () => (
 const CachedPage: React.FC = () => (
   <React.Suspense fallback={<PageLoader />}>
     <CachedTab />
+  </React.Suspense>
+)
+
+const LogsPageWrapper: React.FC = () => (
+  <React.Suspense fallback={<PageLoader />}>
+    <LogsPage />
   </React.Suspense>
 )
 
@@ -152,19 +159,6 @@ const SettingsPage: React.FC = () => (
   </div>
 )
 
-// Logs page placeholder (for future implementation)
-const LogsPage: React.FC = () => (
-  <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-    <div className="text-center">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-        Logs
-      </h1>
-      <p className="text-gray-600 dark:text-gray-400">
-        Dedicated logs page coming soon...
-      </p>
-    </div>
-  </div>
-)
 
 // NotFound component
 const NotFound: React.FC = () => (
@@ -211,8 +205,8 @@ const App: React.FC = () => {
                 {/* Settings route (placeholder) */}
                 <Route path="/settings" element={<SettingsPage />} />
                 
-                {/* Logs route (placeholder) */}
-                <Route path="/logs" element={<LogsPage />} />
+                {/* Logs route */}
+                <Route path="/logs" element={<LogsPageWrapper />} />
                 
                 {/* Catch-all route for 404 */}
                 <Route path="*" element={<NotFound />} />

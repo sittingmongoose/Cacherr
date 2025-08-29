@@ -14,6 +14,8 @@ import {
 import { LogEntry, LogFilter, LogsResponse } from '@/types/api'
 import { LoadingSpinner, CardLoader } from '@/components/common/LoadingSpinner'
 import { formatTimestamp, getLogLevelColor, classNames } from '@/utils/format'
+import { APIService, APIError } from '@/services/api'
+import webSocketService, { useWebSocketLogs } from '@/services/websocket'
 
 /**
  * LogViewer component for displaying and filtering application logs
@@ -27,52 +29,13 @@ import { formatTimestamp, getLogLevelColor, classNames } from '@/utils/format'
  * - Keyboard shortcuts
  * - Accessibility support
  */
-interface LogViewerProps {
+export interface LogViewerProps {
   className?: string
   maxHeight?: string
   autoRefresh?: boolean
   refreshInterval?: number
 }
 
-// Mock data for development
-const mockLogs: LogEntry[] = [
-  {
-    level: 'info',
-    message: 'Cacherr started successfully',
-    timestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
-    module: 'main',
-  },
-  {
-    level: 'info',
-    message: 'Connected to Plex server at http://192.168.1.100:32400',
-    timestamp: new Date(Date.now() - 4 * 60 * 1000).toISOString(),
-    module: 'plex',
-  },
-  {
-    level: 'warning',
-    message: 'Cache destination not configured, using default path',
-    timestamp: new Date(Date.now() - 3 * 60 * 1000).toISOString(),
-    module: 'config',
-  },
-  {
-    level: 'error',
-    message: 'Failed to move file: Permission denied - /cache/Movies/sample.mkv',
-    timestamp: new Date(Date.now() - 2 * 60 * 1000).toISOString(),
-    module: 'file_operations',
-  },
-  {
-    level: 'debug',
-    message: 'Processing file: /media/Movies/Sample Movie (2023).mkv [1.2GB]',
-    timestamp: new Date(Date.now() - 1 * 60 * 1000).toISOString(),
-    module: 'cache_engine',
-  },
-  {
-    level: 'info',
-    message: 'Cache operation completed: 3 files processed, 2 successful, 1 failed',
-    timestamp: new Date().toISOString(),
-    module: 'main',
-  },
-]
 
 const LOG_LEVELS = ['info', 'warning', 'error', 'debug'] as const
 const LOG_MODULES = ['main', 'plex', 'config', 'file_operations', 'cache_engine', 'scheduler']
@@ -84,8 +47,8 @@ export const LogViewer: React.FC<LogViewerProps> = ({
   refreshInterval = 5000,
 }) => {
   // State
-  const [logs, setLogs] = useState<LogEntry[]>(mockLogs)
-  const [filteredLogs, setFilteredLogs] = useState<LogEntry[]>(mockLogs)
+  const [logs, setLogs] = useState<LogEntry[]>([])
+  const [filteredLogs, setFilteredLogs] = useState<LogEntry[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [filters, setFilters] = useState<LogFilter>({})
@@ -96,8 +59,10 @@ export const LogViewer: React.FC<LogViewerProps> = ({
   const logContainerRef = useRef<HTMLDivElement>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
 
-  // Auto-refresh effect
+  // Initial fetch and auto-refresh effect
   useEffect(() => {
+    fetchLogs() // Initial fetch
+    
     if (!autoRefresh) return
 
     const interval = setInterval(() => {
@@ -106,6 +71,38 @@ export const LogViewer: React.FC<LogViewerProps> = ({
 
     return () => clearInterval(interval)
   }, [autoRefresh, refreshInterval])
+
+  // WebSocket connection and real-time log updates
+  useEffect(() => {
+    // Connect to WebSocket if not already connected
+    if (!webSocketService.isConnected()) {
+      webSocketService.connect()
+    }
+
+    // Handle real-time log entries
+    const handleLogEntry = (logData: LogEntry) => {
+      setLogs(prevLogs => {
+        // Avoid duplicates by checking timestamp and message
+        const isDuplicate = prevLogs.some(log => 
+          log.timestamp === logData.timestamp && log.message === logData.message
+        )
+        
+        if (!isDuplicate) {
+          // Add new log and keep only last 500 entries for performance
+          const updatedLogs = [...prevLogs, logData].slice(-500)
+          return updatedLogs
+        }
+        
+        return prevLogs
+      })
+    }
+
+    webSocketService.addEventListener('log_entry', handleLogEntry)
+
+    return () => {
+      webSocketService.removeEventListener('log_entry', handleLogEntry)
+    }
+  }, [])
 
   // Filter logs whenever filters or logs change
   useEffect(() => {
@@ -150,22 +147,16 @@ export const LogViewer: React.FC<LogViewerProps> = ({
       setIsLoading(true)
       setError(null)
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 300))
-      
-      // Add a new mock log entry occasionally
-      if (Math.random() > 0.7) {
-        const newLog: LogEntry = {
-          level: LOG_LEVELS[Math.floor(Math.random() * LOG_LEVELS.length)],
-          message: `System update: ${new Date().toLocaleTimeString()}`,
-          timestamp: new Date().toISOString(),
-          module: LOG_MODULES[Math.floor(Math.random() * LOG_MODULES.length)],
-        }
-        setLogs(prev => [...prev, newLog])
-      }
+      const logsResponse = await APIService.getLogs()
+      setLogs(logsResponse.logs || [])
       
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch logs')
+      console.error('Error fetching logs:', err)
+      if (err instanceof APIError) {
+        setError(err.message)
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to fetch logs')
+      }
     } finally {
       setIsLoading(false)
     }
@@ -212,19 +203,24 @@ export const LogViewer: React.FC<LogViewerProps> = ({
   }
 
   const exportLogs = () => {
-    const logText = filteredLogs.map(log => 
-      `[${formatTimestamp(log.timestamp)}] ${log.level.toUpperCase()} ${log.module ? `[${log.module}]` : ''} ${log.message}`
-    ).join('\n')
-    
-    const blob = new Blob([logText], { type: 'text/plain' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `plexcacheultra-logs-${new Date().toISOString().split('T')[0]}.txt`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+    try {
+      const logText = filteredLogs.map(log => 
+        `[${formatTimestamp(log.timestamp)}] ${log.level.toUpperCase()} ${log.module ? `[${log.module}]` : ''} ${log.message}`
+      ).join('\n')
+      
+      const blob = new Blob([logText], { type: 'text/plain' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `cacherr-logs-${new Date().toISOString().split('T')[0]}.txt`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      console.error('Error exporting logs:', err)
+      setError('Failed to export logs')
+    }
   }
 
   const getLogIcon = (level: string) => {
@@ -441,7 +437,10 @@ export const LogViewer: React.FC<LogViewerProps> = ({
 
                   {/* Timestamp */}
                   <div className="text-gray-500 dark:text-gray-400 w-24 flex-shrink-0 text-xs">
-                    {new Date(log.timestamp).toLocaleTimeString()}
+                    {log.timestamp ? 
+                      (new Date(log.timestamp).toLocaleTimeString() || log.timestamp.slice(-8)) 
+                      : new Date().toLocaleTimeString()
+                    }
                   </div>
 
                   {/* Module */}
