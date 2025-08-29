@@ -1,0 +1,19 @@
+{
+  "name": "plexcache-testing",
+  "version": "1.0.0",
+  "description": "End-to-end testing for PlexCache web interface",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:debug": "playwright test --debug",
+    "test:headed": "playwright test --headed",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.47.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

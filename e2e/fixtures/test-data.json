@@ -1,0 +1,82 @@
+{
+  "api": {
+    "baseURL": "http://192.168.50.223:5445",
+    "endpoints": {
+      "status": "/api/status",
+      "health": "/api/health",
+      "cache": "/api/cache"
+    }
+  },
+  "expectedResponses": {
+    "status": {
+      "success": true,
+      "data": {
+        "cache": {
+          "status": "healthy",
+          "initialized": true
+        },
+        "system": {
+          "status": "operational"
+        }
+      }
+    }
+  },
+  "testUsers": [
+    {
+      "name": "Test User 1",
+      "email": "test1@example.com"
+    },
+    {
+      "name": "Test User 2",
+      "email": "test2@example.com"
+    }
+  ],
+  "cacheConfigurations": {
+    "default": {
+      "type": "memory",
+      "ttl": 3600,
+      "maxSize": 1000
+    },
+    "redis": {
+      "type": "redis",
+      "host": "localhost",
+      "port": 6379,
+      "ttl": 3600
+    }
+  },
+  "performanceThresholds": {
+    "apiResponseTime": 1000,
+    "pageLoadTime": 5000,
+    "cacheOperationTime": 100
+  },
+  "errorMessages": {
+    "cacheNotInitialized": "Cache engine not initialized",
+    "apiUnavailable": "API service unavailable",
+    "networkError": "Network connection failed"
+  },
+  "uiElements": {
+    "dashboard": {
+      "selectors": [
+        ".dashboard",
+        "[class*='dashboard']",
+        "main",
+        ".content"
+      ]
+    },
+    "cacheStatus": {
+      "selectors": [
+        ".cache-status",
+        "[data-cache-status]",
+        "text=/cache.*status/i"
+      ]
+    },
+    "errorMessages": {
+      "selectors": [
+        ".error",
+        ".alert",
+        ".danger",
+        "[class*='error']"
+      ]
+    }
+  }
+}
