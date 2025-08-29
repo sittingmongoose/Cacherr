@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlexCacheUltra WebSocket Test</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .connected {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .disconnected {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .error {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        .log {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <h1>PlexCacheUltra WebSocket Test</h1>
+
+    <div id="status" class="status disconnected">
+        Status: Disconnected
+    </div>
+
+    <div>
+        <button id="connectBtn">Connect</button>
+        <button id="disconnectBtn" disabled>Disconnect</button>
+        <button id="pingBtn" disabled>Ping Server</button>
+        <button id="statusBtn" disabled>Get Status</button>
+        <button id="clearLogBtn">Clear Log</button>
+    </div>
+
+    <h2>Connection Log</h2>
+    <div id="log" class="log"></div>
+
+    <script>
+        let socket;
+        let logElement = document.getElementById('log');
+        let statusElement = document.getElementById('status');
+        let connectBtn = document.getElementById('connectBtn');
+        let disconnectBtn = document.getElementById('disconnectBtn');
+        let pingBtn = document.getElementById('pingBtn');
+        let statusBtn = document.getElementById('statusBtn');
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.innerHTML = `[${timestamp}] ${message}`;
+
+            if (type === 'error') {
+                logEntry.style.color = 'red';
+            } else if (type === 'success') {
+                logEntry.style.color = 'green';
+            }
+
+            logElement.appendChild(logEntry);
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        function updateStatus(connected) {
+            if (connected) {
+                statusElement.className = 'status connected';
+                statusElement.textContent = `Status: Connected (SID: ${socket.id})`;
+                connectBtn.disabled = true;
+                disconnectBtn.disabled = false;
+                pingBtn.disabled = false;
+                statusBtn.disabled = false;
+            } else {
+                statusElement.className = 'status disconnected';
+                statusElement.textContent = 'Status: Disconnected';
+                connectBtn.disabled = false;
+                disconnectBtn.disabled = true;
+                pingBtn.disabled = true;
+                statusBtn.disabled = true;
+            }
+        }
+
+        function connect() {
+            if (socket && socket.connected) {
+                log('Already connected', 'warning');
+                return;
+            }
+
+            log('Connecting to WebSocket server...');
+            socket = io('http://localhost:5000');
+
+            socket.on('connect', () => {
+                log(`Connected successfully! SID: ${socket.id}`, 'success');
+                updateStatus(true);
+            });
+
+            socket.on('disconnect', (reason) => {
+                log(`Disconnected: ${reason}`, 'warning');
+                updateStatus(false);
+            });
+
+            socket.on('connection_ack', (data) => {
+                log(`Connection acknowledged: ${JSON.stringify(data)}`, 'success');
+            });
+
+            socket.on('pong', (data) => {
+                log(`Pong received: ${JSON.stringify(data)}`, 'success');
+            });
+
+            socket.on('status_response', (data) => {
+                log(`Status response: ${JSON.stringify(data, null, 2)}`, 'info');
+            });
+
+            socket.on('connect_error', (error) => {
+                log(`Connection error: ${error.message}`, 'error');
+                updateStatus(false);
+            });
+
+            socket.on('error', (error) => {
+                log(`Socket error: ${JSON.stringify(error)}`, 'error');
+            });
+        }
+
+        function disconnect() {
+            if (socket) {
+                log('Disconnecting...');
+                socket.disconnect();
+            }
+        }
+
+        function ping() {
+            if (socket && socket.connected) {
+                log('Sending ping...');
+                socket.emit('ping');
+            }
+        }
+
+        function getStatus() {
+            if (socket && socket.connected) {
+                log('Requesting status...');
+                socket.emit('status');
+            }
+        }
+
+        function clearLog() {
+            logElement.innerHTML = '';
+        }
+
+        // Event listeners
+        connectBtn.addEventListener('click', connect);
+        disconnectBtn.addEventListener('click', disconnect);
+        pingBtn.addEventListener('click', ping);
+        statusBtn.addEventListener('click', getStatus);
+        document.getElementById('clearLogBtn').addEventListener('click', clearLog);
+
+        // Initialize
+        log('WebSocket test page loaded. Click "Connect" to test WebSocket functionality.');
+        updateStatus(false);
+    </script>
+</body>
+</html>
