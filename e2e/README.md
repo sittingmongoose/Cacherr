@@ -2,7 +2,7 @@
 
 ## Overview
 
-This directory contains comprehensive end-to-end tests for the PlexCacheUltra webgui using Playwright. The tests cover all major user workflows, component interactions, and edge cases to ensure the application works correctly across different browsers and scenarios.
+This directory contains comprehensive end-to-end tests for the Cacherr webgui using Playwright. The tests cover all major user workflows, component interactions, and edge cases to ensure the application works correctly across different browsers and scenarios.
 
 ## Test Structure
 

@@ -1,6 +1,6 @@
-# PlexCacheUltra Architecture Overview
+# Cacherr Architecture Overview
 
-This document provides a high-level overview of the PlexCacheUltra architecture after the comprehensive refactoring completed in phases 1-6 of the architectural improvement project.
+This document provides a high-level overview of the Cacherr architecture after the comprehensive refactoring completed in phases 1-6 of the architectural improvement project.
 
 ## Table of Contents
 - [System Overview](#system-overview)
@@ -12,13 +12,13 @@ This document provides a high-level overview of the PlexCacheUltra architecture 
 
 ## System Overview
 
-PlexCacheUltra is a sophisticated media file caching system designed to optimize Plex Media Server performance by intelligently managing file placement between high-speed cache storage and slower array storage. The system has been completely restructured using modern architectural patterns to ensure maintainability, testability, and scalability.
+Cacherr is a sophisticated media file caching system designed to optimize Plex Media Server performance by intelligently managing file placement between high-speed cache storage and slower array storage. The system has been completely restructured using modern architectural patterns to ensure maintainability, testability, and scalability.
 
 ### High-Level Architecture Diagram
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    PlexCacheUltra System                    │
+│                      Cacherr System                      │
 ├─────────────────────────────────────────────────────────────┤
 │                    Web Interface Layer                      │
 │  ┌─────────────┐ ┌─────────────┐ ┌─────────────────────┐   │

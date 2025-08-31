@@ -1,6 +1,6 @@
-# PlexCacheUltra Interface Architecture
+# Cacherr Interface Architecture
 
-This document describes the foundational interfaces created for PlexCacheUltra's modular architecture refactoring.
+This document describes the foundational interfaces created for Cacherr's modular architecture refactoring.
 
 ## Overview
 

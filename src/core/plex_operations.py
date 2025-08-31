@@ -1,9 +1,32 @@
+"""
+Plex Operations Service with Pydantic v2.5 validation and comprehensive type safety.
+
+This service handles all Plex server operations including media discovery,
+watchlist management, and watched status tracking. All operations use
+Pydantic v2.5 models for data validation and type safety.
+
+Features:
+- Comprehensive Plex media discovery and analysis
+- Watchlist and watched status tracking
+- Real-time media monitoring
+- Concurrent operation processing
+- Robust error handling and retry mechanisms
+- Pydantic v2.5 type safety and validation
+
+Example:
+    >>> plex_ops = PlexOperations(config)
+    >>> plex_ops.set_plex_connection(plex_server)
+    >>> media = plex_ops.fetch_ondeck_media()
+    >>> print(f"Found {len(media)} onDeck media files")
+"""
+
 import logging
 import time
 from datetime import datetime, timedelta
 from typing import List, Generator, Optional
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+from pydantic import BaseModel, Field, ConfigDict, field_validator
 from plexapi.server import PlexServer
 from plexapi.video import Episode, Movie
 from plexapi.myplex import MyPlexAccount
@@ -15,8 +38,93 @@ except ImportError:
     # Fallback for testing
     from config.settings import Config
 
+
+class PlexMediaItem(BaseModel):
+    """
+    Pydantic v2.5 model for Plex media item information.
+
+    Represents a media item with comprehensive metadata and validation.
+    Used for type-safe media processing and analysis.
+    """
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+
+    title: str = Field(..., description="Media item title")
+    key: str = Field(..., description="Plex API key for the item")
+    rating_key: str = Field(..., description="Plex rating key")
+    guid: str = Field(..., description="Unique Plex GUID")
+    media_type: str = Field(..., description="Type of media (movie, episode, etc.)")
+    file_path: Optional[str] = Field(None, description="Local file path if available")
+    library_section: str = Field(..., description="Plex library section name")
+    last_viewed_at: Optional[datetime] = Field(None, description="Last viewed timestamp")
+    added_at: datetime = Field(..., description="When item was added to library")
+
+    @field_validator('media_type')
+    @classmethod
+    def validate_media_type(cls, v: str) -> str:
+        """Validate media type is one of the supported types."""
+        allowed_types = {'movie', 'episode', 'show', 'season', 'album', 'track'}
+        if v not in allowed_types:
+            raise ValueError(f'media_type must be one of: {allowed_types}')
+        return v
+
+
+class PlexConnectionConfig(BaseModel):
+    """
+    Pydantic v2.5 model for Plex connection configuration.
+
+    Encapsulates all settings needed to establish and maintain
+    a connection to a Plex server with validation.
+    """
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+
+    url: str = Field(..., description="Plex server URL with protocol and port")
+    token: Optional[str] = Field(None, description="Plex authentication token")
+    username: Optional[str] = Field(None, description="Plex username (alternative auth)")
+    password: Optional[str] = Field(None, description="Plex password (alternative auth)")
+    timeout: int = Field(30, ge=5, le=300, description="Connection timeout in seconds")
+    verify_ssl: bool = Field(True, description="Verify SSL certificates")
+
+    @field_validator('url')
+    @classmethod
+    def validate_url(cls, v: str) -> str:
+        """Validate Plex URL format."""
+        if not v.startswith(('http://', 'https://')):
+            raise ValueError("URL must start with http:// or https://")
+        if '://' not in v:
+            raise ValueError("URL must include protocol")
+        return v
+
+
 class PlexOperations:
-    """Handles Plex API operations for Cacherr"""
+    """
+    Comprehensive Plex operations service using Pydantic v2.5 models.
+
+    This service provides type-safe access to Plex server operations with
+    comprehensive validation and error handling. All methods use Pydantic
+    models for data validation and return typed results.
+
+    Features:
+    - Type-safe Plex media discovery and analysis
+    - Watchlist and watched status tracking
+    - Real-time media monitoring capabilities
+    - Concurrent operation processing with thread pools
+    - Robust error handling with retry mechanisms
+    - Pydantic v2.5 validation for all data structures
+
+    Example:
+        >>> plex_ops = PlexOperations(config)
+        >>> plex_ops.set_plex_connection(plex_server)
+        >>> ondeck_files = plex_ops.fetch_ondeck_media()
+        >>> print(f"Found {len(ondeck_files)} onDeck media files")
+    """
     
     def __init__(self, config: Config):
         self.config = config

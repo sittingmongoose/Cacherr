@@ -1,5 +1,5 @@
 /**
- * Test setup configuration for PlexCacheUltra frontend
+ * Test setup configuration for Cacherr frontend
  * 
  * Configures testing environment with jsdom, jest-dom matchers,
  * and global test utilities.

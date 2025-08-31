@@ -1,5 +1,5 @@
 /**
- * API service for PlexCacheUltra frontend
+ * API service for Cacherr frontend
  * 
  * Provides type-safe API communication with the Flask backend,
  * including error handling, retry logic, and response transformation.
@@ -321,69 +321,6 @@ export class APIService {
     return response.data
   }
 
-  // Watcher endpoints (placeholder implementations)
-  static async startWatcher(): Promise<{ message: string }> {
-    const response = await client.post<APIResponse<void>>('/api/watcher/start')
-    if (!response.success) {
-      throw new APIError(response.error || 'Failed to start watcher', 500)
-    }
-    return { message: response.message || 'Watcher started' }
-  }
-
-  static async stopWatcher(): Promise<{ message: string }> {
-    const response = await client.post<APIResponse<void>>('/api/watcher/stop')
-    if (!response.success) {
-      throw new APIError(response.error || 'Failed to stop watcher', 500)
-    }
-    return { message: response.message || 'Watcher stopped' }
-  }
-
-  static async getWatcherStatus(): Promise<{
-    is_watching: boolean
-    stats: Record<string, unknown>
-  }> {
-    const response = await client.get<APIResponse<{
-      is_watching: boolean
-      stats: Record<string, unknown>
-    }>>('/api/watcher/status')
-    
-    if (!response.success || !response.data) {
-      throw new APIError(response.error || 'Failed to get watcher status', 500)
-    }
-    return response.data
-  }
-
-  // Trakt endpoints (placeholder implementations)
-  static async getTraktStatus(): Promise<{
-    stats: Record<string, unknown>
-    trending_movies: unknown[]
-  }> {
-    const response = await client.get<APIResponse<{
-      stats: Record<string, unknown>
-      trending_movies: unknown[]
-    }>>('/api/trakt/status')
-    
-    if (!response.success || !response.data) {
-      throw new APIError(response.error || 'Failed to get Trakt status', 500)
-    }
-    return response.data
-  }
-
-  static async startTraktWatcher(): Promise<{ message: string }> {
-    const response = await client.post<APIResponse<void>>('/api/trakt/start')
-    if (!response.success) {
-      throw new APIError(response.error || 'Failed to start Trakt watcher', 500)
-    }
-    return { message: response.message || 'Trakt watcher started' }
-  }
-
-  static async stopTraktWatcher(): Promise<{ message: string }> {
-    const response = await client.post<APIResponse<void>>('/api/trakt/stop')
-    if (!response.success) {
-      throw new APIError(response.error || 'Failed to stop Trakt watcher', 500)
-    }
-    return { message: response.message || 'Trakt watcher stopped' }
-  }
 
   // Cached Files endpoints
   static async getCachedFiles(filter: CachedFilesFilter = {}): Promise<CachedFilesResponse> {

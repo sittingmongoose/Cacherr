@@ -15,7 +15,7 @@ import { LogEntry, LogFilter, LogsResponse } from '@/types/api'
 import { LoadingSpinner, CardLoader } from '@/components/common/LoadingSpinner'
 import { formatTimestamp, getLogLevelColor, classNames } from '@/utils/format'
 import { APIService, APIError } from '@/services/api'
-import webSocketService, { useWebSocketLogs } from '@/services/websocket'
+import webSocketService from '@/services/websocket'
 
 /**
  * LogViewer component for displaying and filtering application logs
@@ -97,11 +97,7 @@ export const LogViewer: React.FC<LogViewerProps> = ({
       })
     }
 
-    webSocketService.addEventListener('log_entry', handleLogEntry)
 
-    return () => {
-      webSocketService.removeEventListener('log_entry', handleLogEntry)
-    }
   }, [])
 
   // Filter logs whenever filters or logs change

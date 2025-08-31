@@ -1,5 +1,5 @@
 """
-Results service implementation for PlexCacheUltra.
+Results service implementation for Cacherr.
 
 Provides comprehensive operation tracking, real-time updates, and historical
 data management. Integrates with the existing DI container and WebSocket system.
@@ -15,9 +15,10 @@ from pathlib import Path
 from typing import List, Dict, Optional, Tuple, Any
 
 from .interfaces import (
-    ResultsService, OperationResult, BatchOperation, 
+    ResultsService, OperationResult, BatchOperation,
     UserOperationContext
 )
+from .websocket_manager import WebSocketMessage, WebSocketEventType
 
 try:
     from ..config.settings import Config
@@ -253,15 +254,18 @@ class SQLiteResultsService(ResultsService):
                 
                 # Notify WebSocket clients about individual file operation update
                 if self.websocket_manager:
-                    self.websocket_manager.broadcast({
-                        'type': 'operation_file_update',
-                        'data': {
+                    message = WebSocketMessage(
+                        type=WebSocketEventType.OPERATION_FILE_UPDATE,
+                        data={
                             'operation_id': operation_id,
                             'status': status,
                             'error_message': error_message,
                             'completed_at': completed_at.isoformat() if completed_at else None
-                        }
-                    })
+                        },
+                        timestamp=datetime.utcnow().isoformat(),
+                        source='results_service'
+                    )
+                    self.websocket_manager.broadcast(message)
                 
                 return rows_affected > 0
                 
@@ -542,9 +546,9 @@ class SQLiteResultsService(ResultsService):
         """Send WebSocket notification for operation update."""
         if self.websocket_manager:
             try:
-                self.websocket_manager.broadcast({
-                    'type': 'operation_progress',
-                    'data': {
+                message = WebSocketMessage(
+                    type=WebSocketEventType.OPERATION_PROGRESS,
+                    data={
                         'operation_id': batch_op.id,
                         'operation_type': batch_op.operation_type,
                         'status': batch_op.status,
@@ -562,7 +566,10 @@ class SQLiteResultsService(ResultsService):
                         'triggered_by_user': batch_op.triggered_by_user,
                         'reason': batch_op.reason,
                         'error_message': batch_op.error_message
-                    }
-                })
+                    },
+                    timestamp=datetime.utcnow().isoformat(),
+                    source='results_service'
+                )
+                self.websocket_manager.broadcast(message)
             except Exception as e:
                 self.logger.warning(f"Failed to send WebSocket notification: {e}")

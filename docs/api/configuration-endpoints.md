@@ -2,7 +2,7 @@
 
 ## Overview
 
-The PlexCacheUltra configuration API provides comprehensive endpoints for managing application settings with **Pydantic v2** validation, real-time error checking, and type-safe configuration management.
+The Cacherr configuration API provides comprehensive endpoints for managing application settings with **Pydantic v2** validation, real-time error checking, and type-safe configuration management.
 
 ## Key Features
 

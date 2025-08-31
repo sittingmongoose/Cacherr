@@ -1,5 +1,5 @@
 /**
- * Service Worker for PlexCacheUltra Dashboard PWA
+ * Service Worker for Cacherr Dashboard PWA
  * 
  * Features:
  * - Offline support with cache-first strategy

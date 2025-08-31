@@ -37,9 +37,13 @@ import { classNames } from '@/utils/format'
  */
 
 interface CacheActionsPanelProps {
-  statistics: CacheStatistics | null
+  statistics?: CacheStatistics | null
   onCleanup: (removeOrphaned?: boolean) => Promise<void>
   onExport: (format: 'csv' | 'json' | 'txt') => Promise<void>
+  onSearch?: (term: string) => Promise<void>
+  onFilterChange?: (newFilter: Partial<CachedFilesFilter>) => void
+  showFilters?: boolean
+  onToggleFilters?: () => void
   isLoading?: boolean
   className?: string
 }

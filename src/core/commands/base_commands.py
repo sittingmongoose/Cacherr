@@ -1,5 +1,5 @@
 """
-Base command implementations for PlexCacheUltra.
+Base command implementations for Cacherr.
 
 This module provides base implementations for the command pattern interfaces,
 offering common functionality that specific command implementations can inherit.

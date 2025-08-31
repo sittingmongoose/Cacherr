@@ -1,5 +1,5 @@
 """
-Mock implementations for PlexCacheUltra testing.
+Mock implementations for Cacherr testing.
 
 This package contains mock implementations of services and components
 that can be used in testing to isolate units under test and provide

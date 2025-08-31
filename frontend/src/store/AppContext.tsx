@@ -402,40 +402,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }
     }
 
-    // System status updates
-    const handleStatusUpdate = (data: SystemStatus) => {
-      dispatch({ type: 'SET_SYSTEM_STATUS', payload: data })
-    }
 
-    // Log entries
-    const handleLogEntry = (data: LogEntry) => {
-      dispatch({ type: 'ADD_LOG', payload: data })
-    }
-
-    // Error messages
-    const handleError = (data: { error: string }) => {
-      dispatch({
-        type: 'ADD_TOAST',
-        payload: {
-          type: 'error',
-          message: data.error,
-          duration: 8000,
-        }
-      })
-    }
 
     // Register event handlers
     webSocketService.addConnectionListener(handleConnectionStatus)
-    webSocketService.addEventListener('status_update', handleStatusUpdate)
-    webSocketService.addEventListener('log_entry', handleLogEntry)
-    webSocketService.addEventListener('error', handleError)
 
     // Cleanup
     return () => {
       webSocketService.removeConnectionListener(handleConnectionStatus)
-      webSocketService.removeEventListener('status_update', handleStatusUpdate)
-      webSocketService.removeEventListener('log_entry', handleLogEntry)
-      webSocketService.removeEventListener('error', handleError)
     }
   }, [dispatch])
 

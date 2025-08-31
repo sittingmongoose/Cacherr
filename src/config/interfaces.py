@@ -1,10 +1,11 @@
 """
-Configuration interfaces for PlexCacheUltra.
+Configuration interfaces for Cacherr.
 
 This module defines the configuration interfaces that establish clear contracts
 for configuration management, environment detection, and path operations.
 These interfaces support dependency injection and enable flexible configuration
 sources including environment variables, files, and remote configuration systems.
+All interfaces use Pydantic v2.5 patterns for consistency and type safety.
 """
 
 from abc import ABC, abstractmethod

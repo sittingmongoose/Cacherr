@@ -1,5 +1,5 @@
 """
-Dashboard routes for PlexCacheUltra web interface.
+Dashboard routes for Cacherr web interface.
 
 This module provides routes for the modern React-based web interface.
 The root route redirects to the React application.

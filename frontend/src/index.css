@@ -232,66 +232,7 @@
     overflow: hidden;
   }
 
-  /* Custom animations */
-  .animate-pulse-slow {
-    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  }
 
-  .animate-bounce-slow {
-    animation: bounce 2s infinite;
-  }
-
-  /* Custom gradients */
-  .bg-gradient-primary {
-    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-  }
-
-  .bg-gradient-success {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  }
-
-  .bg-gradient-warning {
-    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-  }
-
-  .bg-gradient-error {
-    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-  }
-
-  /* Custom shadows */
-  .shadow-glow {
-    box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
-  }
-
-  .shadow-glow-success {
-    box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
-  }
-
-  .shadow-glow-warning {
-    box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
-  }
-
-  .shadow-glow-error {
-    box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
-  }
-
-  /* Responsive utilities */
-  .container-responsive {
-    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
-  }
-
-  .section-padding {
-    @apply py-8 sm:py-12 lg:py-16;
-  }
-
-  /* Dark mode specific utilities */
-  .dark\:bg-gradient-dark {
-    @apply dark:bg-gradient-to-br dark:from-gray-900 dark:to-gray-800;
-  }
-
-  .dark\:border-gradient {
-    @apply dark:border-transparent dark:bg-gradient-to-r dark:from-primary-500 dark:to-primary-600 dark:bg-clip-border;
-  }
 }
 
 /* Print styles */

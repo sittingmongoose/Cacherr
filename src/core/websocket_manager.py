@@ -24,15 +24,8 @@ from flask_socketio import SocketIO, emit, join_room, leave_room
 
 class WebSocketEventType(Enum):
     """WebSocket event types for type safety."""
-    STATUS_UPDATE = 'status_update'
-    LOG_ENTRY = 'log_entry'
     OPERATION_PROGRESS = 'operation_progress'
-    ERROR = 'error'
-    CACHE_FILE_ADDED = 'cache_file_added'
-    CACHE_FILE_REMOVED = 'cache_file_removed'
-    CACHE_STATISTICS_UPDATED = 'cache_statistics_updated'
     OPERATION_FILE_UPDATE = 'operation_file_update'
-    PONG = 'pong'
 
 
 @dataclass

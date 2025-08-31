@@ -1,7 +1,7 @@
 """
-PlexCacheUltra Test Suite.
+Cacherr Test Suite.
 
-This package contains comprehensive tests for all PlexCacheUltra components
+This package contains comprehensive tests for all Cacherr components
 including unit tests, integration tests, and mock implementations.
 
 Test Structure:

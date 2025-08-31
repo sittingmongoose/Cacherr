@@ -1,3 +1,25 @@
+"""
+Cacherr Engine - Main orchestration service for media caching operations.
+
+This module provides the central engine that orchestrates all caching operations,
+integrating with Plex, file operations, and real-time watchers. It uses
+Pydantic v2.5 models for type safety and comprehensive validation.
+
+Features:
+- Orchestration of media discovery and caching operations
+- Real-time Plex watching integration
+- Trakt.tv integration for enhanced recommendations
+- Comprehensive operation statistics and reporting
+- Pydantic v2.5 validation for all data structures
+- Concurrent processing with proper error handling
+
+Example:
+    >>> config = Config()
+    >>> engine = CacherrEngine(config)
+    >>> success = engine.run(test_mode=True)
+    >>> stats = engine.get_status()
+"""
+
 import os
 import json
 import logging
@@ -6,9 +28,9 @@ import time
 from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import List, Set, Generator, Tuple, Optional, Dict
-from dataclasses import dataclass
+from typing import List, Set, Generator, Tuple, Optional, Dict, Any
 
+from pydantic import BaseModel, Field, ConfigDict
 from plexapi.server import PlexServer
 from plexapi.video import Episode, Movie
 from plexapi.myplex import MyPlexAccount
@@ -30,28 +52,47 @@ except ImportError:
     from .plex_watcher import PlexWatcher
     from .trakt_watcher import TraktWatcher
 
-@dataclass
-class CacheStats:
-    """Statistics for cache operations"""
-    files_moved_to_cache: int = 0
-    files_moved_to_array: int = 0
-    total_size_moved: int = 0
-    start_time: datetime = None
-    end_time: datetime = None
-    
+class CacheStats(BaseModel):
+    """
+    Pydantic v2.5 model for cache operation statistics.
+
+    Provides comprehensive statistics for cache operations with proper
+    validation and type safety. All fields are validated and provide
+    meaningful execution time calculations.
+    """
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        validate_assignment=True,
+        extra='forbid'
+    )
+
+    files_moved_to_cache: int = Field(0, ge=0, description="Number of files moved to cache")
+    files_moved_to_array: int = Field(0, ge=0, description="Number of files moved to array")
+    total_size_moved: int = Field(0, ge=0, description="Total size of moved files in bytes")
+    start_time: Optional[datetime] = Field(None, description="When the operation started")
+    end_time: Optional[datetime] = Field(None, description="When the operation completed")
+
     @property
     def execution_time(self) -> str:
-        """Calculate and format execution time"""
+        """
+        Calculate and format execution time with proper validation.
+
+        Returns:
+            Formatted string representing execution duration
+        """
         if not self.start_time or not self.end_time:
             return "Unknown"
-        
+
         duration = self.end_time - self.start_time
+        if duration.total_seconds() <= 0:
+            return "0 seconds"
+
         total_seconds = int(duration.total_seconds())
-        
+
         days, remainder = divmod(total_seconds, 86400)
         hours, remainder = divmod(remainder, 3600)
         minutes, seconds = divmod(remainder, 60)
-        
+
         parts = []
         if days > 0:
             parts.append(f"{days} day{'s' if days > 1 else ''}")
@@ -59,13 +100,57 @@ class CacheStats:
             parts.append(f"{hours} hour{'s' if hours > 1 else ''}")
         if minutes > 0:
             parts.append(f"{minutes} minute{'s' if minutes > 1 else ''}")
-        if seconds > 0:
-            parts.append(f"{seconds} second{'s' if seconds > 1 else ''}")
-        
-        return ", ".join(parts) if parts else "0 seconds"
+        if seconds > 0 or not parts:  # Always show seconds if no other units
+            parts.append(f"{seconds} second{'s' if seconds != 1 else ''}")
+
+        return ", ".join(parts)
+
+    @property
+    def total_files_moved(self) -> int:
+        """Get total number of files moved in both directions."""
+        return self.files_moved_to_cache + self.files_moved_to_array
+
+    @property
+    def is_completed(self) -> bool:
+        """Check if the operation has completed."""
+        return self.end_time is not None
+
+    def get_summary(self) -> Dict[str, Any]:
+        """Get a summary of cache statistics."""
+        return {
+            'files_moved_to_cache': self.files_moved_to_cache,
+            'files_moved_to_array': self.files_moved_to_array,
+            'total_files_moved': self.total_files_moved,
+            'total_size_moved': self.total_size_moved,
+            'execution_time': self.execution_time,
+            'is_completed': self.is_completed,
+            'start_time': self.start_time.isoformat() if self.start_time else None,
+            'end_time': self.end_time.isoformat() if self.end_time else None
+        }
 
 class CacherrEngine:
-    """Main engine for Cacherr operations"""
+    """
+    Main orchestration engine for Cacherr media caching operations.
+
+    This class provides the central coordination point for all caching operations,
+    integrating Plex operations, file management, real-time watching, and notifications.
+    It uses Pydantic v2.5 models for type safety and comprehensive validation.
+
+    Features:
+    - Complete orchestration of media discovery and caching workflows
+    - Integration with Plex operations and real-time watchers
+    - Comprehensive error handling and recovery mechanisms
+    - Detailed operation statistics and reporting
+    - Support for both live and test mode operations
+    - Pydantic v2.5 validation for all configuration and data structures
+
+    Example:
+        >>> config = Config()
+        >>> engine = CacherrEngine(config)
+        >>> success = engine.run(test_mode=True)
+        >>> status = engine.get_status()
+        >>> print(f"Processed {status['pending_operations']['files_to_cache']} files")
+    """
     
     def __init__(self, config: Config):
         self.config = config

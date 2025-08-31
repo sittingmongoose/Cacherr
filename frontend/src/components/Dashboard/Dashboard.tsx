@@ -68,10 +68,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ className }) => {
   }
 
   const handleManualRefresh = async () => {
-    console.log('Manual refresh triggered')
     try {
       await refreshAll()
-      console.log('Manual refresh completed')
     } catch (error) {
       console.error('Manual refresh failed:', error)
     }

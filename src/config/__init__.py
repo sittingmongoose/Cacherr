@@ -1,9 +1,10 @@
 """
-Modern Pydantic v2 configuration package for PlexCacheUltra.
+Modern Pydantic v2.5 configuration package for Cacherr.
 
-This package provides a complete Pydantic v2-based configuration system with
-comprehensive validation, environment variable support, and type safety.
-The old dataclass-based configuration has been completely replaced.
+This package provides a streamlined, consolidated Pydantic v2.5-based configuration
+system with comprehensive validation, environment variable support, and type safety.
+All legacy configuration systems have been removed and consolidated into a single,
+clean architecture.
 
 Example:
     >>> from src.config import get_config
@@ -14,7 +15,7 @@ Example:
     'Copy to cache (preserves originals)'
 """
 
-# Core configuration system (Pydantic v2 based)
+# Core configuration system (Pydantic v2.5 based)
 from .settings import Config, get_config, reload_config
 
 # Underlying Pydantic models and settings

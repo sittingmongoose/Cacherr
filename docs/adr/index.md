@@ -1,6 +1,6 @@
 # Architecture Decision Records (ADRs) Index
 
-This directory contains Architecture Decision Records (ADRs) for PlexCacheUltra. ADRs document important architectural decisions made during the development and evolution of the system, including the context, decision, and consequences of each choice.
+This directory contains Architecture Decision Records (ADRs) for Cacherr. ADRs document important architectural decisions made during the development and evolution of the system, including the context, decision, and consequences of each choice.
 
 ## Active ADRs
 

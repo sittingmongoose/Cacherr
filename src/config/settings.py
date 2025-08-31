@@ -1,9 +1,9 @@
 """
-Modern Pydantic v2 configuration system for PlexCacheUltra.
+Modern Pydantic v2.5 configuration system for Cacherr.
 
-This module completely replaces the old dataclass-based configuration with
-a modern Pydantic v2 implementation featuring comprehensive validation,
-environment variable support, and type safety.
+This module provides a consolidated, production-ready configuration system using
+Pydantic v2.5 patterns with comprehensive validation, environment variable support,
+and type safety. All legacy configuration systems have been removed.
 
 Example:
     >>> config = Config()
@@ -203,25 +203,79 @@ class Config:
         # Apply media configuration overrides
         if 'media' in overrides:
             try:
-                # Exclude computed fields when dumping model data
-                media_data = self.media.model_dump(exclude={'cache_mode_description'})
+                # Exclude all computed fields when dumping model data to prevent serialization issues
+                media_data = self.media.model_dump(exclude={
+                    'cache_mode_description',
+                    'estimated_cache_lifetime_hours'
+                })
                 media_data.update(overrides['media'])
                 self.media = MediaConfig(**media_data)
                 self.logger.debug("Applied media configuration overrides")
             except ValidationError as e:
                 self.logger.warning(f"Invalid media override: {e}")
-        
+
         # Apply performance configuration overrides
         if 'performance' in overrides:
             try:
-                # Exclude computed fields when dumping model data
-                perf_data = self.performance.model_dump(exclude={'total_max_concurrent'})
+                # Exclude all computed fields when dumping model data to prevent serialization issues
+                perf_data = self.performance.model_dump(exclude={
+                    'total_max_concurrent',
+                    'performance_profile',
+                    'resource_intensity_score',
+                    'concurrency_breakdown'
+                })
                 perf_data.update(overrides['performance'])
                 self.performance = PerformanceConfig(**perf_data)
                 self.logger.debug("Applied performance configuration overrides")
             except ValidationError as e:
                 self.logger.warning(f"Invalid performance override: {e}")
         
+        # Apply plex configuration overrides
+        if 'plex' in overrides:
+            try:
+                # Exclude computed fields when dumping model data to prevent serialization issues
+                plex_data = self.plex.model_dump(exclude={
+                    'has_credentials',
+                    'config_type',
+                    'version'
+                })
+                plex_data.update(overrides['plex'])
+                self.plex = PlexConfig(**plex_data)
+                self.logger.debug("Applied plex configuration overrides")
+            except ValidationError as e:
+                self.logger.warning(f"Invalid plex override: {e}")
+
+        # Apply paths configuration overrides
+        if 'paths' in overrides:
+            try:
+                # Exclude computed fields when dumping model data to prevent serialization issues
+                paths_data = self.paths.model_dump(exclude={
+                    'total_source_paths',
+                    'has_additional_sources',
+                    'primary_source',
+                    'config_type',
+                    'version'
+                })
+                paths_data.update(overrides['paths'])
+                self.paths = PathsConfig(**paths_data)
+                self.logger.debug("Applied paths configuration overrides")
+            except ValidationError as e:
+                self.logger.warning(f"Invalid paths override: {e}")
+
+        # Apply logging configuration overrides
+        if 'logging' in overrides:
+            try:
+                # Exclude computed fields when dumping model data to prevent serialization issues
+                logging_data = self.logging.model_dump(exclude={
+                    'config_type',
+                    'version'
+                })
+                logging_data.update(overrides['logging'])
+                self.logging = LogLevel(**logging_data)
+                self.logger.debug("Applied logging configuration overrides")
+            except ValidationError as e:
+                self.logger.warning(f"Invalid logging override: {e}")
+
         # Apply other overrides
         for section, section_overrides in overrides.items():
             if section in ['real_time_watch', 'trakt', 'web', 'test_mode', 'notifications']:
@@ -243,10 +297,10 @@ class Config:
                             elif section == 'notifications':
                                 # No computed fields for NotificationConfiguration
                                 pass
-                            
+
                             config_data = current_config.model_dump(exclude=exclude_fields)
                             config_data.update(section_overrides)
-                            
+
                             # Recreate the appropriate model
                             if section == 'real_time_watch':
                                 from .interfaces import RealTimeWatchConfiguration
@@ -260,7 +314,7 @@ class Config:
                             elif section == 'notifications':
                                 from .interfaces import NotificationConfiguration
                                 setattr(self, section, NotificationConfiguration(**config_data))
-                            
+
                             self.logger.debug(f"Applied {section} configuration overrides")
                         except ValidationError as e:
                             self.logger.warning(f"Invalid {section} override: {e}")
@@ -380,17 +434,20 @@ class Config:
     
     def to_dict(self) -> Dict[str, Any]:
         """
-        Export complete configuration as dictionary.
-        
+        Export complete configuration as dictionary, excluding computed fields.
+
+        This method ensures that computed fields are not included in the exported
+        configuration to prevent Pydantic validation errors when loading.
+
         Returns:
             Dictionary representation of all configuration sections
         """
         return {
-            'plex': self.plex.model_dump(),
-            'media': self.media.model_dump(exclude={'cache_mode_description'}),
-            'paths': self.paths.model_dump(),
-            'performance': self.performance.model_dump(exclude={'total_max_concurrent'}),
-            'logging': self.logging.model_dump(),
+            'plex': self.plex.model_dump(exclude={'has_credentials'}),
+            'media': self.media.model_dump(exclude={'cache_mode_description', 'estimated_lifetime_hours', 'performance_profile', 'multi_user_enabled', 'watchlist_enabled'}),
+            'paths': self.paths.model_dump(exclude={'total_source_paths', 'has_additional_sources', 'primary_source'}),
+            'performance': self.performance.model_dump(exclude={'total_max_concurrent', 'performance_profile', 'resource_intensity_score', 'concurrency_breakdown'}),
+            'logging': self.logging.model_dump(exclude={'config_type', 'version'}),
             'real_time_watch': self.real_time_watch.model_dump() if hasattr(self.real_time_watch, 'model_dump') else self.real_time_watch,
             'trakt': self.trakt.model_dump() if hasattr(self.trakt, 'model_dump') else self.trakt,
             'web': self.web.model_dump() if hasattr(self.web, 'model_dump') else self.web,
@@ -425,17 +482,40 @@ class Config:
         
         for section_name, config_obj in sections:
             try:
-                # Re-validate using Pydantic, excluding computed fields
-                if section_name == 'media':
+                # Re-validate using Pydantic, excluding all computed fields to prevent serialization issues
+                if section_name == 'plex':
+                    # Exclude computed fields for PlexConfig
+                    dump_data = config_obj.model_dump(exclude={
+                        'has_credentials', 'config_type', 'version'
+                    })
+                elif section_name == 'media':
                     # Exclude computed fields for MediaConfig
-                    dump_data = config_obj.model_dump(exclude={'cache_mode_description'})
+                    dump_data = config_obj.model_dump(exclude={
+                        'cache_mode_description', 'estimated_cache_lifetime_hours',
+                        'config_type', 'version', 'cache_mode', 'performance_profile',
+                        'multi_user_enabled', 'watchlist_enabled'
+                    })
+                elif section_name == 'paths':
+                    # Exclude computed fields for PathsConfig
+                    dump_data = config_obj.model_dump(exclude={
+                        'total_source_paths', 'has_additional_sources', 'primary_source',
+                        'config_type', 'version'
+                    })
                 elif section_name == 'performance':
                     # Exclude computed fields for PerformanceConfig
-                    dump_data = config_obj.model_dump(exclude={'total_max_concurrent'})
+                    dump_data = config_obj.model_dump(exclude={
+                        'total_max_concurrent', 'performance_profile', 'resource_intensity_score',
+                        'concurrency_breakdown', 'config_type', 'version'
+                    })
+                elif section_name == 'logging':
+                    # Exclude computed fields for LogLevel
+                    dump_data = config_obj.model_dump(exclude={
+                        'config_type', 'version'
+                    })
                 else:
                     # No computed fields to exclude for other configs
                     dump_data = config_obj.model_dump()
-                
+
                 config_obj.model_validate(dump_data)
                 results['sections'][section_name] = {
                     'valid': True,
@@ -487,7 +567,7 @@ class Config:
                 'plex_url': self.plex.url,
                 'cache_destination': self.paths.cache_destination,
                 'max_concurrent_cache': self.performance.max_concurrent_moves_cache,
-                'log_level': self.logging.level.value,
+                'log_level': self.logging.level,
                 'debug_mode': self.settings.debug,
             },
             'validation_details': validation_results['sections']

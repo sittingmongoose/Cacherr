@@ -688,12 +688,57 @@ class ApplicationContext:
             # Register configuration as singleton
             self.container.register_instance(Config, self.config)
             
-            # Register core services
-            # Note: These would need to be imported from actual implementations
-            # For now, we'll register the cache engine which we know exists
-            
+            # Register core services with their proper interface names
+
+            # Register MediaService (PlexOperations)
+            try:
+                from .core.plex_operations import PlexOperations
+                from .core.interfaces import MediaService
+                self.container.register_singleton(MediaService, PlexOperations)
+                self.logger.info("MediaService registered successfully")
+            except ImportError as e:
+                self.logger.warning(f"Failed to import MediaService: {e}")
+                self.startup_errors.append(f"MediaService import failed: {e}")
+
+            # Register FileService (FileOperations)
+            try:
+                from .core.file_operations import FileOperations
+                from .core.interfaces import FileService
+                self.container.register_singleton(FileService, FileOperations)
+                self.logger.info("FileService registered successfully")
+            except ImportError as e:
+                self.logger.warning(f"Failed to import FileService: {e}")
+                self.startup_errors.append(f"FileService import failed: {e}")
+
+            # Register NotificationService (NotificationManager)
+            try:
+                from .core.notifications import NotificationManager
+                from .core.interfaces import NotificationService
+                self.container.register_singleton(NotificationService, NotificationManager)
+                self.logger.info("NotificationService registered successfully")
+            except ImportError as e:
+                self.logger.warning(f"Failed to import NotificationService: {e}")
+                self.startup_errors.append(f"NotificationService import failed: {e}")
+
+            # Register ResultsService (SQLiteResultsService)
+            try:
+                from .core.results_service import SQLiteResultsService
+                from .core.interfaces import ResultsService
+                self.container.register_singleton(ResultsService, SQLiteResultsService)
+                self.logger.info("ResultsService registered successfully")
+            except ImportError as e:
+                self.logger.warning(f"Failed to import ResultsService: {e}")
+                self.startup_errors.append(f"ResultsService import failed: {e}")
+
+            # Register CacheService (CacherrEngine)
             if self.app_config.enable_cache_engine:
-                self.container.register_singleton(CacherrEngine, CacherrEngine)
+                try:
+                    from .core.interfaces import CacheService
+                    self.container.register_singleton(CacheService, CacherrEngine)
+                    self.logger.info("CacheService registered successfully")
+                except ImportError as e:
+                    self.logger.warning(f"Failed to import CacheService: {e}")
+                    self.startup_errors.append(f"CacheService import failed: {e}")
             
             # Register CachedFilesService for tracking cached files with enhanced error recovery
             try:

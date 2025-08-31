@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document outlines the comprehensive testing strategy for the new "Cached" tab implementation in PlexCacheUltra. The testing covers backend services, API endpoints, frontend components, and integration scenarios.
+This document outlines the comprehensive testing strategy for the new "Cached" tab implementation in Cacherr. The testing covers backend services, API endpoints, frontend components, and integration scenarios.
 
 ## Testing Scope
 
@@ -30,7 +30,7 @@ This document outlines the comprehensive testing strategy for the new "Cached" t
 ## Test Environment Setup
 
 ### **Prerequisites**
-- PlexCacheUltra development environment
+- Cacherr development environment
 - Test database with sample data
 - Mock Plex server for testing
 - WebSocket test client

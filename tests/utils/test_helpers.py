@@ -1,5 +1,5 @@
 """
-Test utilities and helper functions for PlexCacheUltra tests.
+Test utilities and helper functions for Cacherr tests.
 
 This module provides common utilities, helpers, and assertion functions
 that can be reused across different test modules.

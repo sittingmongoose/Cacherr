@@ -1,4 +1,4 @@
-"""Test utilities and helpers for PlexCacheUltra tests."""
+"""Test utilities and helpers for Cacherr tests."""
 
 from .test_helpers import (
     TestTimer, TestDataBuilder, MockFileSystem, AsyncTestHelper,

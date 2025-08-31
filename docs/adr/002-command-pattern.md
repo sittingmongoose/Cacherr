@@ -5,7 +5,7 @@ Accepted
 
 ## Context
 
-The original PlexCacheUltra system performed file operations directly within service methods, leading to several problems:
+The original Cacherr system performed file operations directly within service methods, leading to several problems:
 
 1. **No operation history**: Once an operation completed, there was no record of what was done
 2. **No undo capability**: Mistaken operations could not be reversed

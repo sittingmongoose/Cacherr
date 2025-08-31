@@ -1,5 +1,5 @@
 /**
- * API response and data type definitions for PlexCacheUltra frontend.
+ * API response and data type definitions for Cacherr frontend.
  * 
  * These types match the Pydantic models and API responses from the Flask backend,
  * ensuring type safety between frontend and backend communication.
@@ -283,22 +283,7 @@ export interface CachedFilesResponse {
   filter_applied: Partial<CachedFilesFilter>
 }
 
-export interface CacheUpdateMessage extends WebSocketMessage {
-  type: 'cache_file_added' | 'cache_file_removed'
-  data: {
-    file_path: string
-    action: 'added' | 'removed'
-    user_id?: string
-    reason: string
-    file_info?: CachedFileInfo
-    cache_method?: CachedFileInfo['cache_method']
-  }
-}
 
-export interface CacheStatisticsMessage extends WebSocketMessage {
-  type: 'cache_statistics_updated'
-  data: CacheStatistics
-}
 
 export interface CacheCleanupRequest {
   remove_orphaned?: boolean
@@ -399,19 +384,9 @@ export interface SchedulerJob {
 
 // WebSocket Message Types
 export interface WebSocketMessage {
-  type: 'status_update' | 'log_entry' | 'operation_progress' | 'error' | 'cache_file_added' | 'cache_file_removed' | 'cache_statistics_updated' | 'operation_file_update' | 'pong'
+  type: 'operation_progress' | 'operation_file_update'
   data: unknown
   timestamp: string
-}
-
-export interface StatusUpdateMessage extends WebSocketMessage {
-  type: 'status_update'
-  data: SystemStatus
-}
-
-export interface LogUpdateMessage extends WebSocketMessage {
-  type: 'log_entry'
-  data: LogEntry
 }
 
 export interface OperationProgressMessage extends WebSocketMessage {
@@ -423,15 +398,6 @@ export interface OperationProgressMessage extends WebSocketMessage {
     files_processed: number
     total_files: number
     estimated_time_remaining?: number
-  }
-}
-
-export interface ErrorMessage extends WebSocketMessage {
-  type: 'error'
-  data: {
-    error: string
-    error_code?: string
-    details?: unknown
   }
 }
 
@@ -720,32 +686,7 @@ export interface RemoveCachedFileRequest {
 }
 
 // Cached Files WebSocket Message Types
-export interface CacheFileAddedMessage extends WebSocketMessage {
-  type: 'cache_file_added'
-  data: {
-    file_path: string
-    action: 'added'
-    user_id?: string
-    reason: string
-    file_info: CachedFileInfo
-  }
-}
 
-export interface CacheFileRemovedMessage extends WebSocketMessage {
-  type: 'cache_file_removed'
-  data: {
-    file_path: string
-    action: 'removed'
-    user_id?: string
-    reason: string
-    file_id: string
-  }
-}
-
-export interface CacheStatisticsUpdatedMessage extends WebSocketMessage {
-  type: 'cache_statistics_updated'
-  data: CacheStatistics
-}
 
 // Export all types for convenient importing
 export type {

@@ -5,7 +5,7 @@ Accepted
 
 ## Context
 
-The original PlexCacheUltra configuration system had several critical problems:
+The original Cacherr configuration system had several critical problems:
 
 1. **Hard-coded Docker paths**: Paths were hardcoded to `/cache` and `/array`, making non-Docker deployments problematic
 2. **Environment coupling**: Configuration was tightly coupled to Docker environment assumptions

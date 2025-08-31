@@ -5,7 +5,7 @@ Accepted
 
 ## Context
 
-The original PlexCacheUltra codebase suffered from tight coupling between components, making testing difficult and reducing code maintainability. The main issues were:
+The original Cacherr codebase suffered from tight coupling between components, making testing difficult and reducing code maintainability. The main issues were:
 
 1. **Hard-coded dependencies**: Services were directly instantiated within classes
 2. **Difficult testing**: Mocking dependencies required complex workarounds

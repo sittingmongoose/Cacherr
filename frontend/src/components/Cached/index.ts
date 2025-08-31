@@ -1,7 +1,7 @@
 /**
  * Cached Tab Components - Entry Point
  * 
- * Exports all cached file management components for the PlexCacheUltra web interface.
+ * Exports all cached file management components for the Cacherr web interface.
  * Provides comprehensive cached file tracking, management, and user attribution.
  */
 

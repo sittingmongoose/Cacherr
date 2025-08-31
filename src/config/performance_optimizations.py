@@ -1,8 +1,9 @@
 """
-Performance optimizations for Pydantic v2 configuration models.
+Performance optimizations for Pydantic v2.5 configuration models.
 
 This module provides performance enhancements including model caching,
 validation optimization, and memory-efficient configuration handling.
+All optimizations are designed for Pydantic v2.5 compatibility.
 """
 
 import functools

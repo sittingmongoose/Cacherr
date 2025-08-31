@@ -13,27 +13,13 @@
 import { io, Socket, SocketOptions } from 'socket.io-client'
 import {
   WebSocketMessage,
-  StatusUpdateMessage,
-  LogUpdateMessage,
   OperationProgressMessage,
-  ErrorMessage,
-  CacheFileAddedMessage,
-  CacheFileRemovedMessage,
-  CacheStatisticsUpdatedMessage,
+  FileOperationUpdateMessage,
 } from '@/types/api'
 
-export type WebSocketEventType = 
-  | 'status_update' 
-  | 'log_entry' 
-  | 'operation_progress' 
-  | 'error'
-  | 'cache_file_added'
-  | 'cache_file_removed'
-  | 'cache_statistics_updated'
+export type WebSocketEventType =
+  | 'operation_progress'
   | 'operation_file_update'
-  | 'pong'
-  | 'connected'
-  | 'disconnected'
 
 export interface WebSocketEventHandler {
   (data: unknown): void
@@ -74,17 +60,8 @@ export class WebSocketService {
     
     // Initialize event handler maps
     const eventTypes: WebSocketEventType[] = [
-      'status_update', 
-      'log_entry', 
-      'operation_progress', 
-      'error',
-      'cache_file_added',
-      'cache_file_removed',
-      'cache_statistics_updated',
-      'operation_file_update',
-      'pong',
-      'connected',
-      'disconnected'
+      'operation_progress',
+      'operation_file_update'
     ]
     eventTypes.forEach(type => {
       this.eventHandlers.set(type, new Set())
@@ -157,22 +134,16 @@ export class WebSocketService {
       // Start ping interval
       this.startPing()
       
-      // Emit connected event to handlers
-      this._emitEvent('connected', {
-        timestamp: new Date().toISOString(),
-        message: 'Connected to Cacherr WebSocket server'
-      })
+      // WebSocket connected successfully
+      console.log('WebSocket connected and ready')
     })
 
     this.socket.on('disconnect', (reason: string) => {
       console.log('Disconnected from WebSocket server:', reason)
       this.updateStatus({ connected: false })
       
-      // Emit disconnected event to handlers
-      this._emitEvent('disconnected', {
-        timestamp: new Date().toISOString(),
-        reason: reason
-      })
+      // WebSocket disconnected
+      console.log('WebSocket disconnected:', reason)
       
       // Clear ping timer
       this.clearTimers()
@@ -204,40 +175,12 @@ export class WebSocketService {
     })
 
     // Application-specific events
-    this.socket.on('status_update', (data: StatusUpdateMessage['data']) => {
-      this._emitEvent('status_update', data)
-    })
-
-    this.socket.on('log_entry', (data: LogUpdateMessage['data']) => {
-      this._emitEvent('log_entry', data)
-    })
-
     this.socket.on('operation_progress', (data: OperationProgressMessage['data']) => {
       this._emitEvent('operation_progress', data)
     })
 
-    this.socket.on('error', (data: ErrorMessage['data']) => {
-      this._emitEvent('error', data)
-    })
-
-    this.socket.on('cache_file_added', (data: CacheFileAddedMessage['data']) => {
-      this._emitEvent('cache_file_added', data)
-    })
-
-    this.socket.on('cache_file_removed', (data: CacheFileRemovedMessage['data']) => {
-      this._emitEvent('cache_file_removed', data)
-    })
-
-    this.socket.on('cache_statistics_updated', (data: CacheStatisticsUpdatedMessage['data']) => {
-      this._emitEvent('cache_statistics_updated', data)
-    })
-
-    this.socket.on('operation_file_update', (data: any) => {
+    this.socket.on('operation_file_update', (data: FileOperationUpdateMessage['data']) => {
       this._emitEvent('operation_file_update', data)
-    })
-
-    this.socket.on('pong', (data: any) => {
-      this._emitEvent('pong', data)
     })
   }
 
@@ -401,37 +344,12 @@ export class WebSocketService {
 const webSocketService = new WebSocketService()
 
 // Convenience functions for typed event handling
-export const useWebSocketStatus = (handler: (status: WebSocketConnectionStatus) => void): void => {
-  webSocketService.addConnectionListener(handler)
-}
-
-export const useWebSocketStatusUpdates = (handler: (data: StatusUpdateMessage['data']) => void): void => {
-  webSocketService.addEventListener('status_update', handler)
-}
-
-export const useWebSocketLogs = (handler: (data: LogUpdateMessage['data']) => void): void => {
-  webSocketService.addEventListener('log_entry', handler)
-}
-
 export const useWebSocketProgress = (handler: (data: OperationProgressMessage['data']) => void): void => {
   webSocketService.addEventListener('operation_progress', handler)
 }
 
-export const useWebSocketErrors = (handler: (data: ErrorMessage['data']) => void): void => {
-  webSocketService.addEventListener('error', handler)
-}
-
-// Cached Files WebSocket event handlers
-export const useWebSocketCacheFileAdded = (handler: (data: CacheFileAddedMessage['data']) => void): void => {
-  webSocketService.addEventListener('cache_file_added', handler)
-}
-
-export const useWebSocketCacheFileRemoved = (handler: (data: CacheFileRemovedMessage['data']) => void): void => {
-  webSocketService.addEventListener('cache_file_removed', handler)
-}
-
-export const useWebSocketCacheStatisticsUpdated = (handler: (data: CacheStatisticsUpdatedMessage['data']) => void): void => {
-  webSocketService.addEventListener('cache_statistics_updated', handler)
+export const useWebSocketFileUpdates = (handler: (data: FileOperationUpdateMessage['data']) => void): void => {
+  webSocketService.addEventListener('operation_file_update', handler)
 }
 
 export default webSocketService

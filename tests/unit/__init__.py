@@ -1,5 +1,5 @@
 """
-Unit tests for individual PlexCacheUltra components.
+Unit tests for individual Cacherr components.
 
 This package contains unit tests that focus on testing individual
 components and modules in isolation, using mocks and stubs for

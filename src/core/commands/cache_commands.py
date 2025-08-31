@@ -1,5 +1,5 @@
 """
-Cache operation command implementations for PlexCacheUltra.
+Cache operation command implementations for Cacherr.
 
 This module provides concrete command implementations for all cache-related
 operations including file movement, copying, deletion, and analysis operations.

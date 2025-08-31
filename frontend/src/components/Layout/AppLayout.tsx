@@ -1,7 +1,7 @@
 /**
  * AppLayout Component - Main Layout with Navigation
  * 
- * Provides consistent layout and navigation across PlexCacheUltra pages.
+ * Provides consistent layout and navigation across Cacherr pages.
  * Features responsive design, theme support, and active route highlighting.
  */
 
@@ -107,47 +107,9 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children, className }) => 
               })}
             </nav>
 
-            {/* Mobile menu button - TODO: Implement mobile menu */}
-            <div className="md:hidden">
-              <button
-                type="button"
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-2"
-                aria-label="Open navigation menu"
-              >
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-              </button>
-            </div>
           </div>
         </div>
 
-        {/* Mobile Navigation - Hidden for now, can be implemented later */}
-        <div className="md:hidden hidden">
-          <div className="pt-2 pb-3 space-y-1 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
-            {navigation.map((item) => {
-              const Icon = item.icon
-              const isActive = isActiveRoute(item.href)
-              
-              return (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className={classNames(
-                    isActive
-                      ? 'bg-primary-50 border-primary-500 text-primary-700 dark:bg-primary-900 dark:text-primary-200'
-                      : 'border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 dark:text-gray-300 dark:hover:bg-gray-700',
-                    'block pl-3 pr-4 py-2 border-l-4 text-base font-medium flex items-center'
-                  )}
-                  aria-current={isActive ? 'page' : undefined}
-                >
-                  <Icon className="h-4 w-4 mr-2" aria-hidden="true" />
-                  {item.name}
-                </Link>
-              )
-            })}
-          </div>
-        </div>
       </header>
 
       {/* Main Content */}

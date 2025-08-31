@@ -1,5 +1,5 @@
 """
-Command queue implementation for PlexCacheUltra.
+Command queue implementation for Cacherr.
 
 This module provides a comprehensive command queue system for managing
 command execution with priority handling, dependency resolution, and

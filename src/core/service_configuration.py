@@ -1,5 +1,5 @@
 """
-Configuration-Driven Service Resolution for PlexCacheUltra.
+Configuration-Driven Service Resolution for Cacherr.
 
 This module provides configuration-driven service registration and resolution
 capabilities for the dependency injection container. It allows services to be

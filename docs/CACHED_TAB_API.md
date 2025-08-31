@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Cached Tab provides comprehensive tracking and management of cached files in PlexCacheUltra. This feature enables users to monitor what files are currently cached, understand why they were cached, track user attribution, and manage cache operations.
+The Cached Tab provides comprehensive tracking and management of cached files in Cacherr. This feature enables users to monitor what files are currently cached, understand why they were cached, track user attribution, and manage cache operations.
 
 ## Features
 
@@ -391,7 +391,7 @@ The Cached tab supports real-time updates through WebSocket events:
 
 ## Error Handling
 
-All endpoints follow the standard PlexCacheUltra API response format:
+All endpoints follow the standard Cacherr API response format:
 
 **Success Response:**
 ```json
@@ -416,7 +416,7 @@ All endpoints follow the standard PlexCacheUltra API response format:
 
 ### Atomic Redirection Integration
 
-The cached files service integrates with PlexCacheUltra's atomic redirection system, which prevents Plex playback interruption:
+The cached files service integrates with Cacherr's atomic redirection system, which prevents Plex playback interruption:
 
 **Atomic Operations Process:**
 1. **Copy to Cache**: File is copied to cache destination (preserves original during access)

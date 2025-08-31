@@ -105,19 +105,11 @@ export const CachedTab: React.FC<CachedTabProps> = ({ className }) => {
       }
     }
 
-    // Add event listeners for cache updates
-    webSocketService.addEventListener('cache_file_added', handleCacheUpdate)
-    webSocketService.addEventListener('cache_file_removed', handleCacheUpdate)
-    webSocketService.addEventListener('cache_statistics_updated', handleCacheUpdate)
-    
     // Add event listeners for operations updates
     webSocketService.addEventListener('operation_progress', handleOperationUpdate)
     webSocketService.addEventListener('operation_file_update', handleFileUpdate)
-    
+
     return () => {
-      webSocketService.removeEventListener('cache_file_added', handleCacheUpdate)
-      webSocketService.removeEventListener('cache_file_removed', handleCacheUpdate)
-      webSocketService.removeEventListener('cache_statistics_updated', handleCacheUpdate)
       webSocketService.removeEventListener('operation_progress', handleOperationUpdate)
       webSocketService.removeEventListener('operation_file_update', handleFileUpdate)
     }

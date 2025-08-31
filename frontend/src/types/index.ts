@@ -120,11 +120,6 @@ export interface NavItem {
   external?: boolean
 }
 
-export interface BreadcrumbItem {
-  label: string
-  path?: string
-  current?: boolean
-}
 
 // Modal and Dialog types
 export interface ModalProps {
@@ -135,13 +130,6 @@ export interface ModalProps {
   preventClose?: boolean
 }
 
-export interface ConfirmDialogProps extends ModalProps {
-  message: string
-  confirmText?: string
-  cancelText?: string
-  type?: 'info' | 'warning' | 'error' | 'success'
-  onConfirm: () => void
-}
 
 // Toast/Notification types
 export interface ToastOptions {
@@ -160,15 +148,6 @@ export interface ToastAction {
   style?: 'primary' | 'secondary'
 }
 
-// Theme types
-export interface ThemeConfig {
-  mode: 'light' | 'dark' | 'auto'
-  primaryColor: string
-  accentColor?: string
-  fontFamily?: string
-  borderRadius?: 'none' | 'sm' | 'md' | 'lg' | 'full'
-  animations?: boolean
-}
 
 // Utility types
 export type ValueOf<T> = T[keyof T]
@@ -185,14 +164,6 @@ export type AsyncCallback<T = void> = () => Promise<T>
 export type As<T = React.ElementType> = T
 export type PropsOf<T extends As> = React.ComponentPropsWithoutRef<T>
 
-// Polymorphic component types
-export interface AsProp<T extends As = As> {
-  as?: T
-}
-
-export type PolymorphicProps<T extends As, P = {}> = P & 
-  AsProp<T> & 
-  Omit<PropsOf<T>, keyof AsProp<T> | keyof P>
 
 // Hook types
 export interface UseApiOptions<T> {
@@ -214,13 +185,6 @@ export interface UseApiResult<T> {
   mutate: (newData: T) => void
 }
 
-// Storage types
-export interface StorageAdapter {
-  getItem(key: string): string | null
-  setItem(key: string, value: string): void
-  removeItem(key: string): void
-  clear(): void
-}
 
 // Validation types
 export interface ValidationRule<T = any> {
@@ -241,51 +205,6 @@ export interface ValidationResult<T = Record<string, any>> {
   values: T
 }
 
-// Date and time types
-export interface DateRange {
-  start: Date | null
-  end: Date | null
-}
-
-export interface TimeRange {
-  start: string // HH:mm format
-  end: string   // HH:mm format
-}
-
-// File handling types
-export interface FileUpload {
-  file: File
-  progress: number
-  status: 'pending' | 'uploading' | 'success' | 'error'
-  error?: string
-  id: string
-}
-
-export interface FilePreview {
-  name: string
-  size: number
-  type: string
-  url: string
-  thumbnail?: string
-}
-
-// Search and filter types
-export interface SearchOptions {
-  query: string
-  filters: Record<string, any>
-  sortBy?: string
-  sortOrder?: 'asc' | 'desc'
-  limit?: number
-  offset?: number
-}
-
-export interface FilterOption {
-  key: string
-  label: string
-  type: 'text' | 'select' | 'date' | 'number' | 'boolean'
-  options?: SelectOption[]
-  placeholder?: string
-}
 
 // Export commonly used React types
 export type {

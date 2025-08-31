@@ -1,8 +1,8 @@
 """
-Core service interfaces for PlexCacheUltra.
+Core service interfaces for Cacherr.
 
 This module defines the foundational interfaces that establish clear contracts
-for the major services within the PlexCacheUltra system. These interfaces
+for the major services within the Cacherr system. These interfaces
 enable dependency injection, improve testability, and support modular
 architecture patterns.
 

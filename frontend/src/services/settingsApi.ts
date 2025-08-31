@@ -542,8 +542,10 @@ export class SettingsAPIService {
     let mimeType: string
     
     if (format === 'yaml') {
-      content = JSON.stringify(exportData.configuration, null, 2) // TODO: Convert to YAML when needed
-      mimeType = 'application/x-yaml'
+      // Note: Currently exports JSON format regardless of requested format
+      // YAML conversion would require additional dependency
+      content = JSON.stringify(exportData.configuration, null, 2)
+      mimeType = 'application/json' // Updated to reflect actual content type
     } else {
       content = options.minify 
         ? JSON.stringify(exportData.configuration)

@@ -1,7 +1,7 @@
 """
-Pydantic BaseSettings implementation for environment variable handling.
+Pydantic v2.5 BaseSettings implementation for environment variable handling.
 
-This module provides robust environment variable configuration using Pydantic v2
+This module provides robust environment variable configuration using Pydantic v2.5
 BaseSettings with proper validation, type conversion, and documentation.
 
 Example:
@@ -16,9 +16,10 @@ import os
 from typing import Optional, List, Dict, Any
 from pathlib import Path
 
-from pydantic import Field, SecretStr, field_validator, ConfigDict
+from pydantic import Field, SecretStr, field_validator, ConfigDict, model_validator, field_serializer, ValidationInfo, BeforeValidator
 from pydantic_settings import BaseSettings
 from pydantic.types import PositiveInt
+from typing import Any
 
 from .pydantic_models import (
     LoggingConfig, PlexConfig, MediaConfig, PathsConfig, PerformanceConfig,
@@ -397,37 +398,181 @@ class CacherrSettings(BaseSettings):
     
     @field_validator('additional_sources', 'additional_plex_sources', mode='before')
     @classmethod
-    def parse_comma_separated(cls, v) -> List[str]:
-        """Parse comma-separated environment variables into lists."""
+    def parse_comma_separated(cls, v: Any, info: ValidationInfo) -> List[str]:
+        """
+        Parse comma-separated environment variables into lists.
+
+        Args:
+            v: The value to parse (string or list)
+            info: Validation context information
+
+        Returns:
+            Parsed list of strings
+
+        Raises:
+            ValueError: If value cannot be parsed into a valid list
+        """
+        field_name = info.field_name if info.field_name else "field"
+
         if isinstance(v, str):
-            return [item.strip() for item in v.split(',') if item.strip()]
+            # Parse comma-separated string
+            parsed = [item.strip() for item in v.split(',') if item.strip()]
+            return parsed
         elif isinstance(v, list):
-            return v
-        return []
+            # Already a list, validate each item
+            validated_items = []
+            for item in v:
+                if isinstance(item, str):
+                    validated_items.append(item.strip())
+                elif item is not None:
+                    validated_items.append(str(item).strip())
+            return validated_items
+        elif v is None:
+            return []
+        else:
+            raise ValueError(f"{field_name} must be a string or list, got {type(v).__name__}")
 
     @field_validator('plex_url')
     @classmethod
-    def validate_plex_url(cls, v: str) -> str:
-        """Validate and normalize Plex URL."""
+    def validate_plex_url(cls, v: str, info: ValidationInfo) -> str:
+        """
+        Validate and normalize Plex URL.
+
+        Args:
+            v: The URL string to validate
+            info: Validation context information
+
+        Returns:
+            Normalized URL string
+
+        Raises:
+            ValueError: If URL format is invalid
+        """
+        if not isinstance(v, str):
+            raise ValueError(f"Plex URL must be a string, got {type(v).__name__}")
+
+        if not v.strip():
+            raise ValueError("Plex URL cannot be empty")
+
         if not (v.startswith('http://') or v.startswith('https://')):
             raise ValueError('Plex URL must start with http:// or https://')
-        return v.rstrip('/')
+
+        # Normalize by removing trailing slashes
+        normalized = v.rstrip('/')
+
+        # Basic URL format validation
+        if '://' not in normalized:
+            raise ValueError("Plex URL must include protocol (http:// or https://)")
+
+        return normalized
 
     @field_validator('webhook_url')
     @classmethod
-    def validate_webhook_url(cls, v: Optional[str]) -> Optional[str]:
-        """Validate webhook URL if provided."""
-        if v and not (v.startswith('http://') or v.startswith('https://')):
+    def validate_webhook_url(cls, v: Optional[str], info: ValidationInfo) -> Optional[str]:
+        """
+        Validate webhook URL if provided.
+
+        Args:
+            v: The webhook URL to validate (optional)
+            info: Validation context information
+
+        Returns:
+            Validated webhook URL or None
+
+        Raises:
+            ValueError: If webhook URL format is invalid
+        """
+        if v is None or v == "":
+            return None
+
+        if not isinstance(v, str):
+            raise ValueError(f"Webhook URL must be a string, got {type(v).__name__}")
+
+        if not (v.startswith('http://') or v.startswith('https://')):
             raise ValueError('Webhook URL must start with http:// or https://')
+
+        # Basic URL format validation
+        if '://' not in v:
+            raise ValueError("Webhook URL must include protocol (http:// or https://)")
+
         return v
 
     @field_validator('log_level', mode='before')
     @classmethod
-    def normalize_log_level(cls, v) -> str:
-        """Normalize log level to uppercase."""
+    def normalize_log_level(cls, v: Any, info: ValidationInfo) -> str:
+        """
+        Normalize log level to uppercase.
+
+        Args:
+            v: The log level value to normalize
+            info: Validation context information
+
+        Returns:
+            Uppercase log level string
+
+        Raises:
+            ValueError: If log level cannot be normalized
+        """
         if isinstance(v, str):
-            return v.upper()
-        return v
+            normalized = v.upper()
+            # Validate against known log levels
+            valid_levels = ['DEBUG', 'INFO', 'WARNING', 'WARN', 'ERROR', 'CRITICAL', 'FATAL']
+            if normalized not in valid_levels:
+                raise ValueError(f"Invalid log level '{v}'. Must be one of: {valid_levels}")
+            return normalized
+        elif v is None:
+            return 'INFO'  # Default fallback
+        else:
+            # Convert other types to string and validate
+            str_val = str(v).upper()
+            valid_levels = ['DEBUG', 'INFO', 'WARNING', 'WARN', 'ERROR', 'CRITICAL', 'FATAL']
+            if str_val not in valid_levels:
+                raise ValueError(f"Invalid log level '{v}'. Must be one of: {valid_levels}")
+            return str_val
+
+    @model_validator(mode='after')
+    def validate_configuration_consistency(self) -> 'CacherrSettings':
+        """
+        Validate overall configuration consistency.
+
+        This method checks for logical consistency across different
+        configuration sections to prevent misconfigurations.
+
+        Returns:
+            Validated CacherrSettings instance
+
+        Raises:
+            ValueError: If configuration contains inconsistencies
+        """
+        # Validate port consistency
+        if hasattr(self, 'port') and hasattr(self, 'web_port'):
+            if self.port != self.web_port:
+                raise ValueError(f"Port ({self.port}) and web_port ({self.web_port}) must be the same")
+
+        # Validate path consistency
+        if hasattr(self, 'plex_source') and hasattr(self, 'real_source'):
+            if self.plex_source != self.real_source:
+                # This is allowed for flexibility, just log a warning
+                pass
+
+        # Validate cache expiration consistency
+        if hasattr(self, 'watchlist_cache_expiry') and hasattr(self, 'watched_cache_expiry'):
+            if self.watchlist_cache_expiry > self.watched_cache_expiry:
+                raise ValueError(
+                    f"Watchlist cache expiry ({self.watchlist_cache_expiry}h) cannot be longer "
+                    f"than watched cache expiry ({self.watched_cache_expiry}h)"
+                )
+
+        # Validate debug mode consistency
+        if hasattr(self, 'debug') and hasattr(self, 'test_mode'):
+            if self.debug and self.test_mode:
+                import warnings
+                warnings.warn(
+                    "Both debug mode and test mode are enabled. This may impact performance.",
+                    UserWarning
+                )
+
+        return self
 
     # =============================================================================
     # COMPUTED PROPERTIES

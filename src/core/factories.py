@@ -1,5 +1,5 @@
 """
-Service Factory Pattern implementations for PlexCacheUltra.
+Service Factory Pattern implementations for Cacherr.
 
 This module provides factory classes and functions for creating services with
 complex initialization logic, configuration-driven creation, and environment-specific

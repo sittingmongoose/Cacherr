@@ -1,4 +1,4 @@
-# Core functionality package for PlexCacheUltra
+# Core functionality package for Cacherr
 
 # Import main classes for easier access
 from .plex_cache_engine import CacherrEngine
