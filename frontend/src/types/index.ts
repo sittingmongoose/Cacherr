@@ -6,6 +6,71 @@
 // Re-export all API types
 export * from './api'
 
+// Re-export Settings types (avoiding conflicts)
+export type {
+  // Settings UI Types
+  SettingsPageState,
+  SettingsSection,
+  SettingsValidationErrors,
+  SettingsNavItem,
+  
+  // Form Data Types
+  PlexSettingsFormData,
+  MediaSettingsFormData,
+  PathSettingsFormData,
+  PerformanceSettingsFormData,
+  RealTimeWatchFormData,
+  TraktSettingsFormData,
+  LoggingSettingsFormData,
+  NotificationSettingsFormData,
+  
+  // Component Props
+  SettingsFormProps,
+  SettingsSectionProps,
+  
+  // Response Types (with renamed duplicates from api.ts)
+  SettingsApiResponse,
+  SettingsUpdateResponse,
+  SettingsValidationResponse,
+  SettingsTestPlexResponse,
+  SettingsExportResponse,
+  SettingsImportResponse,
+  SettingsSchemaResponse,
+  SettingsPersistenceResponse,
+  
+  // Field Schema Types
+  SettingsFieldSchema,
+  SettingsFormField,
+  SettingsFormSection,
+  
+  // Export/Import Options
+  SettingsExportOptions,
+  SettingsImportOptions,
+  
+  // Utility Types
+  SettingsFormErrors,
+  SettingsAction,
+  
+  // Constants
+  DEFAULT_SETTINGS_STATE,
+  SETTINGS_SECTIONS,
+} from './settings'
+
+// Import specific types to re-export with aliases to avoid conflicts
+import type {
+  SettingsUpdateRequest as SettingsUpdateRequestFromSettings,
+  SettingsValidationRequest as SettingsValidationRequestFromSettings,
+  SettingsImportRequest as SettingsImportRequestFromSettings,
+  PlexTestRequest as PlexTestRequestFromSettings
+} from './settings'
+
+export type {
+  SettingsUpdateRequestFromSettings as SettingsUpdateRequest,
+  SettingsValidationRequestFromSettings as SettingsValidationRequest,
+  SettingsImportRequestFromSettings as SettingsImportRequest,
+  PlexTestRequestFromSettings as PlexTestRequest
+}
+
 // Component-specific types
 export interface ComponentProps {
   className?: string

@@ -1,3 +1,15 @@
+# =============================================================================
+# 🔄 ENVIRONMENT VARIABLE MIGRATION NOTICE
+# =============================================================================
+#
+# This docker-compose.dev.yml contains legacy environment variables from
+# the PlexCacheUltra project. For production use, see ENVIRONMENT_MIGRATION.md
+# for instructions on migrating to the new CACHERR_* variable format.
+#
+# Development Note: This file is kept for backward compatibility during
+# the development phase but should be updated to use CACHERR_* variables.
+# =============================================================================
+
 version: '3.8'
 
 services:

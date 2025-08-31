@@ -1,6 +1,12 @@
 # ===========================================
 # Docker Compose Configuration for Cacherr
 # Production-ready with profiles for different environments
+#
+# 🔄 ENVIRONMENT VARIABLE MIGRATION:
+# If upgrading from PlexCacheUltra, see ENVIRONMENT_MIGRATION.md
+# for instructions on migrating your environment variables.
+#
+# 📋 RECOMMENDED: Configure settings via web UI (http://localhost:5445/settings)
 # ===========================================
 
 version: '3.8'
@@ -22,11 +28,44 @@ services:
     ports:
       - "5445:5445"  # Web interface and API
     environment:
-      # Minimal environment variables - prefer web UI configuration
+      # ===========================================
+      # ENVIRONMENT VARIABLE MIGRATION NOTES
+      # ===========================================
+      #
+      # NEW NAMING CONVENTION (Post-refactoring):
+      # The project has been renamed from PlexCacheUltra to Cacherr.
+      # Environment variables follow the new CACHERR_* pattern.
+      #
+      # MIGRATION REQUIRED:
+      # If you have old PLEX_* variables, update them to CACHERR_* equivalents.
+      # See ENVIRONMENT_MIGRATION.md for complete migration instructions.
+      #
+      # RECOMMENDED APPROACH:
+      # Configure most settings via web UI (http://localhost:5445/settings)
+      # Only use environment variables for infrastructure-specific settings.
+      # ===========================================
+
+      # Required environment variables
       - CACHERR_ENVIRONMENT=production
       - CACHERR_LOG_LEVEL=${LOG_LEVEL:-INFO}
       - TZ=${TZ:-UTC}
-      # Legacy support (will be removed in future)
+
+      # ===========================================
+      # LEGACY VARIABLES (DEPRECATED - MIGRATE TO CACHERR_*)
+      # ===========================================
+      # These are provided for backward compatibility only.
+      # They will show deprecation warnings and be removed in future versions.
+      #
+      # MIGRATION STEPS:
+      # 1. Remove these legacy variables from your .env file
+      # 2. Use web UI settings instead, OR
+      # 3. Replace with CACHERR_PLEX_URL and CACHERR_PLEX_TOKEN
+      #
+      # BEFORE: PLEX_URL=http://plex:32400
+      # AFTER:  CACHERR_PLEX_URL=http://plex:32400
+      # ===========================================
+
+      # DEPRECATED - Remove these and use web UI or CACHERR_* equivalents
       - PLEX_URL=${PLEX_URL:-}
       - PLEX_TOKEN=${PLEX_TOKEN:-}
     volumes:
@@ -86,9 +125,21 @@ services:
       - CACHERR_LOG_LEVEL=DEBUG
       - TZ=${TZ:-UTC}
 
-      # Legacy environment variables for compatibility
+      # ===========================================
+      # DEVELOPMENT LEGACY VARIABLES (DEPRECATED)
+      # ===========================================
+      # These legacy variables are kept for development compatibility
+      # but should be migrated to CACHERR_* equivalents when possible.
+      #
+      # For development, you may want to use environment variables
+      # for rapid iteration, but production should use web UI.
+      # ===========================================
+
+      # DEPRECATED - Consider using CACHERR_PLEX_* for consistency
       - PLEX_URL=${PLEX_URL:-}
       - PLEX_TOKEN=${PLEX_TOKEN:-}
+
+      # Mixed legacy/support - these work with current system
       - CONFIG_DIR=${CONFIG_DIR:-/config}
       - CACHE_DESTINATION=${CACHE_DESTINATION:-/cache}
     volumes:

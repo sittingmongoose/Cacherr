@@ -111,6 +111,8 @@ export interface PlexSettings {
   token: string
   username?: string
   password?: string
+  verify_ssl?: boolean
+  timeout?: number
 }
 
 export interface MediaSettings {
@@ -327,10 +329,19 @@ export interface UserCacheStatistics {
 
 export interface ConnectivityCheckResult {
   status: 'success' | 'failed' | 'error'
+  success?: boolean // Legacy property for compatibility
   url?: string
   response_time_ms?: number
   status_code?: number
   error?: string
+  message?: string
+  server_info?: {
+    product?: string
+    version?: string
+    platform?: string
+    server_name?: string
+    library_count?: number
+  }
 }
 
 // Log Entry Types

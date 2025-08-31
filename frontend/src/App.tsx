@@ -125,6 +125,7 @@ const PageLoader: React.FC = () => (
 const Dashboard = React.lazy(() => import('@/components/Dashboard'))
 const CachedTab = React.lazy(() => import('@/components/Cached'))
 const LogsPage = React.lazy(() => import('@/components/Logs'))
+const Settings = React.lazy(() => import('@/components/Settings/SettingsPage'))
 
 // Route components wrapper with Suspense for lazy loading
 const DashboardPage: React.FC = () => (
@@ -145,18 +146,10 @@ const LogsPageWrapper: React.FC = () => (
   </React.Suspense>
 )
 
-// Settings page placeholder (for future implementation)
-const SettingsPage: React.FC = () => (
-  <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-    <div className="text-center">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-        Settings
-      </h1>
-      <p className="text-gray-600 dark:text-gray-400">
-        Settings page coming soon...
-      </p>
-    </div>
-  </div>
+const SettingsPageWrapper: React.FC = () => (
+  <React.Suspense fallback={<PageLoader />}>
+    <Settings />
+  </React.Suspense>
 )
 
 
@@ -202,8 +195,8 @@ const App: React.FC = () => {
                 {/* Legacy results route - redirect to cached */}
                 <Route path="/results" element={<Navigate to="/cached" replace />} />
                 
-                {/* Settings route (placeholder) */}
-                <Route path="/settings" element={<SettingsPage />} />
+                {/* Settings route */}
+                <Route path="/settings" element={<SettingsPageWrapper />} />
                 
                 {/* Logs route */}
                 <Route path="/logs" element={<LogsPageWrapper />} />

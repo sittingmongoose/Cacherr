@@ -26,6 +26,7 @@ export interface SettingsPageState {
 export type SettingsSection = 'plex' | 'media' | 'performance' | 'advanced' | 'export-import'
 
 export interface SettingsValidationErrors {
+  general?: string[]
   plex: string[]
   media: string[]
   paths: string[]
