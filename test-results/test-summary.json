@@ -1,0 +1,8 @@
+{
+  "project": "Cacherr",
+  "environment": "test",
+  "startTime": "2025-08-31T23:27:35.001Z",
+  "endTime": "2025-08-31T23:27:35.805Z",
+  "baseUrl": "http://localhost:3000",
+  "apiUrl": "http://localhost:5445"
+}

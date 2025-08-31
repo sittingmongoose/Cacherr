@@ -1,5 +1,55 @@
 {
+  "name": "cacherr-testing",
+  "version": "1.0.0",
+  "description": "Comprehensive testing suite for Cacherr",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "test:debug": "playwright test --debug",
+    "test:dashboard": "playwright test --grep 'dashboard'",
+    "test:settings": "playwright test --grep 'settings'",
+    "test:navigation": "playwright test --grep 'navigation'",
+    "test:responsive": "playwright test --grep 'responsive'",
+    "test:accessibility": "playwright test --project=accessibility",
+    "test:performance": "playwright test --grep 'performance'",
+    "test:mobile": "playwright test --project=mobile-chrome --project=mobile-safari",
+    "test:smoke": "playwright test --grep 'critical|smoke'",
+    "test:ci": "playwright test --project=chromium --project=firefox",
+    "report": "node scripts/generate-test-report.js",
+    "report:html": "playwright show-report playwright-report",
+    "install-browsers": "playwright install --with-deps",
+    "update-browsers": "playwright install --with-deps --force",
+    "codegen": "playwright codegen localhost:3000",
+    "test:docker": "./run-playwright.sh test",
+    "test:docker-ui": "./run-playwright.sh test-ui",
+    "test:docker-debug": "./run-playwright.sh debug",
+    "clean:test": "rm -rf test-results playwright-report test-reports"
+  },
   "devDependencies": {
-    "@playwright/test": "^1.55.0"
+    "@playwright/test": "^1.55.0",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "axe-playwright": "^1.2.0",
+    "@axe-core/playwright": "^4.8.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/cacherr.git"
+  },
+  "keywords": [
+    "testing",
+    "playwright",
+    "e2e",
+    "automation",
+    "cacherr"
+  ],
+  "author": "Cacherr Team",
+  "license": "MIT",
+  "playwright": {
+    "config": "playwright.config.js"
   }
 }

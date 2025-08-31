@@ -183,23 +183,29 @@ services:
   cacherr-test:
     build:
       context: .
-      dockerfile: Dockerfile.test
+      dockerfile: Dockerfile.playwright
     image: sittingmongoose/cacherr:test
     container_name: cacherr-test
     profiles: ["testing"]
     environment:
       - CI=true
       - CACHERR_ENVIRONMENT=testing
+      - NODE_ENV=test
+      - BASE_URL=http://localhost:3000
+      - API_BASE_URL=http://localhost:5445
     volumes:
-      # Mount test files
+      # Mount test files and configuration
       - ./e2e:/app/e2e:rw
       - ./playwright.config.js:/app/playwright.config.js:rw
+      - ./test-results:/app/test-results:rw
       - ./playwright-report:/app/playwright-report:rw
 
       # Configuration for tests
       - ${CONFIG_DIR:-./config}:/config:rw
     networks:
       - cacherr-network
+    ports:
+      - "9323:9323"  # Playwright UI port
     working_dir: /app
     command: npx playwright test
     logging:
@@ -207,6 +213,12 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   # ===========================================
   # PLAYWRIGHT UI SERVICE (Interactive Testing)
@@ -214,17 +226,21 @@ services:
   playwright-ui:
     build:
       context: .
-      dockerfile: Dockerfile.test
+      dockerfile: Dockerfile.playwright
     container_name: cacherr-playwright-ui
     profiles: ["testing"]
     ports:
       - "9323:9323"  # Playwright UI port
     environment:
       - CI=false
+      - NODE_ENV=test
+      - BASE_URL=http://localhost:3000
+      - API_BASE_URL=http://localhost:5445
     volumes:
-      # Mount test files
+      # Mount test files and configuration
       - ./e2e:/app/e2e:rw
       - ./playwright.config.js:/app/playwright.config.js:rw
+      - ./test-results:/app/test-results:rw
       - ./playwright-report:/app/playwright-report:rw
     networks:
       - cacherr-network
@@ -235,6 +251,12 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
 networks:
   cacherr-network:
