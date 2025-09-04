@@ -173,11 +173,18 @@ class HighPerformanceSettings(CacherrSettings):
     @functools.lru_cache(maxsize=32)
     def get_plex_config_cached(self) -> PlexConfig:
         """Get cached Plex configuration."""
+        token_value = self.plex_token.strip() if isinstance(self.plex_token, str) else None
+        token_value = token_value or None
+        password_value = (
+            self.plex_password.get_secret_value().strip()
+            if self.plex_password and self.plex_password.get_secret_value()
+            else None
+        )
         return create_plex_config(
             url=self.plex_url,
-            token=self.plex_token,
+            token=token_value,
             username=self.plex_username,
-            password=self.plex_password.get_secret_value() if self.plex_password else None
+            password=password_value
         )
     
     @functools.lru_cache(maxsize=32)

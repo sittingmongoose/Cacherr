@@ -162,10 +162,9 @@ class PlexConfig(BaseModel):
         description="Plex server URL (must be valid HTTP/HTTPS)",
         examples=["http://192.168.1.100:32400", "https://plex.example.com:32400"]
     )
-    token: SecretStr = Field(
-        ...,
-        min_length=20,
-        description="Plex authentication token (stored securely)",
+    token: Optional[SecretStr] = Field(
+        default=None,
+        description="Plex authentication token (optional; stored securely)",
         examples=["********************abcd"]
     )
     username: Optional[str] = Field(
@@ -222,29 +221,28 @@ class PlexConfig(BaseModel):
 
     @field_validator('token')
     @classmethod
-    def validate_token(cls, v: SecretStr, info: ValidationInfo) -> SecretStr:
+    def validate_token(cls, v: Optional[SecretStr], info: ValidationInfo) -> Optional[SecretStr]:
         """
-        Validate Plex authentication token.
+        Validate Plex authentication token when provided.
 
-        Args:
-            v: The token to validate
-            info: Validation context information
-
-        Returns:
-            Validated SecretStr token
-
-        Raises:
-            ValueError: If token is invalid
+        - Accepts None or empty values to allow the app to start
+          and let users configure credentials via the UI.
+        - If provided, perform a light sanity check without blocking startup.
         """
-        token_str = v.get_secret_value()
-
-        if len(token_str) < 20:
-            raise ValueError("Plex token must be at least 20 characters long")
-
-        # Basic format validation (Plex tokens are typically alphanumeric)
-        if not token_str.replace('-', '').replace('_', '').isalnum():
-            raise ValueError("Plex token contains invalid characters")
-
+        if v is None:
+            return None
+        try:
+            token_str = v.get_secret_value()
+        except Exception:
+            return None
+        # Treat empty/whitespace-only as not provided
+        if not isinstance(token_str, str) or not token_str.strip():
+            return None
+        # Keep basic character sanity without enforcing length at model level
+        cleaned = token_str.replace('-', '').replace('_', '')
+        if not cleaned.isalnum():
+            # Allow passing through; connection tests will surface issues
+            return v
         return v
 
     @field_serializer('url')

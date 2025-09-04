@@ -579,12 +579,26 @@ class CacherrSettings(BaseSettings):
     # =============================================================================
     
     def get_plex_config(self) -> PlexConfig:
-        """Get Plex configuration as a validated model."""
+        """Get Plex configuration as a validated model.
+
+        Token is optional to allow the application to start and expose the UI
+        for credential entry. If the token environment variable is empty, it
+        will be treated as not provided.
+        """
+        # Normalize empty values to None so validation does not fail
+        token_value = self.plex_token.strip() if isinstance(self.plex_token, str) else None
+        token_value = token_value or None
+        password_value = (
+            self.plex_password.get_secret_value().strip()
+            if self.plex_password and self.plex_password.get_secret_value()
+            else None
+        )
+
         return PlexConfig(
             url=self.plex_url,
-            token=self.plex_token,
+            token=token_value,
             username=self.plex_username,
-            password=self.plex_password.get_secret_value() if self.plex_password else None
+            password=password_value
         )
 
     def get_media_config(self) -> MediaConfig:
