@@ -33,11 +33,11 @@ import {
   FileOperation,
   OperationDetails,
   ResultsFilter
-} from '@/types/api'
+} from './types/api'
 
-import { LoadingSpinner, CardLoader } from '@/components/common/LoadingSpinner'
-import StatusBadge from '@/components/common/StatusBadge'
-import { formatBytes, formatDuration, formatFilePath, classNames } from '@/utils/format'
+import { LoadingSpinner, CardLoader } from '../common/LoadingSpinner'
+import StatusBadge from '../common/StatusBadge'
+import { formatBytes, formatDuration, formatFilePath, classNames } from '../../utils/format'
 import OperationCard from './OperationCard'
 
 interface OperationsViewProps {

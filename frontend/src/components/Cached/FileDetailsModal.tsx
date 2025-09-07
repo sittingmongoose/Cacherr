@@ -19,14 +19,14 @@ import {
   Info,
   Activity
 } from 'lucide-react'
-import { CachedFileInfo, RemoveCachedFileRequest } from '@/types/api'
-import useAPI from '@/hooks/useApi'
-import APIService from '@/services/api'
-import { useCachedFilesOperations } from '@/hooks/useApi'
-import { LoadingSpinner } from '@/components/common/LoadingSpinner'
-import StatusBadge from '@/components/common/StatusBadge'
+import { CachedFileInfo, RemoveCachedFileRequest } from './types/api'
+import useAPI from '../../hooks/useApi'
+import APIService from '../../services/api'
+import { useCachedFilesOperations } from '../../hooks/useApi'
+import { LoadingSpinner } from '../common/LoadingSpinner'
+import StatusBadge from '../common/StatusBadge'
 import UserAttributionCard from './UserAttributionCard'
-import { classNames } from '@/utils/format'
+import { classNames } from '../../utils/format'
 
 /**
  * FileDetailsModal Component

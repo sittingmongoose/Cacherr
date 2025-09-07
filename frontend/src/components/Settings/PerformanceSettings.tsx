@@ -40,8 +40,8 @@ import {
   Server
 } from 'lucide-react'
 
-import { LoadingSpinner } from '@/components/common/LoadingSpinner'
-import { classNames } from '@/utils/format'
+import { LoadingSpinner } from '../common/LoadingSpinner'
+import { classNames } from '../../utils/format'
 
 // Type imports
 import type { 
@@ -49,7 +49,7 @@ import type {
   PerformanceSettings as PerformanceSettingsType,
   SettingsFormProps,
   PerformanceSettingsFormData
-} from '@/types'
+} from './types'
 
 /**
  * Props interface for the PerformanceSettings component

@@ -36,9 +36,9 @@ import {
   RefreshCw
 } from 'lucide-react'
 
-import { LoadingSpinner, ButtonSpinner } from '@/components/common/LoadingSpinner'
-import { classNames } from '@/utils/format'
-import SettingsAPIService, { APIError } from '@/services/settingsApi'
+import { LoadingSpinner, ButtonSpinner } from '../common/LoadingSpinner'
+import { classNames } from '../../utils/format'
+import SettingsAPIService, { APIError } from '../../services/settingsApi'
 
 // Type imports
 import type { 
@@ -46,7 +46,7 @@ import type {
   ConnectivityCheckResult,
   SettingsFormProps,
   PlexTestRequest 
-} from '@/types'
+} from './types'
 
 /**
  * Props interface for the PlexSettings component

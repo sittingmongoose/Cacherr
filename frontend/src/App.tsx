@@ -1,9 +1,9 @@
 import React from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
-import { AppProvider } from '@/store'
-import { AppLayout } from '@/components/Layout'
-import { FullPageLoader } from '@/components/common/LoadingSpinner'
-import { ToastContainer } from '@/components/common/Toast'
+import { AppProvider } from './store'
+import { AppLayout } from './components/Layout'
+import { FullPageLoader } from './components/common/LoadingSpinner'
+import { ToastContainer } from './components/common/Toast'
 
 /**
  * Main App component
@@ -122,10 +122,10 @@ const PageLoader: React.FC = () => (
 )
 
 // Lazy load components for better performance and code splitting
-const Dashboard = React.lazy(() => import('@/components/Dashboard'))
-const CachedTab = React.lazy(() => import('@/components/Cached'))
-const LogsPage = React.lazy(() => import('@/components/Logs'))
-const Settings = React.lazy(() => import('@/components/Settings/SettingsPage'))
+const Dashboard = React.lazy(() => import('./components/Dashboard'))
+const CachedTab = React.lazy(() => import('./components/Cached'))
+const LogsPage = React.lazy(() => import('./components/Logs'))
+const Settings = React.lazy(() => import('./components/Settings/SettingsPage'))
 
 // Route components wrapper with Suspense for lazy loading
 const DashboardPage: React.FC = () => (

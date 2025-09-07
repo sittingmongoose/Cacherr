@@ -11,9 +11,9 @@ import {
   Calendar,
   Target
 } from 'lucide-react'
-import { CacheStatistics as CacheStats } from '@/types/api'
-import { LoadingSpinner, CardLoader, SkeletonLoader } from '@/components/common/LoadingSpinner'
-import { classNames } from '@/utils/format'
+import { CacheStatistics as CacheStats } from './types/api'
+import { LoadingSpinner, CardLoader, SkeletonLoader } from '../common/LoadingSpinner'
+import { classNames } from '../../utils/format'
 
 /**
  * CacheStatistics Component

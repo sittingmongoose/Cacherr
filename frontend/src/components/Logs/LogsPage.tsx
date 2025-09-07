@@ -1,5 +1,5 @@
 import React from 'react'
-import { LogViewer } from '@/components/LogViewer'
+import { LogViewer } from '../LogViewer'
 
 /**
  * LogsPage component - Main page for viewing application logs

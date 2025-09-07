@@ -27,7 +27,7 @@ import {
   RemoveCachedFileRequest,
   OperationsResponse,
   OperationDetails,
-} from '@/types/api'
+} from './types/api'
 
 // API configuration
 const API_BASE_URL = '' // Always use relative URLs to go through Vite proxy

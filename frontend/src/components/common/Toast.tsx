@@ -14,9 +14,9 @@
 import React, { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, CheckCircle, XCircle, AlertTriangle, Info } from 'lucide-react'
-import { ToastOptions } from '@/types/api'
-import { classNames } from '@/utils/format'
-import { useToasts } from '@/store'
+import { ToastOptions } from './types/api'
+import { classNames } from '../../utils/format'
+import { useToasts } from '../../store'
 
 // Toast icon mapping
 const toastIcons = {

@@ -12,12 +12,12 @@ import {
   HardDrive,
   Activity
 } from 'lucide-react'
-import { CachedFilesFilter, ResultsFilter } from '@/types/api'
-import { useCachedFilesRealTime, useCachedFilesOperations, useOperationResults, useOperationDetails } from '@/hooks/useApi'
-import { useAppContext } from '@/store/AppContext'
-import { LoadingSpinner, FullPageLoader } from '@/components/common/LoadingSpinner'
-import { classNames } from '@/utils/format'
-import webSocketService from '@/services/websocket'
+import { CachedFilesFilter, ResultsFilter } from './types/api'
+import { useCachedFilesRealTime, useCachedFilesOperations, useOperationResults, useOperationDetails } from '../../hooks/useApi'
+import { useAppContext } from '../../store/AppContext'
+import { LoadingSpinner, FullPageLoader } from '../common/LoadingSpinner'
+import { classNames } from '../../utils/format'
+import webSocketService from '../../services/websocket'
 
 // Import child components (will be created)
 import CachedFilesView from './CachedFilesView'

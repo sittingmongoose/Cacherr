@@ -32,6 +32,7 @@ from typing import List, Set, Generator, Tuple, Optional, Dict, Any
 
 from pydantic import BaseModel, Field, ConfigDict
 from plexapi.server import PlexServer
+from .url_utils import ensure_no_trailing_slash
 from plexapi.video import Episode, Movie
 from plexapi.myplex import MyPlexAccount
 from plexapi.exceptions import NotFound, BadRequest
@@ -220,8 +221,10 @@ class CacherrEngine:
             raise ValueError("PLEX_TOKEN is not configured. Please configure it via the web interface.")
         
         try:
-            self.plex = PlexServer(self.config.plex.url, self.config.plex.token)
-            self.logger.info(f"Connected to Plex server: {self.config.plex.url}")
+            base_url = ensure_no_trailing_slash(self.config.plex.url)
+            plex_token = str(self.config.plex.token)  # Convert SecretStr to string
+            self.plex = PlexServer(base_url, plex_token)
+            self.logger.info(f"Connected to Plex server: {base_url}")
         except Exception as e:
             self.logger.error(f"Failed to connect to Plex server: {e}")
             raise

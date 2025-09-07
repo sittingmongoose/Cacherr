@@ -14,7 +14,7 @@ import {
   FileText, 
   Activity 
 } from 'lucide-react'
-import { classNames } from '@/utils/format'
+import { classNames } from '../../utils/format'
 
 interface AppLayoutProps {
   children: React.ReactNode

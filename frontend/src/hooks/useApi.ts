@@ -6,8 +6,8 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import APIService, { APIError } from '@/services/api'
-import { useAppContext } from '@/store/AppContext'
+import APIService, { APIError } from '../services/api'
+import { useAppContext } from '../store/AppContext'
 import {
   SystemStatus,
   HealthStatus,
@@ -24,7 +24,7 @@ import {
   CacheCleanupRequest,
   CacheCleanupResponse,
   RemoveCachedFileRequest,
-} from '@/types/api'
+} from './types/api'
 
 // Generic API hook return type
 interface APIHookResult<T> {

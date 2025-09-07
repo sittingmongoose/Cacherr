@@ -10,9 +10,9 @@ import {
   Filter,
   Search
 } from 'lucide-react'
-import { TestResults as TestResultsType, TestOperationResult, FileDetail } from '@/types/api'
-import { LoadingSpinner, CardLoader } from '@/components/common/LoadingSpinner'
-import { formatBytes, formatFilePath, formatOperationType, classNames } from '@/utils/format'
+import { TestResults as TestResultsType, TestOperationResult, FileDetail } from './types/api'
+import { LoadingSpinner, CardLoader } from '../common/LoadingSpinner'
+import { formatBytes, formatFilePath, formatOperationType, classNames } from '../../utils/format'
 
 /**
  * TestResults component displays test mode analysis results

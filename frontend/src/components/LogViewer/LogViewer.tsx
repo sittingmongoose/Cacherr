@@ -11,11 +11,11 @@ import {
   AlertTriangle,
   Bug
 } from 'lucide-react'
-import { LogEntry, LogFilter, LogsResponse } from '@/types/api'
-import { LoadingSpinner, CardLoader } from '@/components/common/LoadingSpinner'
-import { formatTimestamp, getLogLevelColor, classNames } from '@/utils/format'
-import { APIService, APIError } from '@/services/api'
-import webSocketService from '@/services/websocket'
+import { LogEntry, LogFilter, LogsResponse } from './types/api'
+import { LoadingSpinner, CardLoader } from '../common/LoadingSpinner'
+import { formatTimestamp, getLogLevelColor, classNames } from '../../utils/format'
+import { APIService, APIError } from '../../services/api'
+import webSocketService from '../../services/websocket'
 
 /**
  * LogViewer component for displaying and filtering application logs

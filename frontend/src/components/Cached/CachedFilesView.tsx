@@ -18,11 +18,11 @@ import {
   Calendar,
   Search
 } from 'lucide-react'
-import { CachedFileInfo, CachedFilesFilter } from '@/types/api'
-import { LoadingSpinner, CardLoader, SkeletonLoader } from '@/components/common/LoadingSpinner'
-import StatusBadge from '@/components/common/StatusBadge'
-import { classNames } from '@/utils/format'
-import { useCachedFilesOperations } from '@/hooks/useApi'
+import { CachedFileInfo, CachedFilesFilter } from './types/api'
+import { LoadingSpinner, CardLoader, SkeletonLoader } from '../common/LoadingSpinner'
+import StatusBadge from '../common/StatusBadge'
+import { classNames } from '../../utils/format'
+import { useCachedFilesOperations } from '../../hooks/useApi'
 
 /**
  * CachedFilesView Component

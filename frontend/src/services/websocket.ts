@@ -15,7 +15,7 @@ import {
   WebSocketMessage,
   OperationProgressMessage,
   FileOperationUpdateMessage,
-} from '@/types/api'
+} from './types/api'
 
 export type WebSocketEventType =
   | 'operation_progress'

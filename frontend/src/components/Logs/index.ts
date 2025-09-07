@@ -7,7 +7,7 @@
 
 export { LogsPage as default } from './LogsPage'
 export { LogsPage } from './LogsPage'
-export { LogViewer } from '@/components/LogViewer'
+export { LogViewer } from '../LogViewer'
 
 // Export types that might be useful for other components
-export type { LogViewerProps } from '@/components/LogViewer/LogViewer'
+export type { LogViewerProps } from '../LogViewer/LogViewer'

@@ -5,7 +5,7 @@
  * to prevent common runtime errors that trigger error boundaries.
  */
 
-import { APIError } from '@/services/api'
+import { APIError } from '../services/api'
 
 /**
  * Safe data access with fallback values

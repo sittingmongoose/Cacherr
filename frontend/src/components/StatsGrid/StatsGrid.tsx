@@ -9,9 +9,9 @@ import {
   Zap,
   CheckCircle 
 } from 'lucide-react'
-import { SystemStatus, CacheStatistics } from '@/types/api'
-import { LoadingSpinner } from '@/components/common/LoadingSpinner'
-import { formatBytes, formatNumber, formatRelativeTime, classNames } from '@/utils/format'
+import { SystemStatus, CacheStatistics } from './types/api'
+import { LoadingSpinner } from '../common/LoadingSpinner'
+import { formatBytes, formatNumber, formatRelativeTime, classNames } from '../../utils/format'
 
 /**
  * StatsGrid component displays key system metrics in a grid layout

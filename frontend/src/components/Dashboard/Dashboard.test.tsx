@@ -14,13 +14,13 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { BrowserRouter } from 'react-router-dom'
 import Dashboard from './Dashboard'
-import { AppProvider } from '@/store'
+import { AppProvider } from '../../store'
 import { mockSystemStatus, mockHealthStatus, mockApiCall, mockApiError } from '@/test-setup'
-import APIService from '@/services/api'
+import APIService from '../../services/api'
 
 // Mock the API service
-vi.mock('@/services/api')
-vi.mock('@/services/websocket', () => ({
+vi.mock('./services/api')
+vi.mock('./services/websocket', () => ({
   default: {
     connect: vi.fn(),
     disconnect: vi.fn(),
@@ -249,7 +249,7 @@ describe('Dashboard Component', () => {
 
     it('shows live updates indicator when WebSocket is connected', async () => {
       // Mock connected WebSocket
-      const mockWebSocket = await vi.importMock('@/services/websocket') as any
+      const mockWebSocket = await vi.importMock('./services/websocket') as any
       vi.mocked(mockWebSocket.default.getStatus).mockReturnValue({
         connected: true,
         reconnecting: false,

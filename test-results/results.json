@@ -13,7 +13,8 @@
     "metadata": {
       "project": "Cacherr",
       "version": "1.0.0",
-      "environment": "test"
+      "environment": "test",
+      "actualWorkers": 2
     },
     "preserveOutput": "always",
     "reporter": [
@@ -47,7 +48,8 @@
         "metadata": {
           "project": "Cacherr",
           "version": "1.0.0",
-          "environment": "test"
+          "environment": "test",
+          "actualWorkers": 2
         },
         "id": "chromium",
         "name": "chromium",
@@ -68,7 +70,8 @@
         "metadata": {
           "project": "Cacherr",
           "version": "1.0.0",
-          "environment": "test"
+          "environment": "test",
+          "actualWorkers": 2
         },
         "id": "firefox",
         "name": "firefox",
@@ -89,7 +92,8 @@
         "metadata": {
           "project": "Cacherr",
           "version": "1.0.0",
-          "environment": "test"
+          "environment": "test",
+          "actualWorkers": 2
         },
         "id": "webkit",
         "name": "webkit",
@@ -110,7 +114,8 @@
         "metadata": {
           "project": "Cacherr",
           "version": "1.0.0",
-          "environment": "test"
+          "environment": "test",
+          "actualWorkers": 2
         },
         "id": "mobile-chrome",
         "name": "mobile-chrome",
@@ -131,7 +136,8 @@
         "metadata": {
           "project": "Cacherr",
           "version": "1.0.0",
-          "environment": "test"
+          "environment": "test",
+          "actualWorkers": 2
         },
         "id": "mobile-safari",
         "name": "mobile-safari",
@@ -152,7 +158,8 @@
         "metadata": {
           "project": "Cacherr",
           "version": "1.0.0",
-          "environment": "test"
+          "environment": "test",
+          "actualWorkers": 2
         },
         "id": "tablet",
         "name": "tablet",
@@ -173,7 +180,8 @@
         "metadata": {
           "project": "Cacherr",
           "version": "1.0.0",
-          "environment": "test"
+          "environment": "test",
+          "actualWorkers": 2
         },
         "id": "accessibility",
         "name": "accessibility",
@@ -204,35 +212,1650 @@
       }
     }
   },
-  "suites": [],
-  "errors": [
+  "suites": [
     {
-      "message": "Error: Cannot find module '@axe-core/playwright'\nRequire stack:\n- /mnt/user/Cursor/Cacherr/e2e/utils/accessibility-test.ts\n- /mnt/user/Cursor/Cacherr/e2e/tests/accessibility.spec.ts\n- /mnt/user/Cursor/Cacherr/node_modules/playwright/lib/transform/transform.js\n- /mnt/user/Cursor/Cacherr/node_modules/playwright/lib/common/configLoader.js\n- /mnt/user/Cursor/Cacherr/node_modules/playwright/lib/program.js\n- /mnt/user/Cursor/Cacherr/node_modules/@playwright/test/cli.js",
-      "stack": "Error: Cannot find module '@axe-core/playwright'\nRequire stack:\n- /mnt/user/Cursor/Cacherr/e2e/utils/accessibility-test.ts\n- /mnt/user/Cursor/Cacherr/e2e/tests/accessibility.spec.ts\n- /mnt/user/Cursor/Cacherr/node_modules/playwright/lib/transform/transform.js\n- /mnt/user/Cursor/Cacherr/node_modules/playwright/lib/common/configLoader.js\n- /mnt/user/Cursor/Cacherr/node_modules/playwright/lib/program.js\n- /mnt/user/Cursor/Cacherr/node_modules/@playwright/test/cli.js\n    at Object.<anonymous> (/mnt/user/Cursor/Cacherr/e2e/utils/accessibility-test.ts:7:1)\n    at Object.<anonymous> (/mnt/user/Cursor/Cacherr/e2e/tests/accessibility.spec.ts:8:1)",
-      "location": {
-        "file": "/mnt/user/Cursor/Cacherr/e2e/utils/accessibility-test.ts",
-        "column": 1,
-        "line": 7
-      },
-      "snippet": "\u001b[90m   at \u001b[39mutils/accessibility-test.ts:7\n\n   5 |\n   6 | import { Page, TestInfo } from '@playwright/test';\n>  7 | import AxeBuilder from '@axe-core/playwright';\n     | ^\n   8 |\n   9 | export interface AccessibilityViolation {\n  10 |   id: string;"
-    },
-    {
-      "message": "Error: Cannot find module '@axe-core/playwright'\nRequire stack:\n- /mnt/user/Cursor/Cacherr/e2e/utils/accessibility-test.ts\n- /mnt/user/Cursor/Cacherr/e2e/tests/performance.spec.ts\n- /mnt/user/Cursor/Cacherr/node_modules/playwright/lib/transform/transform.js\n- /mnt/user/Cursor/Cacherr/node_modules/playwright/lib/common/configLoader.js\n- /mnt/user/Cursor/Cacherr/node_modules/playwright/lib/program.js\n- /mnt/user/Cursor/Cacherr/node_modules/@playwright/test/cli.js",
-      "stack": "Error: Cannot find module '@axe-core/playwright'\nRequire stack:\n- /mnt/user/Cursor/Cacherr/e2e/utils/accessibility-test.ts\n- /mnt/user/Cursor/Cacherr/e2e/tests/performance.spec.ts\n- /mnt/user/Cursor/Cacherr/node_modules/playwright/lib/transform/transform.js\n- /mnt/user/Cursor/Cacherr/node_modules/playwright/lib/common/configLoader.js\n- /mnt/user/Cursor/Cacherr/node_modules/playwright/lib/program.js\n- /mnt/user/Cursor/Cacherr/node_modules/@playwright/test/cli.js\n    at Object.<anonymous> (/mnt/user/Cursor/Cacherr/e2e/utils/accessibility-test.ts:7:1)\n    at Object.<anonymous> (/mnt/user/Cursor/Cacherr/e2e/tests/performance.spec.ts:8:1)",
-      "location": {
-        "file": "/mnt/user/Cursor/Cacherr/e2e/utils/accessibility-test.ts",
-        "column": 1,
-        "line": 7
-      },
-      "snippet": "\u001b[90m   at \u001b[39mutils/accessibility-test.ts:7\n\n   5 |\n   6 | import { Page, TestInfo } from '@playwright/test';\n>  7 | import AxeBuilder from '@axe-core/playwright';\n     | ^\n   8 |\n   9 | export interface AccessibilityViolation {\n  10 |   id: string;"
+      "title": "dashboard.spec.ts",
+      "file": "dashboard.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Dashboard Core Functionality",
+          "file": "dashboard.spec.ts",
+          "line": 19,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Dashboard loads with all tabs visible",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 19,
+                      "error": {
+                        "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝",
+                        "stack": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-07T06:29:39.654Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-7583cb3f4c52f4969d74",
+              "file": "dashboard.spec.ts",
+              "line": 30,
+              "column": 7
+            },
+            {
+              "title": "Navigation switches content correctly",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 18,
+                      "error": {
+                        "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝",
+                        "stack": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-07T06:29:39.679Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-9ee92a5ec206eca8b4b8",
+              "file": "dashboard.spec.ts",
+              "line": 69,
+              "column": 7
+            },
+            {
+              "title": "Statistics display correct cache usage information",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 16,
+                      "error": {
+                        "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝",
+                        "stack": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-07T06:29:45.536Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-481edfe808c8ae12dc57",
+              "file": "dashboard.spec.ts",
+              "line": 101,
+              "column": 7
+            },
+            {
+              "title": "System status information is properly displayed",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 21,
+                      "error": {
+                        "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝",
+                        "stack": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-07T06:29:45.582Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-433d6998976bbe434951",
+              "file": "dashboard.spec.ts",
+              "line": 133,
+              "column": 7
+            },
+            {
+              "title": "Real-time update information is displayed",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 12,
+                      "error": {
+                        "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝",
+                        "stack": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-07T06:29:51.360Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-3380565a5bb071889021",
+              "file": "dashboard.spec.ts",
+              "line": 160,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Real-Time Updates",
+          "file": "dashboard.spec.ts",
+          "line": 181,
+          "column": 6,
+          "specs": [
+            {
+              "title": "WebSocket updates dashboard data in real-time",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 16,
+                      "error": {
+                        "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝",
+                        "stack": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-07T06:29:51.446Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-d86a8b15933cd9b8133d",
+              "file": "dashboard.spec.ts",
+              "line": 189,
+              "column": 7
+            },
+            {
+              "title": "WebSocket real-time updates with mock data",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 6,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 17,
+                      "error": {
+                        "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝",
+                        "stack": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-07T06:29:57.190Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-fa1ad1251d27aa0b4450",
+              "file": "dashboard.spec.ts",
+              "line": 241,
+              "column": 7
+            },
+            {
+              "title": "WebSocket disconnection handled gracefully",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 24,
+                      "error": {
+                        "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝",
+                        "stack": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-07T06:29:57.298Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-f530e1719b11d37555d1",
+              "file": "dashboard.spec.ts",
+              "line": 297,
+              "column": 7
+            },
+            {
+              "title": "WebSocket reconnection after failure",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 15,
+                      "error": {
+                        "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝",
+                        "stack": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-07T06:30:03.121Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-c408a249c0f00784a052",
+              "file": "dashboard.spec.ts",
+              "line": 332,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "User Interactions",
+          "file": "dashboard.spec.ts",
+          "line": 366,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Theme switching works correctly",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 9,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 15,
+                      "error": {
+                        "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝",
+                        "stack": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-07T06:30:03.229Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-719485e28f81df196eda",
+              "file": "dashboard.spec.ts",
+              "line": 374,
+              "column": 7
+            },
+            {
+              "title": "Auto-refresh toggle functionality",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 10,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 13,
+                      "error": {
+                        "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝",
+                        "stack": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-07T06:30:09.008Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-60121d1daaee71cb5a6b",
+              "file": "dashboard.spec.ts",
+              "line": 405,
+              "column": 7
+            },
+            {
+              "title": "Manual refresh functionality",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 11,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 16,
+                      "error": {
+                        "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝",
+                        "stack": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-07T06:30:09.084Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-c014130e543db79b25f2",
+              "file": "dashboard.spec.ts",
+              "line": 432,
+              "column": 7
+            },
+            {
+              "title": "Cache operation buttons functionality",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 12,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 15,
+                      "error": {
+                        "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝",
+                        "stack": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-07T06:30:14.813Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-4ba462be00a3b0f5f455",
+              "file": "dashboard.spec.ts",
+              "line": 458,
+              "column": 7
+            },
+            {
+              "title": "Scheduler control functionality",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 13,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 16,
+                      "error": {
+                        "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝",
+                        "stack": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-07T06:30:14.874Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-3fcd8a37aa24ea388098",
+              "file": "dashboard.spec.ts",
+              "line": 493,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Responsive Design",
+          "file": "dashboard.spec.ts",
+          "line": 523,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Mobile viewport adaptation",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 14,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 14,
+                      "error": {
+                        "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝",
+                        "stack": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-07T06:30:20.613Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-1d55e67a2ac8b22a559c",
+              "file": "dashboard.spec.ts",
+              "line": 531,
+              "column": 7
+            },
+            {
+              "title": "Tablet viewport adaptation",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 15,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 15,
+                      "error": {
+                        "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝",
+                        "stack": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-07T06:30:20.685Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-8a3ab4d242f213cd617d",
+              "file": "dashboard.spec.ts",
+              "line": 561,
+              "column": 7
+            },
+            {
+              "title": "Desktop viewport functionality",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 16,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 13,
+                      "error": {
+                        "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝",
+                        "stack": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-07T06:30:26.279Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-77facb807b4f544cf6ea",
+              "file": "dashboard.spec.ts",
+              "line": 581,
+              "column": 7
+            },
+            {
+              "title": "Responsive functionality across viewports",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 17,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 16,
+                      "error": {
+                        "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝",
+                        "stack": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-07T06:30:26.375Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-d285dcd7ab0549226fee",
+              "file": "dashboard.spec.ts",
+              "line": 605,
+              "column": 7
+            },
+            {
+              "title": "Touch interactions on mobile",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 18,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 11,
+                      "error": {
+                        "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝",
+                        "stack": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-07T06:30:32.065Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-dea0a0ed1a3161eb8905",
+              "file": "dashboard.spec.ts",
+              "line": 635,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Accessibility",
+          "file": "dashboard.spec.ts",
+          "line": 666,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Keyboard navigation works correctly",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 19,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 14,
+                      "error": {
+                        "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝",
+                        "stack": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-07T06:30:32.106Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-e6c60156a48560fea44a",
+              "file": "dashboard.spec.ts",
+              "line": 673,
+              "column": 7
+            },
+            {
+              "title": "ARIA labels and roles are properly implemented",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 20,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 12,
+                      "error": {
+                        "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝",
+                        "stack": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-07T06:30:37.900Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-fe5eb97238b6cfbf4c31",
+              "file": "dashboard.spec.ts",
+              "line": 704,
+              "column": 7
+            },
+            {
+              "title": "Heading hierarchy is correct",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 21,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 16,
+                      "error": {
+                        "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝",
+                        "stack": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-07T06:30:37.997Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-6c31c1209a92b725dcd1",
+              "file": "dashboard.spec.ts",
+              "line": 726,
+              "column": 7
+            },
+            {
+              "title": "Focus indicators are visible",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 22,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 14,
+                      "error": {
+                        "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝",
+                        "stack": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-07T06:30:43.694Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-2554029fd439a2782db2",
+              "file": "dashboard.spec.ts",
+              "line": 747,
+              "column": 7
+            },
+            {
+              "title": "Color contrast meets accessibility standards",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 23,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 14,
+                      "error": {
+                        "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝",
+                        "stack": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-07T06:30:43.819Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-2eae62f6fa9e878d390b",
+              "file": "dashboard.spec.ts",
+              "line": 779,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Error Handling",
+          "file": "dashboard.spec.ts",
+          "line": 811,
+          "column": 6,
+          "specs": [
+            {
+              "title": "API failures are handled gracefully",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 24,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 12,
+                      "error": {
+                        "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝",
+                        "stack": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-07T06:30:49.488Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-07f1d267c6082d2d03aa",
+              "file": "dashboard.spec.ts",
+              "line": 819,
+              "column": 7
+            },
+            {
+              "title": "WebSocket connection errors are handled",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 25,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 14,
+                      "error": {
+                        "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝",
+                        "stack": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-07T06:30:49.636Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-72859a8438ff4ea6e7b9",
+              "file": "dashboard.spec.ts",
+              "line": 845,
+              "column": 7
+            },
+            {
+              "title": "Network connectivity issues are handled",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 26,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 13,
+                      "error": {
+                        "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝",
+                        "stack": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-07T06:30:55.240Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-6e52f2027104f37deda4",
+              "file": "dashboard.spec.ts",
+              "line": 866,
+              "column": 7
+            },
+            {
+              "title": "Component rendering errors are handled",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 27,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 14,
+                      "error": {
+                        "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝",
+                        "stack": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-07T06:30:55.434Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-8aa724b95d13d13c7b5a",
+              "file": "dashboard.spec.ts",
+              "line": 893,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Performance",
+          "file": "dashboard.spec.ts",
+          "line": 913,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Dashboard loads within acceptable time",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 28,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 36,
+                      "error": {
+                        "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝",
+                        "stack": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-07T06:31:00.929Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-2e0792a0332e8cc43153",
+              "file": "dashboard.spec.ts",
+              "line": 920,
+              "column": 7
+            },
+            {
+              "title": "Data refresh completes efficiently",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 29,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 20,
+                      "error": {
+                        "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝",
+                        "stack": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-07T06:31:01.364Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-1385e15e2167e7e13f20",
+              "file": "dashboard.spec.ts",
+              "line": 939,
+              "column": 7
+            },
+            {
+              "title": "Interactions are smooth and responsive",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 30,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 11,
+                      "error": {
+                        "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝",
+                        "stack": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-07T06:31:07.028Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-cf78abbadf91c9793167",
+              "file": "dashboard.spec.ts",
+              "line": 961,
+              "column": 7
+            },
+            {
+              "title": "Memory usage remains stable",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 31,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 12,
+                      "error": {
+                        "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝",
+                        "stack": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-07T06:31:07.254Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-699a2adcad2c504d217c",
+              "file": "dashboard.spec.ts",
+              "line": 985,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Cross-browser Compatibility",
+          "file": "dashboard.spec.ts",
+          "line": 1018,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Core functionality works consistently across browsers",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 32,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 12,
+                      "error": {
+                        "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝",
+                        "stack": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-07T06:31:12.896Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-27718d0ef61b3262d164",
+              "file": "dashboard.spec.ts",
+              "line": 1026,
+              "column": 7
+            },
+            {
+              "title": "Browser-specific features are handled gracefully",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 33,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 13,
+                      "error": {
+                        "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝",
+                        "stack": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-07T06:31:13.144Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-c52f1eb61525164aeec7",
+              "file": "dashboard.spec.ts",
+              "line": 1051,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Integration Tests",
+          "file": "dashboard.spec.ts",
+          "line": 1077,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Dashboard integrates with backend API",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 34,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 14,
+                      "error": {
+                        "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝",
+                        "stack": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-07T06:31:18.691Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-72ea74860bbaaa01cec0",
+              "file": "dashboard.spec.ts",
+              "line": 1084,
+              "column": 7
+            },
+            {
+              "title": "State persists across navigation",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 35,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 14,
+                      "error": {
+                        "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝",
+                        "stack": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-07T06:31:18.978Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-106cd9ae58fe16e829bf",
+              "file": "dashboard.spec.ts",
+              "line": 1109,
+              "column": 7
+            },
+            {
+              "title": "Concurrent operations are handled properly",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 36,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 13,
+                      "error": {
+                        "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝",
+                        "stack": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: browserType.launch: \n╔══════════════════════════════════════════════════════╗\n║ Host system is missing dependencies to run browsers. ║\n║ Please install them with the following command:      ║\n║                                                      ║\n║     npx playwright install-deps                      ║\n║                                                      ║\n║ Alternatively, use apt:                              ║\n║     apt-get install libnspr4\\                        ║\n║         libnss3                                      ║\n║                                                      ║\n║ <3 Playwright Team                                   ║\n╚══════════════════════════════════════════════════════╝"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-07T06:31:24.851Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-b5f91067c99bb4cf033d",
+              "file": "dashboard.spec.ts",
+              "line": 1141,
+              "column": 7
+            }
+          ]
+        }
+      ]
     }
   ],
+  "errors": [],
   "stats": {
-    "startTime": "2025-08-31T23:27:27.477Z",
-    "duration": 11174.784,
+    "startTime": "2025-09-07T06:29:25.822Z",
+    "duration": 119287.778,
     "expected": 0,
     "skipped": 0,
-    "unexpected": 0,
+    "unexpected": 37,
     "flaky": 0
   }
 }

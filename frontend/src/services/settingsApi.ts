@@ -13,7 +13,7 @@ import {
   ConfigurationSettings,
   ValidationResult,
   ConnectivityCheckResult,
-} from '@/types/api'
+} from './types/api'
 
 import {
   // Settings-specific types
@@ -31,7 +31,7 @@ import {
   PlexTestRequest,
   SettingsExportOptions,
   SettingsImportOptions,
-} from '@/types/settings'
+} from './types/settings'
 
 // Import HTTP client from existing API service
 import { APIError } from './api'

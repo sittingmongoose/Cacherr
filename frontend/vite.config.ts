@@ -16,6 +16,9 @@ export default defineConfig({
       '@/utils': path.resolve(__dirname, './src/utils'),
     },
   },
+  define: {
+    global: 'globalThis',
+  },
   server: {
     host: '0.0.0.0', // Required for Docker container access
     port: 3000,

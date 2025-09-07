@@ -1,13 +1,13 @@
 import React, { useEffect } from 'react'
 import { Settings, RefreshCw, Moon, Sun, Monitor, Wifi, WifiOff } from 'lucide-react'
-import { SystemStatus, HealthStatus, CacheStatistics } from '@/types/api'
-import StatusCard from '@/components/StatusCard'
-import StatsGrid from '@/components/StatsGrid'
-import { LoadingSpinner, FullPageLoader } from '@/components/common/LoadingSpinner'
-import { classNames } from '@/utils/format'
-import { useAppContext, useSystemStatus, useUIState, useWebSocketStatus } from '@/store'
-import { useRealTimeData, useOperations } from '@/hooks/useApi'
-import webSocketService from '@/services/websocket'
+import { SystemStatus, HealthStatus, CacheStatistics } from './types/api'
+import StatusCard from '../StatusCard'
+import StatsGrid from '../StatsGrid'
+import { LoadingSpinner, FullPageLoader } from '../common/LoadingSpinner'
+import { classNames } from '../../utils/format'
+import { useAppContext, useSystemStatus, useUIState, useWebSocketStatus } from '../../store'
+import { useRealTimeData, useOperations } from '../../hooks/useApi'
+import webSocketService from '../../services/websocket'
 
 /**
  * Main Dashboard component

@@ -1,6 +1,6 @@
 import React from 'react'
-import { LoadingProps } from '@/types'
-import { classNames } from '@/utils/format'
+import { LoadingProps } from './types'
+import { classNames } from '../../utils/format'
 
 /**
  * LoadingSpinner component with accessibility support

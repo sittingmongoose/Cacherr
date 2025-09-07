@@ -45,8 +45,8 @@ import {
   Trash2
 } from 'lucide-react'
 
-import { LoadingSpinner, ButtonSpinner } from '@/components/common/LoadingSpinner'
-import { classNames, formatBytes } from '@/utils/format'
+import { LoadingSpinner, ButtonSpinner } from '../common/LoadingSpinner'
+import { classNames, formatBytes } from '../../utils/format'
 
 // Type imports
 import type { 
@@ -56,7 +56,7 @@ import type {
   SettingsFormProps,
   MediaSettingsFormData,
   PathSettingsFormData
-} from '@/types'
+} from './types'
 
 /**
  * Props interface for the MediaSettings component

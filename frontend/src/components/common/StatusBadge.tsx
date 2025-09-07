@@ -1,5 +1,5 @@
 import React from 'react'
-import { classNames, getStatusVariant } from '@/utils/format'
+import { classNames, getStatusVariant } from '../../utils/format'
 
 /**
  * StatusBadge component for displaying status indicators

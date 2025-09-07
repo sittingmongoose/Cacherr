@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react'
-import { SystemStatus, HealthStatus, LogEntry, TestResults, UIState, ToastOptions } from '@/types/api'
-import webSocketService, { WebSocketConnectionStatus } from '@/services/websocket'
+import { SystemStatus, HealthStatus, LogEntry, TestResults, UIState, ToastOptions } from './types/api'
+import webSocketService, { WebSocketConnectionStatus } from '../services/websocket'
 
 /**
  * Application-wide state management using React Context API

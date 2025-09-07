@@ -37,9 +37,9 @@ import {
   Shield
 } from 'lucide-react'
 
-import { LoadingSpinner, ButtonSpinner } from '@/components/common/LoadingSpinner'
-import { classNames } from '@/utils/format'
-import SettingsAPIService, { APIError } from '@/services/settingsApi'
+import { LoadingSpinner, ButtonSpinner } from '../common/LoadingSpinner'
+import { classNames } from '../../utils/format'
+import SettingsAPIService, { APIError } from '../../services/settingsApi'
 
 // Import all Settings components
 import PlexSettings from './PlexSettings'
@@ -55,10 +55,10 @@ import type {
   SettingsValidationErrors,
   SETTINGS_SECTIONS,
   SettingsNavItem
-} from '@/types'
+} from './types'
 
 // Import API ValidationResult explicitly to avoid conflict with generic ValidationResult
-import type { ValidationResult } from '@/types/api'
+import type { ValidationResult } from './types/api'
 
 /**
  * Settings page state interface

@@ -27,11 +27,11 @@
     "clean:test": "rm -rf test-results playwright-report test-reports"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.8.0",
     "@playwright/test": "^1.55.0",
     "@types/node": "^20.0.0",
-    "typescript": "^5.0.0",
     "axe-playwright": "^1.2.0",
-    "@axe-core/playwright": "^4.8.0"
+    "typescript": "^5.0.0"
   },
   "engines": {
     "node": ">=18.0.0"
@@ -51,5 +51,8 @@
   "license": "MIT",
   "playwright": {
     "config": "playwright.config.js"
+  },
+  "dependencies": {
+    "puppeteer": "^24.19.0"
   }
 }
