@@ -234,6 +234,51 @@ class CachedFilesService:
             self.logger.error(f"Failed to initialize cached files database: {e}")
             raise
 
+    def _ensure_tables_exist(self) -> None:
+        """Ensure required tables and indexes exist and are usable.
+
+        This method is referenced by the application bootstrap during
+        database path probing. It verifies the presence of the schema and
+        performs a lightweight sanity check. If any required table is
+        missing, it (re)initializes the schema.
+        """
+        try:
+            with sqlite3.connect(self.database_path) as conn:
+                conn.execute("PRAGMA foreign_keys = ON")
+
+                # Check existing tables
+                rows = conn.execute(
+                    "SELECT name FROM sqlite_master WHERE type='table'"
+                ).fetchall()
+                existing_tables = {r[0] for r in rows}
+
+                required_tables = {
+                    'cached_files',
+                    'cached_file_users',
+                    'cache_operations_log',
+                }
+
+                # Initialize schema if anything is missing
+                if not required_tables.issubset(existing_tables):
+                    self.logger.info("Database schema incomplete; initializing tables...")
+                    self._init_database()
+
+                # Lightweight sanity checks (will raise if tables are inaccessible)
+                conn.execute("SELECT 1 FROM cached_files LIMIT 1")
+                conn.execute("SELECT 1 FROM cache_operations_log LIMIT 1")
+
+                # Ensure indexes exist (idempotent)
+                conn.execute("CREATE INDEX IF NOT EXISTS idx_cached_files_status ON cached_files(status)")
+                conn.execute("CREATE INDEX IF NOT EXISTS idx_cached_files_user ON cached_files(triggered_by_user)")
+                conn.execute("CREATE INDEX IF NOT EXISTS idx_cached_files_cached_at ON cached_files(cached_at)")
+                conn.execute("CREATE INDEX IF NOT EXISTS idx_cache_log_timestamp ON cache_operations_log(timestamp)")
+                conn.execute("CREATE INDEX IF NOT EXISTS idx_cache_log_user ON cache_operations_log(triggered_by_user)")
+
+                conn.commit()
+        except sqlite3.Error as e:
+            self.logger.error(f"Schema verification failed: {e}")
+            raise
+
     def add_cached_file(self, file_path: str, original_path: str, cached_path: str,
                        cache_method: str = 'atomic_symlink', user_context: Optional[UserOperationContext] = None,
                        operation_reason: str = 'manual', metadata: Optional[Dict] = None) -> CachedFileInfo:

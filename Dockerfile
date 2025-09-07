@@ -1,19 +1,26 @@
 # ===========================================
 # Production Dockerfile for Cacherr
-# Multi-stage build: Frontend → Backend
-# Target: <200MB final image
+# Multi-stage build: Frontend → Backend (single image)
 # ===========================================
 
-# ===========================================
-# Production Dockerfile for Cacherr
-# Uses pre-built frontend for faster builds
-# ===========================================
+# ---------- Frontend build stage ----------
+FROM node:20-bullseye-slim AS frontend-build
+WORKDIR /frontend
 
+# Install deps
+COPY frontend/package*.json ./
+RUN npm ci
+
+# Build assets
+COPY frontend/ ./
+RUN npm run build
+
+# ---------- Backend runtime stage ----------
 FROM python:3.11-slim AS production
 
 # Labels for container metadata
 LABEL maintainer="Cacherr Team" \
-      description="Docker-optimized Plex media caching system" \
+      description="Docker-optimized Plex media caching system (single-image build)" \
       version="1.0.0"
 
 # Set environment variables for production
@@ -44,16 +51,13 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# Copy pre-built frontend assets (built during development)
-COPY frontend/dist ./frontend/dist
-
-# Verify frontend assets exist
-RUN ls -la frontend/dist/
-
-# Copy application source code
+# Copy backend source
 COPY src/ ./src/
 COPY main.py .
 COPY entrypoint.sh .
+
+# Copy built frontend from build stage
+COPY --from=frontend-build /frontend/dist ./frontend/dist
 
 # Create necessary directories with proper permissions
 RUN mkdir -p /config /logs /cache && \
@@ -65,7 +69,7 @@ EXPOSE 5445
 
 # Health check for production monitoring
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:5445/api/health || exit 1
+    CMD curl -f http://localhost:5445/health || exit 1
 
 # Use entrypoint script for proper startup and permission handling
 # Note: Entrypoint runs as root initially, then switches to cacherr user

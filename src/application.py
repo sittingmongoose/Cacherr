@@ -734,8 +734,11 @@ class ApplicationContext:
             if self.app_config.enable_cache_engine:
                 try:
                     from .core.interfaces import CacheService
+                    # Register by interface for DI lookups
                     self.container.register_singleton(CacheService, CacherrEngine)
-                    self.logger.info("CacheService registered successfully")
+                    # Also register by concrete type for direct resolutions elsewhere
+                    self.container.register_singleton(CacherrEngine, CacherrEngine)
+                    self.logger.info("CacheService and CacherrEngine registered successfully")
                 except ImportError as e:
                     self.logger.warning(f"Failed to import CacheService: {e}")
                     self.startup_errors.append(f"CacheService import failed: {e}")
@@ -771,7 +774,7 @@ class ApplicationContext:
                             try:
                                 test_service = CachedFilesService(database_path=path)
                                 # Try a simple operation to verify database integrity
-                                test_service._ensure_tables_exist()  # Assuming this method exists
+                                test_service._ensure_tables_exist()
                                 cached_files_service = test_service
                                 db_path = path
                                 self.logger.info(f"Successfully connected to existing database: {path}")
@@ -789,7 +792,7 @@ class ApplicationContext:
                         try:
                             test_service = CachedFilesService(database_path=path)
                             # Initialize database schema
-                            test_service._ensure_tables_exist()  # Assuming this method exists
+                            test_service._ensure_tables_exist()
                             cached_files_service = test_service
                             db_path = path
                             self.logger.info(f"Successfully created new database: {path}")
