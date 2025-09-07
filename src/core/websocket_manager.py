@@ -16,7 +16,7 @@ import logging
 import json
 from typing import Dict, Set, Any, Optional, List
 from datetime import datetime, timedelta
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 from enum import Enum
 
 from flask_socketio import SocketIO, emit, join_room, leave_room
@@ -61,7 +61,7 @@ class ClientInfo:
     last_seen: datetime
     user_agent: Optional[str] = None
     ip_address: Optional[str] = None
-    rooms: Set[str] = set()
+    rooms: Set[str] = field(default_factory=set)
 
 
 class WebSocketManager:
