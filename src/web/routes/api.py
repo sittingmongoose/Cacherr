@@ -672,8 +672,28 @@ def api_test_plex_connection():
             )
             return jsonify(response.model_dump()), 400
 
-        plex_url = data.get('url', '').strip()
-        plex_token = data.get('token', '').strip()
+        plex_url = (data.get('url') or '').strip()
+        plex_token = (data.get('token') or '').strip()
+
+        # Resolve token: treat masked tokens as "use saved value"
+        MASK = '***MASKED***'
+        cfg = get_config()
+        if (not plex_token) or (plex_token == MASK) or ('*' in plex_token.upper()) or (plex_token.lower() == 'masked'):
+            if cfg and getattr(cfg.plex, 'token', None):
+                # Handle SecretStr and plain str
+                token_val = cfg.plex.token
+                if hasattr(token_val, 'get_secret_value'):
+                    token_val = token_val.get_secret_value()
+                plex_token = token_val
+            elif os.getenv('PLEX_TOKEN'):
+                plex_token = os.getenv('PLEX_TOKEN')
+
+        # Resolve URL: fall back to saved or environment value
+        if not plex_url:
+            if cfg and getattr(cfg.plex, 'url', None):
+                plex_url = str(cfg.plex.url)
+            elif os.getenv('PLEX_URL'):
+                plex_url = os.getenv('PLEX_URL')
 
         if not plex_url or not plex_token:
             response = APIResponse(
