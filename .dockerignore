@@ -62,8 +62,8 @@ __pycache__/
 .coverage
 htmlcov/
 
-# Frontend Build Artifacts (exclude built, keep source for build)
-frontend/dist/
+# Frontend artifacts
+# Keep built dist in context so the image can serve the UI without building
 frontend/node_modules/
 frontend/*.config.js
 frontend/*.config.ts
