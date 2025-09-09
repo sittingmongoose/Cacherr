@@ -20,6 +20,7 @@ from dataclasses import dataclass, asdict, field
 from enum import Enum
 
 from flask_socketio import SocketIO, emit, join_room, leave_room
+from flask import request
 
 
 class WebSocketEventType(Enum):
@@ -92,9 +93,13 @@ class WebSocketManager:
         """Register WebSocket event handlers."""
         
         @self.socketio.on('connect')
-        def handle_connect():
+        def handle_connect(auth=None):
             """Handle client connection."""
-            sid = self.socketio.server.eio.sid
+            sid = getattr(request, 'sid', None)
+            if not sid:
+                # Fallback: do nothing if SID cannot be determined
+                self.logger.warning("WebSocket connect without SID")
+                return
             self._add_client(sid)
             self.logger.info(f"Client connected: {sid}")
             
@@ -108,14 +113,18 @@ class WebSocketManager:
         @self.socketio.on('disconnect')
         def handle_disconnect():
             """Handle client disconnection."""
-            sid = self.socketio.server.eio.sid
+            sid = getattr(request, 'sid', None)
+            if not sid:
+                return
             self._remove_client(sid)
             self.logger.info(f"Client disconnected: {sid}")
         
         @self.socketio.on('join')
         def handle_join(data):
             """Handle client joining a room."""
-            sid = self.socketio.server.eio.sid
+            sid = getattr(request, 'sid', None)
+            if not sid:
+                return
             room = data.get('room')
             if room:
                 self._join_room(sid, room)
@@ -125,7 +134,9 @@ class WebSocketManager:
         @self.socketio.on('leave')
         def handle_leave(data):
             """Handle client leaving a room."""
-            sid = self.socketio.server.eio.sid
+            sid = getattr(request, 'sid', None)
+            if not sid:
+                return
             room = data.get('room')
             if room:
                 self._leave_room(sid, room)
@@ -135,7 +146,9 @@ class WebSocketManager:
         @self.socketio.on('ping')
         def handle_ping():
             """Handle ping message from client."""
-            sid = self.socketio.server.eio.sid
+            sid = getattr(request, 'sid', None)
+            if not sid:
+                return
             self._update_client_last_seen(sid)
             emit('pong', {
                 'timestamp': datetime.utcnow().isoformat(),
@@ -305,4 +318,3 @@ def send_to_client(sid: str, message: WebSocketMessage):
         manager.send_to_client(sid, message)
     else:
         logging.warning("WebSocket manager not initialized, cannot send message")
-

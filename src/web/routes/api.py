@@ -331,9 +331,10 @@ def api_get_config_current():
 
     try:
         # Return configuration in the format expected by Settings page
+        # Ensure all values are JSON-serializable (cast Pydantic Url/Enum types to str)
         config_data = {
             'plex': {
-                'url': config.plex.url,
+                'url': str(config.plex.url) if getattr(config.plex, 'url', None) else '',
                 'token': '***MASKED***' if config.plex.token else '',
                 'username': config.plex.username or '',
                 'password': '***MASKED***' if config.plex.password else ''
@@ -350,10 +351,12 @@ def api_get_config_current():
                 'delete_from_cache_when_done': config.media.delete_from_cache_when_done
             },
             'performance': {
-                'max_concurrent_operations': config.performance.max_concurrent_moves_cache,
-                'cache_check_interval': config.real_time_watch.get('check_interval', 30) if isinstance(config.real_time_watch, dict) else 30,
-                'max_concurrent_local_transfers': config.performance.max_concurrent_local_transfers,
-                'log_level': getattr(config.logging.level, 'value', config.logging.level)
+                'max_concurrent_operations': getattr(config.performance, 'max_concurrent_moves_cache', getattr(config.performance, 'max_concurrent_operations', 3)),
+                'cache_check_interval': (config.real_time_watch.get('check_interval', 30)
+                                         if isinstance(config.real_time_watch, dict)
+                                         else 30),
+                'max_concurrent_local_transfers': getattr(config.performance, 'max_concurrent_local_transfers', 1),
+                'log_level': str(getattr(config.logging, 'level', 'INFO')) if not isinstance(getattr(config.logging, 'level', 'INFO'), str) else getattr(config.logging, 'level', 'INFO')
             }
         }
 

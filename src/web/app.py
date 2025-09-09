@@ -186,6 +186,13 @@ class WebApplicationFactory:
                 g.media_service = self.container.try_resolve(MediaService)
                 g.file_service = self.container.try_resolve(FileService)
                 g.notification_service = self.container.try_resolve(NotificationService)
+                # Results service for operations/history endpoints
+                try:
+                    from ..core.interfaces import ResultsService
+                    g.results_service = self.container.try_resolve(ResultsService)
+                except Exception as e:
+                    g.results_service = None
+                    self.logger.warning(f"ResultsService resolution failed: {e}")
                 # Try to resolve CachedFilesService if available
                 try:
                     from ..core.cached_files_service import CachedFilesService
