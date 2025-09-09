@@ -31,9 +31,16 @@ RECENT FIXES APPLIED:&#xD;
 &#xD;
 MOUNT COMPATIBILITY: Uses identical mount paths as Plex container to prevent media visibility issues.&#xD;
 &#xD;
-SAFE CONFIGURATION: Default paths use dedicated directories to prevent system damage.</Overview>
+  SAFE CONFIGURATION: Default paths use dedicated directories to prevent system damage.&#xD;
+&#xD;
+COMMON SETUP PITFALLS (and fixes):&#xD;
+- WebUI not reachable: ensure WEB_HOST=0.0.0.0 and WEB_PORT matches the container port mapping (Target=5445).&#xD;
+- Dev redirect to :3000: set CACHERR_ENVIRONMENT=production (default) to serve the built UI.&#xD;
+- Plex auth errors: include protocol and port in PLEX_URL (e.g., http://host:32400) and paste PLEX_TOKEN without quotes.&#xD;
+- Permissions: do not map /config or /cache to system dirs; use dedicated appdata paths.&#xD;
+  </Overview>
   <Category>MediaServer:Other</Category>
-  <WebUI>http://[IP]:5445</WebUI>
+  <WebUI>http://[IP]:[PORT:5445]</WebUI>
   <TemplateURL/>
   <Icon>https://raw.githubusercontent.com/sittingmongoose/cacherr/main/cacherr-icon.png</Icon>
   <ExtraParams>--platform linux/amd64 --security-opt no-new-privileges:true</ExtraParams>
@@ -43,10 +50,17 @@ SAFE CONFIGURATION: Default paths use dedicated directories to prevent system da
   <DonateText/>
   <DonateLink/>
   <Requires>Plex Media Server</Requires>
-  <Config Name="PLEX_URL" Target="PLEX_URL" Default="" Mode="" Description="Your Plex server URL - configure via WebGUI" Type="Variable" Display="always" Required="false" Mask="false"/>
-  <Config Name="PLEX_TOKEN" Target="PLEX_TOKEN" Default="" Mode="" Description="Your Plex authentication token - configure via WebGUI" Type="Variable" Display="always" Required="false" Mask="true"/>
+  <Config Name="PLEX_URL" Target="PLEX_URL" Default="" Mode="" Description="Plex server URL (include protocol and port), e.g. http://192.168.1.10:32400. Leave blank to configure in the WebGUI." Type="Variable" Display="always" Required="false" Mask="false"/>
+  <Config Name="PLEX_TOKEN" Target="PLEX_TOKEN" Default="" Mode="" Description="Plex token (paste raw token without quotes). Leave blank to configure in the WebGUI." Type="Variable" Display="always" Required="false" Mask="true"/>
   <Config Name="PLEX_SOURCE" Target="PLEX_SOURCE" Default="/media" Mode="" Description="Inside-container path to your primary Plex media mount (should match the Path Target below). Default: /media." Type="Variable" Display="advanced" Required="false" Mask="false"/>
-  <Config Name="Web Port" Target="5445" Default="5445" Mode="tcp" Description="Web interface port" Type="Port" Display="always" Required="true" Mask="false">5445</Config>
+  <Config Name="Web Port" Target="5445" Default="5445" Mode="tcp" Description="Web interface port (container). Match this with WEB_PORT below." Type="Port" Display="always" Required="true" Mask="false">5445</Config>
+  <Config Name="WEB_HOST" Target="WEB_HOST" Default="0.0.0.0" Mode="" Description="Host interface for the web server to bind. Use 0.0.0.0 so Unraid can reach it." Type="Variable" Display="advanced" Required="false" Mask="false"/>
+  <Config Name="WEB_PORT" Target="WEB_PORT" Default="5445" Mode="" Description="Internal web server port. Must match the container port mapping above (Target=5445 by default)." Type="Variable" Display="advanced" Required="false" Mask="false"/>
+  <Config Name="CACHERR_ENVIRONMENT" Target="CACHERR_ENVIRONMENT" Default="production" Mode="" Description="Runtime mode. Use 'production' to serve the built UI and avoid dev-server redirects." Type="Variable" Display="advanced" Required="false" Mask="false"/>
+  <Config Name="LOG_LEVEL" Target="LOG_LEVEL" Default="INFO" Mode="" Description="Logging level: DEBUG, INFO, WARNING, ERROR." Type="Variable" Display="advanced" Required="false" Mask="false"/>
+  <Config Name="TZ" Target="TZ" Default="UTC" Mode="" Description="Container timezone." Type="Variable" Display="advanced" Required="false" Mask="false"/>
+  <Config Name="AUTO_START_SCHEDULER" Target="AUTO_START_SCHEDULER" Default="true" Mode="" Description="Automatically start background scheduler on boot." Type="Variable" Display="advanced" Required="false" Mask="false"/>
+  <Config Name="ENABLE_REAL_TIME_WATCHER" Target="ENABLE_REAL_TIME_WATCHER" Default="false" Mode="" Description="Enable real-time Plex watcher (advanced)." Type="Variable" Display="advanced" Required="false" Mask="false"/>
   <Config Name="Plex Media Path" Target="/media" Default="" Mode="ro" Description="Plex-compatible path for primary media (READ-ONLY). Default inside-container path is /media and should match PLEX_SOURCE." Type="Path" Display="always" Required="true" Mask="false"/>
   <Config Name="Cache Directory" Target="/cache" Default="/mnt/user/appdata/cacherr-cache/" Mode="rw" Description="Dedicated cache directory - DO NOT use system directories" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/cacherr-cache/</Config>
   <Config Name="Config Directory" Target="/config" Default="/mnt/user/appdata/cacherr/" Mode="rw" Description="Dedicated config directory - DO NOT use system directories" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/cacherr/</Config>
