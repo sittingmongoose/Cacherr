@@ -26,6 +26,7 @@ import logging
 import shutil
 import time
 from datetime import datetime, timedelta
+from urllib.parse import urlparse, urlunparse
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import List, Set, Generator, Tuple, Optional, Dict, Any
@@ -195,7 +196,7 @@ class CacherrEngine:
         # Ensure cache directory exists
         self.cache_dir.mkdir(exist_ok=True)
         
-        # Initialize Plex connection
+        # Initialize Plex connection (non-fatal if unavailable)
         self.plex = None
         self._connect_to_plex()
         # Provide Plex connection to operations helper
@@ -213,21 +214,85 @@ class CacherrEngine:
         self.test_results: Dict = {}
         
     def _connect_to_plex(self):
-        """Establish connection to Plex server"""
-        if not self.config.plex.url:
-            raise ValueError("PLEX_URL is not configured. Please configure it via the web interface.")
-        
-        if not self.config.plex.token:
-            raise ValueError("PLEX_TOKEN is not configured. Please configure it via the web interface.")
-        
+        """Establish connection to Plex server without failing startup.
+
+        Behavior:
+        - If no token is configured, log a warning and continue so the UI can load.
+        - If connection fails (e.g., 401 Unauthorized), log guidance and continue.
+        - If the URL uses port 32401, attempt a fallback connection to port 32400.
+        """
         try:
-            base_url = ensure_no_trailing_slash(self.config.plex.url)
-            plex_token = str(self.config.plex.token)  # Convert SecretStr to string
-            self.plex = PlexServer(base_url, plex_token)
-            self.logger.info(f"Connected to Plex server: {base_url}")
+            if not getattr(self.config, 'plex', None) or not getattr(self.config.plex, 'url', None):
+                self.logger.warning("PLEX_URL is not configured. Configure it in Settings → Plex.")
+                return
+
+            # Normalize URL and token
+            raw_url = ensure_no_trailing_slash(self.config.plex.url)
+            token_value = None
+            if getattr(self.config.plex, 'token', None) is not None:
+                try:
+                    # SecretStr in some contexts, plain str in others
+                    token_value = self.config.plex.token.get_secret_value()  # type: ignore[attr-defined]
+                except Exception:
+                    token_value = str(self.config.plex.token)
+
+            if not token_value or not str(token_value).strip():
+                self.logger.warning(
+                    "PLEX_TOKEN is not configured. The app will start without Plex access. "
+                    "Set a valid token under Settings → Plex."
+                )
+                return
+
+            def try_connect(url: str) -> Optional[PlexServer]:
+                plex = PlexServer(url, token_value)
+                # Validate auth with a lightweight call
+                _ = plex.library.sections()
+                return plex
+
+            # First attempt
+            try:
+                self.plex = try_connect(raw_url)
+                if self.plex:
+                    self.logger.info(f"Connected to Plex server: {raw_url}")
+                    return
+            except Exception as e:
+                err_text = str(e).lower()
+                if '401' in err_text or 'unauthorized' in err_text:
+                    self.logger.error(
+                        "Plex authentication failed (401 Unauthorized). "
+                        "Verify PLEX_TOKEN and that PLEX_URL points to the API port (32400)."
+                    )
+                else:
+                    self.logger.error(f"Failed to connect to Plex at {raw_url}: {e}")
+
+                # If URL likely points to port 32401, try 32400 as a fallback
+                try:
+                    parsed = urlparse(raw_url)
+                    if parsed.port == 32401:
+                        fallback_netloc = f"{parsed.hostname}:32400" if parsed.hostname else parsed.netloc.replace('32401', '32400')
+                        fallback_url = urlunparse((parsed.scheme, fallback_netloc, parsed.path or '', parsed.params, parsed.query, parsed.fragment))
+                        self.logger.info(f"Attempting fallback Plex URL on port 32400: {fallback_url}")
+                        try:
+                            self.plex = try_connect(fallback_url)
+                            if self.plex:
+                                self.logger.info(f"Connected to Plex server via fallback URL: {fallback_url}")
+                                return
+                        except Exception as fallback_err:
+                            self.logger.error(f"Fallback connection failed: {fallback_err}")
+                except Exception:
+                    # Parsing issues should not be fatal
+                    pass
+
+            # Continue without an active connection
+            self.plex = None
+            self.logger.warning(
+                "Continuing without an active Plex connection. UI is available, "
+                "but operations requiring Plex will be disabled until credentials are fixed."
+            )
         except Exception as e:
-            self.logger.error(f"Failed to connect to Plex server: {e}")
-            raise
+            # Never let Plex connection block startup
+            self.plex = None
+            self.logger.error(f"Unexpected error during Plex connection setup: {e}")
     
     def run(self, test_mode: bool = False) -> bool:
         """Main execution method"""

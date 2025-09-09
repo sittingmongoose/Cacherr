@@ -238,12 +238,17 @@ def react_assets(filename):
         if not app_root.exists():
             app_root = Path.cwd()
         
+        # Allow explicit override of dist directory via env for flexibility
+        dist_override = os.getenv('FRONTEND_DIST_DIR')
+        possible_paths = []
+        if dist_override:
+            possible_paths.append(Path(dist_override))
         # Check multiple possible locations for the frontend
-        possible_paths = [
+        possible_paths.extend([
             app_root / 'frontend' / 'dist',  # Docker path
             Path.cwd() / 'frontend' / 'dist',  # Current working directory
             Path('/mnt/user/Cursor/Cacherr/frontend/dist'),  # Absolute path for current setup
-        ]
+        ])
         
         frontend_dist = None
         for path in possible_paths:
