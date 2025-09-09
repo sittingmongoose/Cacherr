@@ -843,3 +843,68 @@ class CacherrEngine:
             'stats': self.stats,
             'watchers': self.get_watcher_stats()
         }
+
+    def get_cache_statistics(self) -> Dict[str, Any]:
+        """Return current cache usage and operation statistics.
+
+        Combines filesystem usage of the configured cache destination with
+        the engine's last operation stats for UI/health endpoints.
+        """
+        try:
+            dest_path = Path(getattr(self.config.paths, 'cache_destination', '/cache') or '/cache')
+        except Exception:
+            dest_path = Path('/cache')
+        if not dest_path.exists():
+            dest_path = self.cache_dir
+
+        # Disk usage
+        try:
+            usage = shutil.disk_usage(str(dest_path))
+            disk_total = int(usage.total)
+            disk_free = int(usage.free)
+            disk_used = disk_total - disk_free
+            disk_used_pct = round((disk_used / disk_total) * 100, 2) if disk_total else 0.0
+        except Exception:
+            disk_total = disk_free = disk_used = 0
+            disk_used_pct = 0.0
+
+        # File stats in cache directory
+        total_files = 0
+        total_size_bytes = 0
+        try:
+            for root, dirs, files in os.walk(dest_path):
+                total_files += len(files)
+                for f in files:
+                    try:
+                        fp = Path(root) / f
+                        total_size_bytes += fp.stat().st_size
+                    except Exception:
+                        continue
+        except Exception:
+            pass
+
+        # Operation stats summary
+        try:
+            op_stats = self.stats.get_summary()
+        except Exception:
+            op_stats = {}
+
+        def _human(n: int) -> str:
+            for unit in ['B','KB','MB','GB','TB']:
+                if n < 1024:
+                    return f"{n:.2f} {unit}" if unit != 'B' else f"{n} {unit}"
+                n /= 1024
+            return f"{n:.2f} PB"
+
+        return {
+            'cache_path': str(dest_path),
+            'total_files': total_files,
+            'total_size_bytes': total_size_bytes,
+            'total_size_readable': _human(total_size_bytes),
+            'disk_total_bytes': disk_total,
+            'disk_used_bytes': disk_used,
+            'disk_free_bytes': disk_free,
+            'disk_used_percent': disk_used_pct,
+            'operation_stats': op_stats,
+            'last_updated': datetime.utcnow().isoformat() + 'Z'
+        }

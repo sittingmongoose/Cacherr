@@ -119,6 +119,31 @@ class DependencyHealthChecker:
             self.logger.warning(f"Plex connectivity check failed: {e}")
             return "unhealthy"
     
+    def _try_get_cache_stats(self, cache_service: CacheService) -> Dict[str, Any]:
+        """Best-effort retrieval of cache statistics across implementations.
+
+        Tries get_cache_statistics first, then falls back to get_cache_status
+        and summarizes embedded stats if present. Returns a minimal structure
+        if neither is available.
+        """
+        # Preferred API
+        if hasattr(cache_service, 'get_cache_statistics'):
+            return cache_service.get_cache_statistics()  # type: ignore[attr-defined]
+
+        # Legacy/fallback
+        if hasattr(cache_service, 'get_cache_status'):
+            try:
+                status = cache_service.get_cache_status()  # type: ignore[attr-defined]
+                if isinstance(status, dict):
+                    stats = status.get('stats')
+                    if hasattr(stats, 'get_summary'):
+                        status['operation_stats'] = stats.get_summary()
+                return status if isinstance(status, dict) else {'status': status}
+            except Exception:
+                pass
+
+        return {'status': 'unknown'}
+
     def check_file_system_access(self, file_service: FileService) -> str:
         """
         Check file system access for key directories.
@@ -155,8 +180,8 @@ class DependencyHealthChecker:
             if not cache_service:
                 return "not_configured"
             
-            # Try to get cache statistics
-            _ = cache_service.get_cache_statistics()
+            # Try to get cache statistics (with fallbacks for older engines)
+            _ = self._try_get_cache_stats(cache_service)
             return "healthy"
             
         except Exception as e:
@@ -284,7 +309,7 @@ def detailed_health_check():
         if cache_service:
             services_status['cache_service'] = health_checker.check_cache_service(cache_service)
             try:
-                cache_stats = cache_service.get_cache_statistics()
+                cache_stats = health_checker._try_get_cache_stats(cache_service)
             except Exception as e:
                 logger.warning(f"Failed to get cache statistics: {e}")
                 cache_stats = {"error": str(e)}

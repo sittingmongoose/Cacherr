@@ -31,6 +31,7 @@ from plexapi.server import PlexServer
 from plexapi.video import Episode, Movie
 from plexapi.myplex import MyPlexAccount
 from plexapi.exceptions import NotFound, BadRequest
+from .url_utils import ensure_no_trailing_slash
 
 try:
     from ..config.settings import Config
@@ -143,14 +144,29 @@ class PlexOperations:
         if self.plex:
             return self.plex
         try:
-            if self.config.plex.token:
-                self.plex = PlexServer(baseurl=self.config.plex.url, token=self.config.plex.token)
-                return self.plex
-            if self.config.plex.username and self.config.plex.password:
-                account = MyPlexAccount(self.config.plex.username, self.config.plex.password)
-                token = account.authentication_token
-                self.plex = PlexServer(baseurl=self.config.plex.url, token=token)
-                return self.plex
+            if getattr(self.config, 'plex', None):
+                baseurl = ensure_no_trailing_slash(self.config.plex.url)
+                # SecretStr in some contexts, plain str in others
+                token_value = None
+                if getattr(self.config.plex, 'token', None) is not None:
+                    try:
+                        token_value = self.config.plex.token.get_secret_value()  # type: ignore[attr-defined]
+                    except Exception:
+                        token_value = str(self.config.plex.token)
+
+                if token_value and str(token_value).strip():
+                    self.plex = PlexServer(baseurl=str(baseurl), token=token_value)
+                    return self.plex
+
+                if getattr(self.config.plex, 'username', None) and getattr(self.config.plex, 'password', None):
+                    try:
+                        pwd = self.config.plex.password.get_secret_value()  # type: ignore[attr-defined]
+                    except Exception:
+                        pwd = str(self.config.plex.password)
+                    account = MyPlexAccount(self.config.plex.username, pwd)
+                    token = account.authentication_token
+                    self.plex = PlexServer(baseurl=str(baseurl), token=token)
+                    return self.plex
         except Exception as e:
             # During initial setup, Plex may be unconfigured; reduce severity
             self.logger.warning(f"Failed to create Plex connection: {e}")
