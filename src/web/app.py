@@ -98,7 +98,7 @@ class WebApplicationFactory:
         self.logger = logging.getLogger(__name__)
         self.socketio: Optional[SocketIO] = None
     
-    def create_app(self, config: Optional[FlaskAppConfig] = None) -> Flask:
+    def create_app(self, config: Optional[FlaskAppConfig] = None, setup_websocket: bool = True) -> Flask:
         """
         Create and configure a Flask application.
         
@@ -140,8 +140,9 @@ class WebApplicationFactory:
             # Setup logging
             self._setup_logging(app, config.log_level)
             
-            # Initialize WebSocket support
-            self._setup_websocket(app)
+            # Initialize WebSocket support (optional to avoid double init)
+            if setup_websocket:
+                self._setup_websocket(app)
             
             self.logger.info("Flask application created successfully")
             return app
@@ -172,7 +173,16 @@ class WebApplicationFactory:
             
             # Pre-resolve commonly used services for performance
             try:
-                g.cache_service = self.container.try_resolve(CacheService)
+                # Only attempt to resolve cache-related services if Plex is configured
+                try:
+                    cfg = self.container.try_resolve(Config)
+                    plex_configured = bool(getattr(cfg, 'plex', None) and getattr(cfg.plex, 'token', None))
+                except Exception:
+                    plex_configured = False
+
+                g.cache_service = None
+                if plex_configured:
+                    g.cache_service = self.container.try_resolve(CacheService)
                 g.media_service = self.container.try_resolve(MediaService)
                 g.file_service = self.container.try_resolve(FileService)
                 g.notification_service = self.container.try_resolve(NotificationService)
@@ -191,9 +201,9 @@ class WebApplicationFactory:
                     self.logger.warning(f"Config service resolution failed: {e}")
                 
                 try:
-                    # Attach cache engine if available; do not fail when missing
+                    # Attach cache engine if available; avoid creating it when Plex isn't configured
                     from ..core.plex_cache_engine import CacherrEngine
-                    engine = self.container.try_resolve(CacherrEngine)
+                    engine = self.container.try_resolve(CacherrEngine) if plex_configured else None
                     if engine is not None and not getattr(g, 'cache_engine', None):
                         g.cache_engine = engine
                 except Exception as e:
@@ -343,7 +353,8 @@ class WebApplicationFactory:
 
 
 def create_app(container: DIContainer, 
-               config: Optional[FlaskAppConfig] = None) -> Flask:
+               config: Optional[FlaskAppConfig] = None,
+               setup_websocket: bool = True) -> Flask:
     """
     Factory function for creating Flask applications.
     
@@ -362,7 +373,7 @@ def create_app(container: DIContainer,
         RuntimeError: If application creation fails
     """
     factory = WebApplicationFactory(container)
-    return factory.create_app(config)
+    return factory.create_app(config, setup_websocket=setup_websocket)
 
 
 def create_test_app(container: DIContainer) -> Flask:

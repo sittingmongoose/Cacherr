@@ -152,7 +152,8 @@ class PlexOperations:
                 self.plex = PlexServer(baseurl=self.config.plex.url, token=token)
                 return self.plex
         except Exception as e:
-            self.logger.error(f"Failed to create Plex connection: {e}")
+            # During initial setup, Plex may be unconfigured; reduce severity
+            self.logger.warning(f"Failed to create Plex connection: {e}")
             return None
         return None
     

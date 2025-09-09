@@ -76,7 +76,8 @@ echo "Starting development environment..."
 # Start frontend dev server in background
 echo "Starting frontend dev server..."
 cd /app/frontend
-npm run dev &
+PORT_ARG=${FRONTEND_PORT:-3000}
+npm run dev -- --port "$PORT_ARG" --host 0.0.0.0 &
 FRONTEND_PID=\$!
 
 # Wait a moment for frontend to start

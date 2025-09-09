@@ -864,8 +864,8 @@ class ApplicationContext:
         try:
             self.logger.info("Creating Flask web application...")
             
-            # Inject services into Flask app factory
-            self.web_app = create_app(self.container, self.app_config.web)
+            # Inject services into Flask app factory (without WebSocket to avoid double init)
+            self.web_app = create_app(self.container, self.app_config.web, setup_websocket=False)
             
             # Add application context to Flask app for route access
             with self.web_app.app_context():

@@ -84,6 +84,15 @@ def determine_run_mode() -> str:
     elif run_mode in ['production', 'prod']:
         return 'production'
     
+    # Consider CACHERR_ENVIRONMENT as an explicit hint (compose sets this)
+    env_mode = os.getenv('CACHERR_ENVIRONMENT', '').lower()
+    if env_mode in ['development', 'dev']:
+        return 'development'
+    if env_mode in ['testing', 'test']:
+        return 'testing'
+    if env_mode in ['production', 'prod']:
+        return 'production'
+
     # Determine mode based on other environment variables
     if os.getenv('DEBUG', '').lower() in ['true', '1', 'yes']:
         return 'development'
@@ -174,19 +183,15 @@ def run_web_server(app_context: ApplicationContext) -> None:
     logger.info(f"Starting web server on {web_config.host}:{web_config.port}")
     
     try:
-        # Check if WebSocket support is available
+        # Initialize WebSocket support on the existing app to avoid duplicate setup
         from src.web.app import WebApplicationFactory
         factory = WebApplicationFactory(app_context.container)
-        
-        # Create the app with WebSocket support
-        web_app_with_websocket = factory.create_app()
-        
-        # Check if the factory has SocketIO support
-        if hasattr(factory, 'socketio') and factory.socketio:
+        factory._setup_websocket(web_app)
+
+        if getattr(factory, 'socketio', None):
             logger.info("Starting Flask-SocketIO server with WebSocket support")
-            # Run with SocketIO
             factory.socketio.run(
-                web_app_with_websocket,
+                web_app,
                 host=web_config.host,
                 port=web_config.port,
                 debug=web_config.debug,
@@ -195,7 +200,6 @@ def run_web_server(app_context: ApplicationContext) -> None:
             )
         else:
             logger.info("Starting standard Flask server (WebSocket not available)")
-            # Fallback to standard Flask
             web_app.run(
                 host=web_config.host,
                 port=web_config.port,

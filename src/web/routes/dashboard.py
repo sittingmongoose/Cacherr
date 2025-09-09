@@ -16,7 +16,7 @@ import os
 from pathlib import Path
 from typing import Optional
 
-from flask import Blueprint, current_app, send_from_directory, send_file, redirect, url_for
+from flask import Blueprint, current_app, send_from_directory, send_file, redirect
 from pydantic import BaseModel, Field
 
 
@@ -61,12 +61,17 @@ def serve_react_app(path=None):
             # Fallback to current working directory for development
             app_root = Path.cwd()
         
+        # Allow explicit override of dist directory via env for flexibility
+        dist_override = os.getenv('FRONTEND_DIST_DIR')
+        possible_paths = []
+        if dist_override:
+            possible_paths.append(Path(dist_override))
         # Check multiple possible locations for the frontend
-        possible_paths = [
+        possible_paths.extend([
             app_root / 'frontend' / 'dist',  # Docker path
             Path.cwd() / 'frontend' / 'dist',  # Current working directory
             Path('/mnt/user/Cursor/Cacherr/frontend/dist'),  # Absolute path for current setup
-        ]
+        ])
         
         frontend_dist = None
         for possible_path in possible_paths:
@@ -75,6 +80,23 @@ def serve_react_app(path=None):
                 break
         
         if not frontend_dist or not frontend_dist.exists():
+            # In development, redirect to the Vite dev server if configured
+            env_mode = os.getenv('CACHERR_ENVIRONMENT', '').lower()
+            dev_url = os.getenv('FRONTEND_DEV_SERVER_URL') or os.getenv('VITE_DEV_SERVER_URL')
+            if not dev_url:
+                # Pick a sensible default based on common ports
+                default_port = os.getenv('FRONTEND_PORT', '3000')
+                dev_url = f"http://localhost:{default_port}"
+            if env_mode in ('development', 'dev'):
+                logger.warning(
+                    "Frontend dist not found; redirecting to dev server at %s", dev_url
+                )
+                # Preserve path for client-side routing
+                target = dev_url.rstrip('/')
+                if path:
+                    target = f"{target}/{path.lstrip('/')}"
+                return redirect(target, code=302)
+            # Otherwise, return a friendly 404 guidance
             logger.error(f"Frontend build directory not found. Checked paths: {possible_paths}")
             return """
             <html>
