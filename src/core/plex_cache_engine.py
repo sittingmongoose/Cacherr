@@ -188,13 +188,20 @@ class CacherrEngine:
             except Exception as e:
                 self.logger.error(f"Failed to auto-start Trakt watcher: {e}")
         
-        # Cache files
-        self.cache_dir = Path("/app/cache")
+        # Cache directory: respect Docker path template (/cache) via configuration only
+        # Do not use alternative fallbacks; this path is provided by the container bind mount.
+        try:
+            configured_cache = getattr(self.config.paths, 'cache_destination', '/cache')
+        except Exception:
+            configured_cache = '/cache'
+        self.cache_dir = Path(str(configured_cache or '/cache'))
+        # Ensure directory exists; if creation fails, log but do not crash startup
+        try:
+            self.cache_dir.mkdir(parents=True, exist_ok=True)
+        except Exception as e:
+            self.logger.warning(f"Unable to create cache directory at {self.cache_dir}: {e}")
         self.watchlist_cache_file = self.cache_dir / "watchlist_cache.json"
         self.watched_cache_file = self.cache_dir / "watched_cache.json"
-        
-        # Ensure cache directory exists
-        self.cache_dir.mkdir(exist_ok=True)
         
         # Initialize Plex connection (non-fatal if unavailable)
         self.plex = None

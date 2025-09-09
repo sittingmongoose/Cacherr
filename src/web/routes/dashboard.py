@@ -68,9 +68,11 @@ def serve_react_app(path=None):
             possible_paths.append(Path(dist_override))
         # Check multiple possible locations for the frontend
         possible_paths.extend([
-            app_root / 'frontend' / 'dist',  # Docker path
-            Path.cwd() / 'frontend' / 'dist',  # Current working directory
-            Path('/mnt/user/Cursor/Cacherr/frontend/dist'),  # Absolute path for current setup
+            app_root / 'frontend' / 'dist',              # Docker path (multi-stage copy or bind mount)
+            Path.cwd() / 'frontend' / 'dist',            # Current working directory
+            Path('/config/frontend/dist'),               # Persisted config volume (optional copy target)
+            Path('/workspace/frontend/dist'),            # Dev workspace
+            Path('/mnt/user/Cursor/Cacherr/frontend/dist'),  # Host path for this setup
         ])
         
         frontend_dist = None
@@ -82,12 +84,21 @@ def serve_react_app(path=None):
         if not frontend_dist or not frontend_dist.exists():
             # In development, redirect to the Vite dev server if configured
             env_mode = os.getenv('CACHERR_ENVIRONMENT', '').lower()
+            # Accept multiple indicators for development mode for convenience
+            run_mode = os.getenv('RUN_MODE', '').lower()
+            flask_env = os.getenv('FLASK_ENV', '').lower()
+            node_env = os.getenv('NODE_ENV', '').lower()
+            debug_flag = os.getenv('DEBUG', '').lower() in ('1', 'true', 'yes')
+
             dev_url = os.getenv('FRONTEND_DEV_SERVER_URL') or os.getenv('VITE_DEV_SERVER_URL')
             if not dev_url:
                 # Pick a sensible default based on common ports
                 default_port = os.getenv('FRONTEND_PORT', '3000')
                 dev_url = f"http://localhost:{default_port}"
-            if env_mode in ('development', 'dev'):
+
+            if env_mode in ('development', 'dev') or run_mode in ('development', 'dev') \
+               or flask_env in ('development', 'dev') or node_env in ('development', 'dev') \
+               or debug_flag:
                 logger.warning(
                     "Frontend dist not found; redirecting to dev server at %s", dev_url
                 )
@@ -245,9 +256,11 @@ def react_assets(filename):
             possible_paths.append(Path(dist_override))
         # Check multiple possible locations for the frontend
         possible_paths.extend([
-            app_root / 'frontend' / 'dist',  # Docker path
-            Path.cwd() / 'frontend' / 'dist',  # Current working directory
-            Path('/mnt/user/Cursor/Cacherr/frontend/dist'),  # Absolute path for current setup
+            app_root / 'frontend' / 'dist',              # Docker path
+            Path.cwd() / 'frontend' / 'dist',            # Current working directory
+            Path('/config/frontend/dist'),               # Persisted config volume
+            Path('/workspace/frontend/dist'),            # Dev workspace
+            Path('/mnt/user/Cursor/Cacherr/frontend/dist'),  # Host path for this setup
         ])
         
         frontend_dist = None
