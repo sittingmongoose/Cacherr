@@ -141,7 +141,7 @@ export const PlexSettings: React.FC<PlexSettingsProps> = ({
   const [showPassword, setShowPassword] = useState(false)
   const [validationState, setValidationState] = useState<PlexValidationState>(DEFAULT_VALIDATION_STATE)
   const [connectionTest, setConnectionTest] = useState<ConnectionTestState>(DEFAULT_TEST_STATE)
-  // Removed local hasUnsavedChanges - let parent handle it
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
 
   // Extract Plex configuration from data with safe defaults
   // Keep original values if they are masked, allowing user to see placeholder text
@@ -160,7 +160,10 @@ export const PlexSettings: React.FC<PlexSettingsProps> = ({
     [errors.plex]
   )
 
-  // Removed local unsaved changes management - parent handles this
+  // Reset unsaved changes when data updates (indicating a successful save)
+  useEffect(() => {
+    setHasUnsavedChanges(false)
+  }, [data])
 
   /**
    * Validates a single form field based on field name and value
@@ -270,7 +273,8 @@ export const PlexSettings: React.FC<PlexSettingsProps> = ({
       }
     }
 
-    // Unsaved changes handled by parent component
+    // Mark as having unsaved changes
+    setHasUnsavedChanges(true)
 
     // Propagate change to parent component
     onChange('plex', updatedPlexConfig)
@@ -421,7 +425,12 @@ export const PlexSettings: React.FC<PlexSettingsProps> = ({
           </div>
         </div>
         
-        {/* Unsaved changes display handled by parent component */}
+        {hasUnsavedChanges && (
+          <div className="flex items-center space-x-2 text-amber-600 dark:text-amber-400">
+            <AlertTriangle className="h-4 w-4" />
+            <span className="text-sm font-medium">Unsaved changes</span>
+          </div>
+        )}
       </div>
 
       {/* Display validation errors from parent */}

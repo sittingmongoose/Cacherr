@@ -281,16 +281,7 @@ class Config:
                 
                 # Handle token properly - only update if a real token is provided
                 token_val = incoming.get('token', None)
-                current_token = None
-                if hasattr(self.plex, 'token') and self.plex.token:
-                    if hasattr(self.plex.token, 'get_secret_value'):
-                        current_token = self.plex.token.get_secret_value()
-                    else:
-                        current_token = str(self.plex.token)
-                
-                self.logger.info(f"=== TOKEN DEBUG ===")
-                self.logger.info(f"Current stored token: {current_token[:10] if current_token else 'None'}...")
-                self.logger.info(f"Incoming token: {type(token_val)} - {str(token_val)[:10] if token_val else 'None'}...")
+                self.logger.debug(f"Processing Plex token override: {type(token_val)} - {str(token_val)[:10] if token_val else 'None'}...")
                 
                 if token_val is not None:
                     # Extract the actual token value for checking
@@ -313,14 +304,14 @@ class Config:
                     if masked:
                         # Keep existing token, don't update
                         incoming.pop('token', None)
-                        self.logger.info(f"PRESERVING existing token - removed from incoming data")
+                        self.logger.debug("Preserving existing Plex token (masked/empty value received)")
                     else:
                         # Use the new token - it's a real token update
-                        self.logger.info(f"UPDATING token with new value (length: {len(actual_token)})")
+                        self.logger.debug(f"Updating Plex token with new value (length: {len(actual_token)})")
                 else:
                     # No token in incoming data, keep existing
                     incoming.pop('token', None)
-                    self.logger.info(f"NO TOKEN in incoming data - preserving existing")
+                    self.logger.debug("No token in update, preserving existing Plex token")
                 
                 # Avoid clobbering URL with blank
                 if 'url' in incoming and (incoming['url'] is None or str(incoming['url']).strip() == ''):
@@ -557,36 +548,20 @@ class Config:
                     self.logger.warning(f"Could not read existing config file, creating new one: {e}")
                     existing_config = {}
             
-            # Load existing configuration and merge with current state
-            # For sections being updated, use current state; for others, preserve existing
-            current_config = self.to_dict_internal()
-            
-            # Debug the plex section specifically
-            current_plex = current_config.get('plex', {})
-            existing_plex = existing_config.get('plex', {})
-            self.logger.info(f"=== SAVE DEBUG ===")
-            self.logger.info(f"Current plex token: {current_plex.get('token', 'None')[:10] if current_plex.get('token') else 'None'}...")
-            self.logger.info(f"Existing plex token: {existing_plex.get('token', 'None')[:10] if existing_plex.get('token') else 'None'}...")
-            
-            # Merge: use existing config as base, then overlay current state
-            final_config = existing_config.copy()
-            for section_name in current_config:
-                final_config[section_name] = current_config[section_name]
-            
-            final_plex = final_config.get('plex', {})
-            self.logger.info(f"Final plex token: {final_plex.get('token', 'None')[:10] if final_plex.get('token') else 'None'}...")
+            # Merge updates with existing configuration
+            existing_config.update(updates)
             
             # Debug logging
             self.logger.info(f"Saving configuration to: {self.config_file}")
             self.logger.debug(f"Config directory permissions: {oct(config_dir.stat().st_mode)[-3:] if config_dir.exists() else 'N/A'}")
-            self.logger.debug(f"Updates received: {list(updates.keys())}")
-            self.logger.debug(f"Final config sections: {list(final_config.keys())}")
+            self.logger.debug(f"Updates to save: {list(updates.keys())}")
+            self.logger.debug(f"Full config after merge: {list(existing_config.keys())}")
             
             # Save merged configuration atomically
             temp_config_file = self.config_file.with_suffix('.tmp')
             try:
                 with open(temp_config_file, 'w') as f:
-                    json.dump(final_config, f, indent=2)
+                    json.dump(existing_config, f, indent=2)
                 # Atomic rename
                 temp_config_file.replace(self.config_file)
                 self.logger.info(f"Configuration saved successfully to {self.config_file}")
