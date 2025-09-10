@@ -549,20 +549,21 @@ class Config:
                     self.logger.warning(f"Could not read existing config file, creating new one: {e}")
                     existing_config = {}
             
-            # Merge updates
-            existing_config.update(updates)
+            # Instead of merging updates, save the current configuration state
+            # This ensures we save the actual current values, not the update data which may contain masked values
+            current_config = self.to_dict_internal()
             
             # Debug logging
             self.logger.info(f"Saving configuration to: {self.config_file}")
             self.logger.debug(f"Config directory permissions: {oct(config_dir.stat().st_mode)[-3:] if config_dir.exists() else 'N/A'}")
-            self.logger.debug(f"Updates to save: {list(updates.keys())}")
-            self.logger.debug(f"Full config after merge: {list(existing_config.keys())}")
+            self.logger.debug(f"Updates received: {list(updates.keys())}")
+            self.logger.debug(f"Current config sections: {list(current_config.keys())}")
             
-            # Save merged configuration atomically
+            # Save current configuration state atomically
             temp_config_file = self.config_file.with_suffix('.tmp')
             try:
                 with open(temp_config_file, 'w') as f:
-                    json.dump(existing_config, f, indent=2)
+                    json.dump(current_config, f, indent=2)
                 # Atomic rename
                 temp_config_file.replace(self.config_file)
                 self.logger.info(f"Configuration saved successfully to {self.config_file}")
