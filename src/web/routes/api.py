@@ -721,19 +721,30 @@ def api_test_plex_connection():
             server_name = plex.friendlyName
             version = plex.version
 
+            # Build connectivity payload compatible with frontend expectations
+            connectivity = {
+                'status': 'success',
+                'success': True,  # legacy compatibility flag used by UI
+                'url': plex_url,
+                'server_info': {
+                    'product': 'Plex Media Server',
+                    'version': str(version),
+                    'platform': None,
+                    'server_name': server_name,
+                    'library_count': None
+                },
+                # Convenience flags some UI variants look for
+                'ok': True,
+                'connected': True
+            }
+
             response = APIResponse(
                 success=True,
                 message=f"Connected to {server_name} (v{version})",
-                data={
-                    'ok': True,
-                    'connected': True,
-                    'server_name': server_name,
-                    'version': str(version),
-                    'url': plex_url
-                }
+                data=connectivity
             )
+            # Also surface ok/connected at top-level for legacy clients
             payload = response.model_dump()
-            # Compatibility flags for legacy frontends that look at top-level fields
             payload['ok'] = True
             payload['connected'] = True
             return jsonify(payload)
@@ -749,10 +760,18 @@ def api_test_plex_connection():
             else:
                 error_msg = f"Connection failed: {error_msg}"
 
+            connectivity = {
+                'status': 'failed',
+                'success': False,
+                'url': plex_url,
+                'error': error_msg,
+                'ok': False,
+                'connected': False
+            }
             response = APIResponse(
                 success=False,
                 error=error_msg,
-                data={'ok': False, 'connected': False}
+                data=connectivity
             )
             payload = response.model_dump()
             payload['ok'] = False
