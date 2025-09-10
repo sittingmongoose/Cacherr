@@ -548,8 +548,17 @@ class Config:
                     self.logger.warning(f"Could not read existing config file, creating new one: {e}")
                     existing_config = {}
             
-            # Merge updates with existing configuration
+            # Merge updates with existing configuration, preserving existing sections
             existing_config.update(updates)
+            
+            # Always save the current Plex configuration to prevent token loss
+            # when saving other settings
+            if 'plex' not in updates and hasattr(self, 'plex'):
+                try:
+                    existing_config['plex'] = self.plex.to_dict(mask_secrets=False)
+                    self.logger.debug("Preserved current Plex configuration including token")
+                except Exception as e:
+                    self.logger.warning(f"Failed to preserve Plex configuration: {e}")
             
             # Debug logging
             self.logger.info(f"Saving configuration to: {self.config_file}")

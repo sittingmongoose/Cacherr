@@ -23,7 +23,7 @@
  * />
  */
 
-import React, { useState, useCallback, useMemo, useEffect } from 'react'
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import { 
   Server, 
   Eye, 
@@ -161,9 +161,14 @@ export const PlexSettings: React.FC<PlexSettingsProps> = ({
   )
 
   // Reset unsaved changes when data updates (indicating a successful save)
+  // Only reset if we currently have unsaved changes
+  const prevDataRef = useRef(data)
   useEffect(() => {
-    setHasUnsavedChanges(false)
-  }, [data])
+    if (hasUnsavedChanges && prevDataRef.current !== data) {
+      setHasUnsavedChanges(false)
+      prevDataRef.current = data
+    }
+  }, [data, hasUnsavedChanges])
 
   /**
    * Validates a single form field based on field name and value
