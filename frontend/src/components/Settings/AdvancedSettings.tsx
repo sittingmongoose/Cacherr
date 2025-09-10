@@ -24,7 +24,7 @@
  * />
  */
 
-import React, { useState, useCallback, useMemo } from 'react'
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import { 
   Settings,
   Eye,
@@ -206,6 +206,15 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
   const [validationState, setValidationState] = useState<AdvancedValidationState>(DEFAULT_VALIDATION_STATE)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['realTimeWatch']))
+
+  // Reset unsaved changes when data updates (indicating a successful save/refresh)
+  const prevDataRef = useRef(data)
+  useEffect(() => {
+    if (hasUnsavedChanges && prevDataRef.current !== data) {
+      setHasUnsavedChanges(false)
+    }
+    prevDataRef.current = data
+  }, [data, hasUnsavedChanges])
 
   // Extract configuration sections from data with safe defaults
   const realTimeWatchConfig = useMemo<RealTimeWatchFormData>(() => ({

@@ -297,9 +297,12 @@ class Config:
                         actual_token = str(token_val)
                     
                     # Check if it's a masked/placeholder value
-                    masked = (actual_token.strip() == '' or 
-                            actual_token == '***MASKED***' or 
-                            actual_token.lower() == 'masked')
+                    masked = (
+                        actual_token.strip() == '' or
+                        actual_token == '***MASKED***' or
+                        '*' in actual_token or
+                        actual_token.lower() == 'masked'
+                    )
                     
                     if masked:
                         # Keep existing token, don't update
@@ -327,6 +330,7 @@ class Config:
                     pwd_masked = (
                         actual_pwd.strip() == '' or
                         actual_pwd == '***MASKED***' or
+                        '*' in actual_pwd or
                         actual_pwd.lower() == 'masked'
                     )
                     if pwd_masked:

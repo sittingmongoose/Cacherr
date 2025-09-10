@@ -23,7 +23,7 @@
  * />
  */
 
-import React, { useState, useCallback, useMemo } from 'react'
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import { 
   Zap,
   Activity,
@@ -171,6 +171,15 @@ export const PerformanceSettings: React.FC<PerformanceSettingsProps> = ({
 
   // Extract validation errors for performance section
   const performanceErrors = useMemo(() => errors.performance || [], [errors.performance])
+
+  // Reset unsaved changes when data updates (indicating a successful save/refresh)
+  const prevDataRef = useRef(data)
+  useEffect(() => {
+    if (hasUnsavedChanges && prevDataRef.current !== data) {
+      setHasUnsavedChanges(false)
+    }
+    prevDataRef.current = data
+  }, [data, hasUnsavedChanges])
 
   /**
    * Validates numeric concurrency value against defined limits

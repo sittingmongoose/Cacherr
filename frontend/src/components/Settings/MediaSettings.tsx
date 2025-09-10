@@ -24,7 +24,7 @@
  * />
  */
 
-import React, { useState, useCallback, useMemo, useEffect } from 'react'
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import { 
   Film, 
   FolderPlus,
@@ -202,6 +202,15 @@ export const MediaSettings: React.FC<MediaSettingsProps> = ({
 
   // Extract validation errors for media and paths sections
   const mediaErrors = useMemo(() => [...(errors.media || []), ...(errors.paths || [])], [errors.media, errors.paths])
+
+  // Reset unsaved changes when data updates (indicating a successful save/refresh)
+  const prevDataRef = useRef(data)
+  useEffect(() => {
+    if (hasUnsavedChanges && prevDataRef.current !== data) {
+      setHasUnsavedChanges(false)
+    }
+    prevDataRef.current = data
+  }, [data, hasUnsavedChanges])
 
   /**
    * Validates path input ensuring they exist and are properly formatted

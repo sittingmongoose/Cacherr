@@ -192,8 +192,13 @@ export const SettingsPage: React.FC = () => {
         validate_before_save: true,
         create_backup: true
       })
-      // Refresh configuration from backend so children receive new data object
-      // This ensures local unsaved-change badges reset and masked secrets are re-applied
+      // Clear any persisted unsaved snapshot immediately to avoid reload race
+      try {
+        localStorage.removeItem('cacherr-unsaved-config')
+      } catch {}
+
+      // Refresh configuration from backend so children receive new data object.
+      // This ensures local unsaved-change badges reset and masked secrets are re-applied.
       await loadConfiguration()
 
       setState(prev => ({
@@ -254,18 +259,25 @@ export const SettingsPage: React.FC = () => {
   ) => {
     setConfigData(prev => {
       if (!prev) return prev
-      
-      return {
+
+      // Only mark unsaved when the section actually changes
+      const prevSection = prev[section as keyof ConfigurationSettings]
+      const changed = JSON.stringify(prevSection) !== JSON.stringify(updates)
+
+      if (!changed) {
+        return prev
+      }
+
+      // Update section with new data
+      const next = {
         ...prev,
         [section]: updates
-      }
+      } as ConfigurationSettings
+
+      // Flip unsaved flag only on real change
+      setState(s => ({ ...s, hasUnsavedChanges: true, saveStatus: 'idle' }))
+      return next
     })
-    
-    setState(prev => ({
-      ...prev,
-      hasUnsavedChanges: true,
-      saveStatus: 'idle'
-    }))
   }, [])
 
   /**
