@@ -347,6 +347,43 @@ export const SettingsPage: React.FC = () => {
     loadConfiguration()
   }, [loadConfiguration])
 
+  // Persist configuration changes to localStorage
+  useEffect(() => {
+    if (configData && state.hasUnsavedChanges) {
+      try {
+        localStorage.setItem('cacherr-unsaved-config', JSON.stringify(configData))
+      } catch (error) {
+        console.warn('Failed to persist unsaved configuration:', error)
+      }
+    }
+  }, [configData, state.hasUnsavedChanges])
+
+  // Load unsaved changes from localStorage on mount
+  useEffect(() => {
+    try {
+      const savedConfig = localStorage.getItem('cacherr-unsaved-config')
+      if (savedConfig && !state.isLoading) {
+        const parsedConfig = JSON.parse(savedConfig)
+        setConfigData(parsedConfig)
+        setState(prev => ({ ...prev, hasUnsavedChanges: true }))
+        console.log('Loaded unsaved configuration from localStorage')
+      }
+    } catch (error) {
+      console.warn('Failed to load unsaved configuration:', error)
+    }
+  }, [state.isLoading])
+
+  // Clear unsaved changes from localStorage when saved
+  useEffect(() => {
+    if (state.saveStatus === 'saved') {
+      try {
+        localStorage.removeItem('cacherr-unsaved-config')
+      } catch (error) {
+        console.warn('Failed to clear unsaved configuration:', error)
+      }
+    }
+  }, [state.saveStatus])
+
   // Render the active settings component
   const renderActiveSettingsComponent = useMemo(() => {
     if (!configData) return null

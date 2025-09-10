@@ -78,8 +78,14 @@ class Config:
         # Initialize typed configuration objects
         self._initialize_configurations()
         
-        # Load persistent overrides
+        # Load persistent overrides (this will create config file if it doesn't exist)
         self._load_persistent_overrides()
+        
+        # Log configuration summary
+        self.logger.info(f"Configuration initialized - Config file: {self.config_file}")
+        self.logger.info(f"Plex URL: {self.plex.url}")
+        self.logger.info(f"Plex token configured: {bool(self.plex.token)}")
+        self.logger.info(f"Cache destination: {self.paths.cache_destination}")
     
     @monitor_performance
     def _initialize_configurations(self) -> None:
@@ -190,8 +196,28 @@ class Config:
                     persistent_config = json.load(f)
                 self._apply_overrides(persistent_config)
                 self.logger.info("Loaded persistent configuration overrides")
+            else:
+                # If no config file exists, create one with current environment settings
+                self._create_initial_config_file()
         except Exception as e:
             self.logger.warning(f"Failed to load persistent overrides: {e}")
+    
+    def _create_initial_config_file(self) -> None:
+        """Create initial configuration file from environment variables."""
+        try:
+            # Get current configuration as dict
+            config_dict = self.to_dict()
+            
+            # Ensure config directory exists
+            self.config_file.parent.mkdir(parents=True, exist_ok=True)
+            
+            # Save initial configuration
+            with open(self.config_file, 'w') as f:
+                json.dump(config_dict, f, indent=2)
+            
+            self.logger.info(f"Created initial configuration file: {self.config_file}")
+        except Exception as e:
+            self.logger.warning(f"Failed to create initial config file: {e}")
     
     def _apply_overrides(self, overrides: Dict[str, Any]) -> None:
         """
@@ -240,16 +266,36 @@ class Config:
                     'version'
                 })
                 incoming = dict(overrides['plex'])
-                # Ignore masked/blank token updates to preserve existing secret
+                
+                # Handle token properly - preserve existing token if masked/blank
                 token_val = incoming.get('token', None)
                 if token_val is not None:
                     if isinstance(token_val, str):
-                        masked = token_val.strip() == '' or token_val == '***MASKED***' or token_val.lower() == 'masked' or ('*' in token_val)
+                        masked = (token_val.strip() == '' or 
+                                token_val == '***MASKED***' or 
+                                token_val.lower() == 'masked' or 
+                                ('*' in token_val) or
+                                token_val == '***MASKED***')
                         if masked:
+                            # Keep existing token, don't update
                             incoming.pop('token', None)
+                            self.logger.debug("Preserving existing Plex token (masked value received)")
+                        else:
+                            # Use the new token
+                            self.logger.debug("Updating Plex token with new value")
+                    else:
+                        # Non-string token, use as-is
+                        self.logger.debug("Updating Plex token with non-string value")
+                else:
+                    # No token in incoming data, keep existing
+                    incoming.pop('token', None)
+                    self.logger.debug("No token in update, preserving existing Plex token")
+                
                 # Avoid clobbering URL with blank
                 if 'url' in incoming and (incoming['url'] is None or str(incoming['url']).strip() == ''):
                     incoming.pop('url', None)
+                    self.logger.debug("Preserving existing Plex URL (blank value received)")
+                
                 plex_data.update(incoming)
                 self.plex = PlexConfig(**plex_data)
                 self.logger.debug("Applied plex configuration overrides")

@@ -691,6 +691,13 @@ def api_test_plex_connection():
                 plex_token = token_val
             elif os.getenv('PLEX_TOKEN'):
                 plex_token = os.getenv('PLEX_TOKEN')
+            else:
+                # If no token found anywhere, this is an error
+                response = APIResponse(
+                    success=False,
+                    error="Plex token is required but not found in saved configuration or environment variables"
+                )
+                return jsonify(response.model_dump()), 400
 
         # Resolve URL: fall back to saved or environment value
         if not plex_url:
