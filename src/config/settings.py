@@ -488,28 +488,54 @@ class Config:
             updates: Dictionary of updates to save
         """
         try:
-            # Ensure config directory exists
-            self.config_file.parent.mkdir(parents=True, exist_ok=True)
+            # Ensure config directory exists with proper permissions
+            config_dir = self.config_file.parent
+            config_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Check if we can write to the directory
+            import tempfile
+            import os
+            try:
+                with tempfile.NamedTemporaryFile(dir=config_dir, delete=False) as tmp:
+                    tmp.write(b'test')
+                    temp_path = tmp.name
+                os.unlink(temp_path)
+            except (OSError, PermissionError) as e:
+                self.logger.error(f"Cannot write to config directory {config_dir}: {e}")
+                raise ValueError(f"Config directory {config_dir} is not writable. Check Docker volume mount and permissions.") from e
             
             # Load existing configuration
             existing_config = {}
             if self.config_file.exists():
-                with open(self.config_file, 'r') as f:
-                    existing_config = json.load(f)
+                try:
+                    with open(self.config_file, 'r') as f:
+                        existing_config = json.load(f)
+                except (json.JSONDecodeError, FileNotFoundError) as e:
+                    self.logger.warning(f"Could not read existing config file, creating new one: {e}")
+                    existing_config = {}
             
             # Merge updates
             existing_config.update(updates)
             
             # Debug logging
             self.logger.info(f"Saving configuration to: {self.config_file}")
+            self.logger.debug(f"Config directory permissions: {oct(config_dir.stat().st_mode)[-3:] if config_dir.exists() else 'N/A'}")
             self.logger.debug(f"Updates to save: {list(updates.keys())}")
             self.logger.debug(f"Full config after merge: {list(existing_config.keys())}")
             
-            # Save merged configuration
-            with open(self.config_file, 'w') as f:
-                json.dump(existing_config, f, indent=2)
-            
-            self.logger.info(f"Configuration saved successfully to {self.config_file}")
+            # Save merged configuration atomically
+            temp_config_file = self.config_file.with_suffix('.tmp')
+            try:
+                with open(temp_config_file, 'w') as f:
+                    json.dump(existing_config, f, indent=2)
+                # Atomic rename
+                temp_config_file.replace(self.config_file)
+                self.logger.info(f"Configuration saved successfully to {self.config_file}")
+            except Exception as e:
+                # Clean up temp file if rename failed
+                if temp_config_file.exists():
+                    temp_config_file.unlink(missing_ok=True)
+                raise
             
         except Exception as e:
             self.logger.error(f"Failed to save configuration file: {e}")

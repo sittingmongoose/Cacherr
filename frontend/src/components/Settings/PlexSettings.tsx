@@ -144,11 +144,12 @@ export const PlexSettings: React.FC<PlexSettingsProps> = ({
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
 
   // Extract Plex configuration from data with safe defaults
+  // Keep original values if they are masked, allowing user to see placeholder text
   const plexConfig = useMemo(() => ({
     url: data.plex?.url || '',
-    token: data.plex?.token === '***MASKED***' ? '' : (data.plex?.token || ''),
+    token: data.plex?.token || '',
     username: data.plex?.username || '',
-    password: data.plex?.password === '***MASKED***' ? '' : (data.plex?.password || ''),
+    password: data.plex?.password || '',
     verify_ssl: data.plex?.verify_ssl ?? true,
     timeout: data.plex?.timeout || 30
   }), [data.plex])
@@ -194,6 +195,10 @@ export const PlexSettings: React.FC<PlexSettingsProps> = ({
         }
 
       case 'token':
+        // If token is masked, it means we have a configured token, so consider it valid
+        if (value === '***MASKED***') {
+          return { isValid: true }
+        }
         if (!value.trim()) {
           return { isValid: false, message: 'Plex token is required' }
         }
@@ -252,11 +257,13 @@ export const PlexSettings: React.FC<PlexSettingsProps> = ({
       [field]: value
     }
 
-    // Special handling for token field - don't send masked values
+    // Special handling for token field - don't send masked values unless user entered new value
     if (field === 'token') {
-      const maskedValues = ['***MASKED***', 'masked', '']
-      if (maskedValues.includes(String(value).trim()) || String(value).includes('*')) {
-        // Don't update the token if it's masked or empty
+      const stringValue = String(value).trim()
+      // Only skip the update if the value is exactly the masked placeholder
+      // Allow empty strings so users can clear the token if needed
+      if (stringValue === '***MASKED***') {
+        // User hasn't actually changed the token, skip update
         return
       }
     }
@@ -296,6 +303,7 @@ export const PlexSettings: React.FC<PlexSettingsProps> = ({
 
     try {
       // Create test request with current form values
+      // If token is masked, send it as-is - the backend will handle it
       const testRequest: PlexTestRequest = {
         url: plexConfig.url.trim(),
         token: plexConfig.token.trim(),
@@ -501,7 +509,7 @@ export const PlexSettings: React.FC<PlexSettingsProps> = ({
               type={showToken ? 'text' : 'password'}
               value={plexConfig.token}
               onChange={(e) => handleFieldChange('token', e.target.value)}
-              placeholder={data.plex?.token === '***MASKED***' ? 'Token is configured (click to change)' : 'Enter your Plex token'}
+              placeholder={data.plex?.token === '***MASKED***' ? 'Token is configured - enter new token to change' : 'Enter your Plex token'}
               disabled={readonly}
               className={classNames(
                 'block w-full px-3 py-2 pr-10 border rounded-lg shadow-sm',

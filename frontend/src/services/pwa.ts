@@ -19,7 +19,10 @@ export class PWAService {
    */
   async register(): Promise<boolean> {
     if (!('serviceWorker' in navigator)) {
-      console.warn('Service Worker not supported')
+      // Only log warning in production, not development
+      if (import.meta.env.PROD) {
+        console.warn('PWA: Service Worker not supported in this browser')
+      }
       return false
     }
 
