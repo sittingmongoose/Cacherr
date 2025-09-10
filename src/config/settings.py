@@ -312,6 +312,26 @@ class Config:
                     # No token in incoming data, keep existing
                     incoming.pop('token', None)
                     self.logger.debug("No token in update, preserving existing Plex token")
+
+                # Handle password similarly - preserve if masked/empty
+                if 'password' in incoming:
+                    pwd_val = incoming.get('password')
+                    if hasattr(pwd_val, 'get_secret_value'):
+                        try:
+                            actual_pwd = pwd_val.get_secret_value()
+                        except Exception:
+                            actual_pwd = str(pwd_val)
+                    else:
+                        actual_pwd = str(pwd_val) if pwd_val is not None else ''
+
+                    pwd_masked = (
+                        actual_pwd.strip() == '' or
+                        actual_pwd == '***MASKED***' or
+                        actual_pwd.lower() == 'masked'
+                    )
+                    if pwd_masked:
+                        incoming.pop('password', None)
+                        self.logger.debug("Preserving existing Plex password (masked/empty value received)")
                 
                 # Avoid clobbering URL with blank
                 if 'url' in incoming and (incoming['url'] is None or str(incoming['url']).strip() == ''):
@@ -548,23 +568,33 @@ class Config:
                     self.logger.warning(f"Could not read existing config file, creating new one: {e}")
                     existing_config = {}
             
-            # Merge updates with existing configuration, preserving existing sections
-            existing_config.update(updates)
-            
-            # Always save the current Plex configuration to prevent token loss
-            # when saving other settings
+            # Merge updates with existing configuration, carefully handling nested sections and secrets
             self.logger.info(f"Save operation: sections being updated: {list(updates.keys())}")
-            if 'plex' not in updates and hasattr(self, 'plex'):
-                try:
-                    plex_dict = self.plex.to_dict(mask_secrets=False)
-                    token_preview = plex_dict.get('token', 'None')
-                    self.logger.info(f"Preserving Plex config with token: {token_preview[:10] if token_preview else 'None'}...")
-                    existing_config['plex'] = plex_dict
-                    self.logger.info("Successfully preserved current Plex configuration")
-                except Exception as e:
-                    self.logger.error(f"Failed to preserve Plex configuration: {e}")
-            else:
-                self.logger.info("Plex section is being updated or doesn't exist - not preserving")
+
+            for section, value in updates.items():
+                if section == 'plex':
+                    # Always persist Plex directly from in-memory validated model
+                    try:
+                        plex_dict = self.plex.to_dict(mask_secrets=False)
+                        token_preview = plex_dict.get('token', 'None')
+                        self.logger.info(
+                            f"Persisting Plex config from memory (token: {token_preview[:10] if token_preview else 'None'}...)"
+                        )
+                        existing_config['plex'] = plex_dict
+                    except Exception as e:
+                        self.logger.error(f"Failed to persist Plex configuration: {e}")
+                    continue
+
+                # For other sections, shallow-merge dictionaries; assign simple values directly
+                if isinstance(value, dict):
+                    current = existing_config.get(section, {})
+                    if not isinstance(current, dict):
+                        current = {}
+                    merged = dict(current)
+                    merged.update(value)
+                    existing_config[section] = merged
+                else:
+                    existing_config[section] = value
             
             # Debug logging
             self.logger.info(f"Saving configuration to: {self.config_file}")

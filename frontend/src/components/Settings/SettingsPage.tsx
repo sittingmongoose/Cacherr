@@ -192,6 +192,9 @@ export const SettingsPage: React.FC = () => {
         validate_before_save: true,
         create_backup: true
       })
+      // Refresh configuration from backend so children receive new data object
+      // This ensures local unsaved-change badges reset and masked secrets are re-applied
+      await loadConfiguration()
 
       setState(prev => ({
         ...prev,
