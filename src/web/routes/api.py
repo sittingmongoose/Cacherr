@@ -411,7 +411,7 @@ def api_update_config():
         config.save_updates(updates)
 
         # Log successful update
-            logger.info(f"Configuration updated successfully: {list(updates.keys())}")
+        logger.info(f"Configuration updated successfully: {list(updates.keys())}")
 
         response = APIResponse(
             success=True,
@@ -732,7 +732,11 @@ def api_test_plex_connection():
                     'url': plex_url
                 }
             )
-            return jsonify(response.model_dump())
+            payload = response.model_dump()
+            # Compatibility flags for legacy frontends that look at top-level fields
+            payload['ok'] = True
+            payload['connected'] = True
+            return jsonify(payload)
 
         except Exception as plex_error:
             error_msg = str(plex_error)
@@ -750,7 +754,10 @@ def api_test_plex_connection():
                 error=error_msg,
                 data={'ok': False, 'connected': False}
             )
-            return jsonify(response.model_dump()), 400
+            payload = response.model_dump()
+            payload['ok'] = False
+            payload['connected'] = False
+            return jsonify(payload), 400
 
     except ImportError:
         response = APIResponse(
