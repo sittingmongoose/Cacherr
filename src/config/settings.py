@@ -299,15 +299,14 @@ class Config:
                     # Check if it's a masked/placeholder value
                     masked = (actual_token.strip() == '' or 
                             actual_token == '***MASKED***' or 
-                            actual_token.lower() == 'masked' or
-                            len(actual_token) < 10)  # Plex tokens are typically longer
+                            actual_token.lower() == 'masked')
                     
                     if masked:
                         # Keep existing token, don't update
                         incoming.pop('token', None)
                         self.logger.debug("Preserving existing Plex token (masked/empty value received)")
                     else:
-                        # Use the new token - it looks like a real token
+                        # Use the new token - it's a real token update
                         self.logger.debug(f"Updating Plex token with new value (length: {len(actual_token)})")
                 else:
                     # No token in incoming data, keep existing

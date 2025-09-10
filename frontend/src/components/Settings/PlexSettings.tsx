@@ -160,6 +160,11 @@ export const PlexSettings: React.FC<PlexSettingsProps> = ({
     [errors.plex]
   )
 
+  // Reset unsaved changes when data is updated (after successful save)
+  useEffect(() => {
+    setHasUnsavedChanges(false)
+  }, [data])
+
   /**
    * Validates a single form field based on field name and value
    * 
