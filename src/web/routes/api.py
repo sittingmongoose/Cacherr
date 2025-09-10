@@ -332,34 +332,14 @@ def api_get_config_current():
 
     try:
         # Return configuration in the format expected by Settings page
-        # Ensure all values are JSON-serializable (cast Pydantic Url/Enum types to str)
-        config_data = {
-            'plex': {
-                'url': str(config.plex.url) if getattr(config.plex, 'url', None) else '',
-                'token': '***MASKED***' if config.plex.token else '',
-                'username': config.plex.username or '',
-                'password': '***MASKED***' if config.plex.password else ''
-            },
-            'media': {
-                'exit_if_active_session': config.media.exit_if_active_session,
-                'watched_move': config.media.watched_move,
-                'users_toggle': config.media.users_toggle,
-                'watchlist_toggle': config.media.watchlist_toggle,
-                'days_to_monitor': config.media.days_to_monitor,
-                'number_episodes': config.media.number_episodes,
-                'watchlist_episodes': config.media.watchlist_episodes,
-                'copy_to_cache': config.media.copy_to_cache,
-                'delete_from_cache_when_done': config.media.delete_from_cache_when_done
-            },
-            'performance': {
-                'max_concurrent_operations': getattr(config.performance, 'max_concurrent_moves_cache', getattr(config.performance, 'max_concurrent_operations', 3)),
-                'cache_check_interval': (config.real_time_watch.get('check_interval', 30)
-                                         if isinstance(config.real_time_watch, dict)
-                                         else 30),
-                'max_concurrent_local_transfers': getattr(config.performance, 'max_concurrent_local_transfers', 1),
-                'log_level': str(getattr(config.logging, 'level', 'INFO')) if not isinstance(getattr(config.logging, 'level', 'INFO'), str) else getattr(config.logging, 'level', 'INFO')
-            }
-        }
+        # Use the config's to_dict method to get all sections properly
+        config_data = config.to_dict()
+        
+        # Mask sensitive fields for security
+        if 'plex' in config_data and 'token' in config_data['plex']:
+            config_data['plex']['token'] = '***MASKED***' if config_data['plex']['token'] else ''
+        if 'plex' in config_data and 'password' in config_data['plex']:
+            config_data['plex']['password'] = '***MASKED***' if config_data['plex']['password'] else ''
 
         response = APIResponse(
             success=True,
@@ -405,8 +385,13 @@ def api_update_config():
             )
             return jsonify(response.model_dump()), 400
 
-        # Accept both {settings: {...}} and direct section updates
-        updates = data.get('settings', data) if isinstance(data, dict) else {}
+        # Accept both {sections: {...}} and direct section updates
+        # Frontend sends {sections: {...}} format
+        updates = data.get('sections', data) if isinstance(data, dict) else {}
+        
+        # Debug logging
+        logger.info(f"Received configuration update request: {list(updates.keys()) if updates else 'empty'}")
+        logger.debug(f"Update data: {updates}")
 
         # Update configuration using the configuration system
         config.save_updates(updates)

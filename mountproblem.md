@@ -150,13 +150,38 @@ volumes:
 - ✅ **ZERO PLEX DISRUPTION**: Plex never loses visibility of media files
 
 ## Current Status
-**✅ PROBLEM FULLY SOLVED**: PlexCacheUltra now works perfectly with existing Plex configurations through shared mount path approach.
+**✅ MOUNT PROBLEM FULLY SOLVED**: PlexCacheUltra now works perfectly with existing Plex configurations through shared mount path approach.
 
 **SINGLE SOLUTION FOR ALL USERS:**
 - Updated `docker-compose.yml` uses shared mount paths (matches user's Plex setup)
 - Updated `my-cacherr.xml` Unraid template with correct mount paths
 - No Plex configuration changes required
 - Works with any existing Plex mount structure
+
+## NEW ISSUE: Settings Persistence Problem (2025-01-27)
+
+**Problem Description**: Settings are not saving properly in the web GUI. Plex token works if you replace it but as soon as you leave the page or restart the settings it stops working. Settings don't persist after saving and going to a different screen or restarting Docker.
+
+**Root Cause Analysis**:
+1. **Frontend-Backend Data Format Mismatch**: Frontend sends `{sections: {...}}` but backend was expecting direct updates
+2. **Plex Token Handling**: Token masking logic was too aggressive and prevented real token updates
+3. **Configuration File Path**: Config directory wasn't being created properly
+4. **URL Handling**: Pydantic v2 HttpUrl objects weren't being converted to strings properly
+
+**Solutions Implemented**:
+1. ✅ **Fixed API Endpoint**: Updated `/api/config/update` to properly handle `{sections: {...}}` format
+2. ✅ **Improved Token Handling**: Made token validation less aggressive to allow real token updates
+3. ✅ **Fixed Config Directory**: Ensured config directory is created on initialization
+4. ✅ **Fixed URL Handling**: Properly convert HttpUrl objects to strings for Pydantic v2 compatibility
+5. ✅ **Enhanced Debugging**: Added comprehensive logging to track configuration updates
+6. ✅ **Fixed API Response**: Use `config.to_dict()` to return complete configuration structure
+
+**Files Modified**:
+- `src/web/routes/api.py` - Fixed data format handling and response structure
+- `src/config/settings.py` - Improved token handling and URL conversion
+- `mountproblem.md` - Documented the new issue and solutions
+
+**Status**: ✅ **SETTINGS PERSISTENCE ISSUE RESOLVED**
 
 ## Implementation Complete
 1. ✅ **COMPLETED** - Analyzed user's specific Plex and cacherr Docker templates

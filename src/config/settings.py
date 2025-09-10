@@ -75,6 +75,9 @@ class Config:
         # Configuration file path
         self.config_file = Path(self.settings.config_dir) / "cacherr_config.json"
         
+        # Ensure config directory exists
+        self.config_file.parent.mkdir(parents=True, exist_ok=True)
+        
         # Initialize typed configuration objects
         self._initialize_configurations()
         
@@ -267,21 +270,22 @@ class Config:
                 })
                 incoming = dict(overrides['plex'])
                 
-                # Handle token properly - preserve existing token if masked/blank
+                # Handle token properly - only update if a real token is provided
                 token_val = incoming.get('token', None)
                 if token_val is not None:
                     if isinstance(token_val, str):
+                        # Check if it's a masked/placeholder value
                         masked = (token_val.strip() == '' or 
                                 token_val == '***MASKED***' or 
                                 token_val.lower() == 'masked' or 
-                                ('*' in token_val) or
-                                token_val == '***MASKED***')
+                                token_val == '***MASKED***' or
+                                len(token_val) < 10)  # Plex tokens are typically longer
                         if masked:
                             # Keep existing token, don't update
                             incoming.pop('token', None)
-                            self.logger.debug("Preserving existing Plex token (masked value received)")
+                            self.logger.debug("Preserving existing Plex token (masked/empty value received)")
                         else:
-                            # Use the new token
+                            # Use the new token - it looks like a real token
                             self.logger.debug("Updating Plex token with new value")
                     else:
                         # Non-string token, use as-is
@@ -295,6 +299,10 @@ class Config:
                 if 'url' in incoming and (incoming['url'] is None or str(incoming['url']).strip() == ''):
                     incoming.pop('url', None)
                     self.logger.debug("Preserving existing Plex URL (blank value received)")
+                
+                # Ensure URL is properly converted to string for Pydantic v2 compatibility
+                if 'url' in incoming and incoming['url'] is not None:
+                    incoming['url'] = str(incoming['url']).strip()
                 
                 plex_data.update(incoming)
                 self.plex = PlexConfig(**plex_data)
@@ -481,9 +489,16 @@ class Config:
             # Merge updates
             existing_config.update(updates)
             
+            # Debug logging
+            self.logger.info(f"Saving configuration to: {self.config_file}")
+            self.logger.debug(f"Updates to save: {list(updates.keys())}")
+            self.logger.debug(f"Full config after merge: {list(existing_config.keys())}")
+            
             # Save merged configuration
             with open(self.config_file, 'w') as f:
                 json.dump(existing_config, f, indent=2)
+            
+            self.logger.info(f"Configuration saved successfully to {self.config_file}")
             
         except Exception as e:
             self.logger.error(f"Failed to save configuration file: {e}")
