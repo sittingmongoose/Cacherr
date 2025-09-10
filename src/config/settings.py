@@ -645,7 +645,7 @@ class Config:
                 'plex_url': str(self.plex.url) if getattr(self.plex, 'url', None) else '',
                 'cache_destination': str(self.paths.cache_destination) if getattr(self.paths, 'cache_destination', None) else '',
                 'max_concurrent_cache': self.performance.max_concurrent_moves_cache,
-                'log_level': (self.logging.level.value if hasattr(self.logging, 'level') and hasattr(self.logging.level, 'value') else str(self.logging.level) if hasattr(self.logging, 'level') else 'INFO'),
+                'log_level': str(self.logging.level) if hasattr(self.logging, 'level') else 'INFO',
                 'debug_mode': self.settings.debug,
             },
             'validation_details': validation_results['sections']

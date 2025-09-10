@@ -703,7 +703,7 @@ class CacherrSettings(BaseSettings):
                 'show_total_size': self.test_show_total_size,
             },
             'logging': {
-                'level': self.log_level.value,
+                'level': str(self.log_level),
             },
             'debug': self.debug,
             'web_host': self.web_host,

@@ -124,7 +124,7 @@ class LoggingConfig(BaseModel):
         return {
             'config_type': 'logging',
             'version': '2.5',
-            'level': self.level.value,
+            'level': str(self.level),
             'max_files': self.max_files,
             'max_size_mb': self.max_size_mb
         }
