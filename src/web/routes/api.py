@@ -417,6 +417,15 @@ def api_update_config():
         )
         return jsonify(response.model_dump()), 422
 
+    except ValueError as e:
+        # Handle validation errors that were converted to ValueError
+        response = APIResponse(
+            success=False,
+            error="Configuration validation failed",
+            data={"validation_errors": [str(e)]}
+        )
+        return jsonify(response.model_dump()), 422
+
     except Exception as e:
         logger.error(f"Failed to update configuration: {e}")
         response = APIResponse(

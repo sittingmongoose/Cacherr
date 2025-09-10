@@ -585,6 +585,12 @@ class CacherrSettings(BaseSettings):
         for credential entry. If the token environment variable is empty, it
         will be treated as not provided.
         """
+        # Debug logging for environment variable values
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.debug(f"Environment PLEX_URL: {self.plex_url}")
+        logger.debug(f"Environment PLEX_TOKEN: {'***' if self.plex_token else 'None'}")
+        
         # Normalize empty values to None so validation does not fail
         token_value = self.plex_token.strip() if isinstance(self.plex_token, str) else None
         token_value = token_value or None
@@ -596,7 +602,7 @@ class CacherrSettings(BaseSettings):
 
         return PlexConfig(
             url=self.plex_url,
-            token=token_value,
+            token=SecretStr(token_value) if token_value else None,
             username=self.plex_username,
             password=password_value
         )

@@ -82,6 +82,8 @@ class Config:
         self._initialize_configurations()
         
         # Load persistent overrides (this will create config file if it doesn't exist)
+        # This should override environment variables with higher priority
+        # The JSON config file represents user-configured values and should take precedence
         self._load_persistent_overrides()
         
         # Log configuration summary
@@ -194,12 +196,16 @@ class Config:
     def _load_persistent_overrides(self) -> None:
         """Load persistent configuration overrides from JSON file."""
         try:
+            self.logger.info(f"Checking for persistent config file: {self.config_file}")
             if self.config_file.exists():
+                self.logger.info(f"Loading persistent configuration from: {self.config_file}")
                 with open(self.config_file, 'r') as f:
                     persistent_config = json.load(f)
+                self.logger.debug(f"Loaded persistent config sections: {list(persistent_config.keys())}")
                 self._apply_overrides(persistent_config)
                 self.logger.info("Loaded persistent configuration overrides")
             else:
+                self.logger.info(f"Config file does not exist, creating initial config: {self.config_file}")
                 # If no config file exists, create one with current environment settings
                 self._create_initial_config_file()
         except Exception as e:
@@ -225,6 +231,9 @@ class Config:
     def _apply_overrides(self, overrides: Dict[str, Any]) -> None:
         """
         Apply configuration overrides with validation.
+        
+        This method applies overrides from the JSON config file, which should
+        take precedence over environment variables for user-configured values.
         
         Args:
             overrides: Dictionary of configuration overrides
@@ -272,6 +281,8 @@ class Config:
                 
                 # Handle token properly - only update if a real token is provided
                 token_val = incoming.get('token', None)
+                self.logger.debug(f"Processing Plex token override: {type(token_val)} - {str(token_val)[:10] if token_val else 'None'}...")
+                
                 if token_val is not None:
                     if isinstance(token_val, str):
                         # Check if it's a masked/placeholder value
@@ -286,7 +297,7 @@ class Config:
                             self.logger.debug("Preserving existing Plex token (masked/empty value received)")
                         else:
                             # Use the new token - it looks like a real token
-                            self.logger.debug("Updating Plex token with new value")
+                            self.logger.debug(f"Updating Plex token with new value (length: {len(token_val)})")
                     else:
                         # Non-string token, use as-is
                         self.logger.debug("Updating Plex token with non-string value")
