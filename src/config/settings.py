@@ -239,7 +239,18 @@ class Config:
                     'config_type',
                     'version'
                 })
-                plex_data.update(overrides['plex'])
+                incoming = dict(overrides['plex'])
+                # Ignore masked/blank token updates to preserve existing secret
+                token_val = incoming.get('token', None)
+                if token_val is not None:
+                    if isinstance(token_val, str):
+                        masked = token_val.strip() == '' or token_val == '***MASKED***' or token_val.lower() == 'masked' or ('*' in token_val)
+                        if masked:
+                            incoming.pop('token', None)
+                # Avoid clobbering URL with blank
+                if 'url' in incoming and (incoming['url'] is None or str(incoming['url']).strip() == ''):
+                    incoming.pop('url', None)
+                plex_data.update(incoming)
                 self.plex = PlexConfig(**plex_data)
                 self.logger.debug("Applied plex configuration overrides")
             except ValidationError as e:
@@ -564,10 +575,10 @@ class Config:
             'key_settings': {
                 'copy_to_cache': self.media.copy_to_cache,
                 'cache_mode': self.media.cache_mode_description,
-                'plex_url': self.plex.url,
-                'cache_destination': self.paths.cache_destination,
+                'plex_url': str(self.plex.url) if getattr(self.plex, 'url', None) else '',
+                'cache_destination': str(self.paths.cache_destination) if getattr(self.paths, 'cache_destination', None) else '',
                 'max_concurrent_cache': self.performance.max_concurrent_moves_cache,
-                'log_level': self.logging.level,
+                'log_level': (self.logging.level.value if hasattr(self.logging, 'level') and hasattr(self.logging.level, 'value') else str(self.logging.level) if hasattr(self.logging, 'level') else 'INFO'),
                 'debug_mode': self.settings.debug,
             },
             'validation_details': validation_results['sections']

@@ -404,17 +404,20 @@ def api_update_config():
             )
             return jsonify(response.model_dump()), 400
 
+        # Accept both {settings: {...}} and direct section updates
+        updates = data.get('settings', data) if isinstance(data, dict) else {}
+
         # Update configuration using the configuration system
-        updated_config = config.save_updates(data)
+        config.save_updates(updates)
 
         # Log successful update
-        logger.info(f"Configuration updated successfully: {list(data.keys())}")
+            logger.info(f"Configuration updated successfully: {list(updates.keys())}")
 
         response = APIResponse(
             success=True,
             message="Configuration updated successfully",
             data={
-                "updated_sections": list(data.keys()),
+                "updated_sections": list(updates.keys()),
                 "validation_summary": config.get_summary()
             }
         )
@@ -720,7 +723,14 @@ def api_test_plex_connection():
 
             response = APIResponse(
                 success=True,
-                message=f"Connected to {server_name} (v{version})"
+                message=f"Connected to {server_name} (v{version})",
+                data={
+                    'ok': True,
+                    'connected': True,
+                    'server_name': server_name,
+                    'version': str(version),
+                    'url': plex_url
+                }
             )
             return jsonify(response.model_dump())
 
@@ -737,7 +747,8 @@ def api_test_plex_connection():
 
             response = APIResponse(
                 success=False,
-                error=error_msg
+                error=error_msg,
+                data={'ok': False, 'connected': False}
             )
             return jsonify(response.model_dump()), 400
 
