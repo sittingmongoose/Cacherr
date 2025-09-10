@@ -164,10 +164,17 @@ export const PlexSettings: React.FC<PlexSettingsProps> = ({
   // Only reset if we currently have unsaved changes
   const prevDataRef = useRef(data)
   useEffect(() => {
+    console.log('PlexSettings data changed:', {
+      hasUnsavedChanges,
+      prevData: prevDataRef.current,
+      newData: data,
+      dataChanged: prevDataRef.current !== data
+    })
     if (hasUnsavedChanges && prevDataRef.current !== data) {
+      console.log('Resetting hasUnsavedChanges to false')
       setHasUnsavedChanges(false)
-      prevDataRef.current = data
     }
+    prevDataRef.current = data
   }, [data, hasUnsavedChanges])
 
   /**

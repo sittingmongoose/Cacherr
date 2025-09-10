@@ -553,12 +553,18 @@ class Config:
             
             # Always save the current Plex configuration to prevent token loss
             # when saving other settings
+            self.logger.info(f"Save operation: sections being updated: {list(updates.keys())}")
             if 'plex' not in updates and hasattr(self, 'plex'):
                 try:
-                    existing_config['plex'] = self.plex.to_dict(mask_secrets=False)
-                    self.logger.debug("Preserved current Plex configuration including token")
+                    plex_dict = self.plex.to_dict(mask_secrets=False)
+                    token_preview = plex_dict.get('token', 'None')
+                    self.logger.info(f"Preserving Plex config with token: {token_preview[:10] if token_preview else 'None'}...")
+                    existing_config['plex'] = plex_dict
+                    self.logger.info("Successfully preserved current Plex configuration")
                 except Exception as e:
-                    self.logger.warning(f"Failed to preserve Plex configuration: {e}")
+                    self.logger.error(f"Failed to preserve Plex configuration: {e}")
+            else:
+                self.logger.info("Plex section is being updated or doesn't exist - not preserving")
             
             # Debug logging
             self.logger.info(f"Saving configuration to: {self.config_file}")
