@@ -54,6 +54,7 @@ Example:
 """
 
 import logging
+import time
 import os
 import requests
 from pathlib import Path
@@ -715,11 +716,29 @@ def api_test_plex_connection():
             if not plex_url.startswith(('http://', 'https://')):
                 plex_url = f'http://{plex_url}'
 
-            # Test connection with timeout
+            # Test connection with timeout and measure response time
+            t0 = time.perf_counter()
             plex = PlexServer(plex_url, plex_token, timeout=10)
-            # Try to get server info to verify connection
+            # Touch a light attribute to ensure the session is valid
             server_name = plex.friendlyName
             version = plex.version
+            response_time_ms = int((time.perf_counter() - t0) * 1000)
+
+            # Attempt to gather optional details (platform, libraries)
+            platform = None
+            library_count = None
+            library_names = []
+            try:
+                platform = getattr(plex, 'platform', None)
+            except Exception:
+                platform = None
+            try:
+                sections = plex.library.sections()
+                library_count = len(sections)
+                library_names = [getattr(s, 'title', None) for s in sections if hasattr(s, 'title')]
+            except Exception:
+                # Library probing is optional; do not fail the test if unavailable
+                pass
 
             # Build connectivity payload compatible with frontend expectations
             connectivity = {
@@ -729,10 +748,12 @@ def api_test_plex_connection():
                 'server_info': {
                     'product': 'Plex Media Server',
                     'version': str(version),
-                    'platform': None,
+                    'platform': platform,
                     'server_name': server_name,
-                    'library_count': None
+                    'library_count': library_count,
+                    'libraries': library_names
                 },
+                'response_time_ms': response_time_ms,
                 # Convenience flags some UI variants look for
                 'ok': True,
                 'connected': True
