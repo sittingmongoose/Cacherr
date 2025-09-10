@@ -119,19 +119,14 @@ class LoggingConfig(BaseModel):
         """Serialize log level to uppercase string."""
         return value.value
 
-    @model_serializer(mode='plain')
-    def serialize_model(self) -> Dict[str, Any]:
-        """Custom model serialization with metadata."""
-        # Get the base data without trying to modify it
-        data = self.__dict__.copy()
-        # The level is already a LogLevel enum, but we want the value
-        level_value = data['level'].value if hasattr(data['level'], 'value') else data['level']
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary with metadata."""
         return {
             'config_type': 'logging',
             'version': '2.5',
-            'level': level_value,
-            'max_files': data['max_files'],
-            'max_size_mb': data['max_size_mb']
+            'level': self.level.value,
+            'max_files': self.max_files,
+            'max_size_mb': self.max_size_mb
         }
 
 
@@ -257,16 +252,15 @@ class PlexConfig(BaseModel):
             return None
         return "***MASKED***"
 
-    @model_serializer(mode='plain')
-    def serialize_model(self) -> Dict[str, Any]:
-        """Custom model serialization with security considerations."""
+    def to_dict(self, mask_secrets: bool = True) -> Dict[str, Any]:
+        """Convert to dictionary with optional security masking."""
         return {
             'config_type': 'plex',
             'version': '2.5',
             'url': str(self.url),
-            'token': "***MASKED***" if self.token else None,
+            'token': "***MASKED***" if mask_secrets and self.token else (self.token.get_secret_value() if self.token else None),
             'username': self.username,
-            'password': "***MASKED***" if self.password else None,
+            'password': "***MASKED***" if mask_secrets and self.password else (self.password.get_secret_value() if self.password else None),
             'has_credentials': bool(self.token)
         }
 
@@ -435,9 +429,8 @@ class MediaConfig(BaseModel):
         """Serialize boolean fields with explicit type conversion."""
         return bool(value)
 
-    @model_serializer(mode='plain')
-    def serialize_model(self) -> Dict[str, Any]:
-        """Custom model serialization with behavioral metadata."""
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary with behavioral metadata."""
         return {
             'config_type': 'media',
             'version': '2.5',
@@ -662,9 +655,8 @@ class PathsConfig(BaseModel):
         """Serialize path lists with consistent formatting."""
         return [path.rstrip('/') for path in value]
 
-    @model_serializer(mode='plain')
-    def serialize_model(self) -> Dict[str, Any]:
-        """Custom model serialization with path analysis."""
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary with path analysis."""
         return {
             'config_type': 'paths',
             'version': '2.5',
@@ -861,9 +853,8 @@ class PerformanceConfig(BaseModel):
         """Serialize concurrency values with validation."""
         return int(value)
 
-    @model_serializer(mode='plain')
-    def serialize_model(self) -> Dict[str, Any]:
-        """Custom model serialization with performance analysis."""
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary with performance analysis."""
         return {
             'config_type': 'performance',
             'version': '2.5',

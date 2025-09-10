@@ -214,8 +214,8 @@ class Config:
     def _create_initial_config_file(self) -> None:
         """Create initial configuration file from environment variables."""
         try:
-            # Get current configuration as dict
-            config_dict = self.to_dict()
+            # Get current configuration as dict (internal version with actual values)
+            config_dict = self.to_dict_internal()
             
             # Ensure config directory exists
             self.config_file.parent.mkdir(parents=True, exist_ok=True)
@@ -526,11 +526,36 @@ class Config:
             Dictionary representation of all configuration sections
         """
         return {
-            'plex': self.plex.model_dump(exclude={'has_credentials'}),
-            'media': self.media.model_dump(exclude={'cache_mode_description', 'estimated_lifetime_hours', 'performance_profile', 'multi_user_enabled', 'watchlist_enabled'}),
-            'paths': self.paths.model_dump(exclude={'total_source_paths', 'has_additional_sources', 'primary_source'}),
-            'performance': self.performance.model_dump(exclude={'total_max_concurrent', 'performance_profile', 'resource_intensity_score', 'concurrency_breakdown'}),
-            'logging': self.logging.model_dump(exclude={'config_type', 'version'}),
+            'plex': self.plex.to_dict(mask_secrets=True),  # Mask secrets for display
+            'media': self.media.to_dict(),
+            'paths': self.paths.to_dict(),
+            'performance': self.performance.to_dict(),
+            'logging': self.logging.to_dict(),
+            'real_time_watch': self.real_time_watch.model_dump() if hasattr(self.real_time_watch, 'model_dump') else self.real_time_watch,
+            'trakt': self.trakt.model_dump() if hasattr(self.trakt, 'model_dump') else self.trakt,
+            'web': self.web.model_dump() if hasattr(self.web, 'model_dump') else self.web,
+            'test_mode': self.test_mode,
+            'notifications': self.notifications.model_dump() if hasattr(self.notifications, 'model_dump') else self.notifications,
+            'cache': self.cache,  # Legacy compatibility
+            'debug': self.settings.debug,
+        }
+    
+    def to_dict_internal(self) -> Dict[str, Any]:
+        """
+        Export complete configuration as dictionary for internal use (unmasked).
+        
+        This method is used for saving configuration and internal operations
+        where we need the actual values, not masked versions.
+        
+        Returns:
+            Dictionary representation of all configuration sections with actual values
+        """
+        return {
+            'plex': self.plex.to_dict(mask_secrets=False),  # Don't mask secrets for internal use
+            'media': self.media.to_dict(),
+            'paths': self.paths.to_dict(),
+            'performance': self.performance.to_dict(),
+            'logging': self.logging.to_dict(),
             'real_time_watch': self.real_time_watch.model_dump() if hasattr(self.real_time_watch, 'model_dump') else self.real_time_watch,
             'trakt': self.trakt.model_dump() if hasattr(self.trakt, 'model_dump') else self.trakt,
             'web': self.web.model_dump() if hasattr(self.web, 'model_dump') else self.web,
@@ -565,39 +590,9 @@ class Config:
         
         for section_name, config_obj in sections:
             try:
-                # Re-validate using Pydantic, excluding all computed fields to prevent serialization issues
-                if section_name == 'plex':
-                    # Exclude computed fields for PlexConfig
-                    dump_data = config_obj.model_dump(exclude={
-                        'has_credentials', 'config_type', 'version'
-                    })
-                elif section_name == 'media':
-                    # Exclude computed fields for MediaConfig
-                    dump_data = config_obj.model_dump(exclude={
-                        'cache_mode_description', 'estimated_cache_lifetime_hours',
-                        'config_type', 'version', 'cache_mode', 'performance_profile',
-                        'multi_user_enabled', 'watchlist_enabled'
-                    })
-                elif section_name == 'paths':
-                    # Exclude computed fields for PathsConfig
-                    dump_data = config_obj.model_dump(exclude={
-                        'total_source_paths', 'has_additional_sources', 'primary_source',
-                        'config_type', 'version'
-                    })
-                elif section_name == 'performance':
-                    # Exclude computed fields for PerformanceConfig
-                    dump_data = config_obj.model_dump(exclude={
-                        'total_max_concurrent', 'performance_profile', 'resource_intensity_score',
-                        'concurrency_breakdown', 'config_type', 'version'
-                    })
-                elif section_name == 'logging':
-                    # Exclude computed fields for LogLevel
-                    dump_data = config_obj.model_dump(exclude={
-                        'config_type', 'version'
-                    })
-                else:
-                    # No computed fields to exclude for other configs
-                    dump_data = config_obj.model_dump()
+                # Re-validate using Pydantic, using our custom to_dict method
+                # This avoids the config_type serialization issues
+                dump_data = config_obj.to_dict()
 
                 config_obj.model_validate(dump_data)
                 results['sections'][section_name] = {
