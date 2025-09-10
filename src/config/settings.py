@@ -284,23 +284,31 @@ class Config:
                 self.logger.debug(f"Processing Plex token override: {type(token_val)} - {str(token_val)[:10] if token_val else 'None'}...")
                 
                 if token_val is not None:
-                    if isinstance(token_val, str):
-                        # Check if it's a masked/placeholder value
-                        masked = (token_val.strip() == '' or 
-                                token_val == '***MASKED***' or 
-                                token_val.lower() == 'masked' or 
-                                token_val == '***MASKED***' or
-                                len(token_val) < 10)  # Plex tokens are typically longer
-                        if masked:
-                            # Keep existing token, don't update
-                            incoming.pop('token', None)
-                            self.logger.debug("Preserving existing Plex token (masked/empty value received)")
-                        else:
-                            # Use the new token - it looks like a real token
-                            self.logger.debug(f"Updating Plex token with new value (length: {len(token_val)})")
+                    # Extract the actual token value for checking
+                    if hasattr(token_val, 'get_secret_value'):
+                        # It's a SecretStr object
+                        try:
+                            actual_token = token_val.get_secret_value()
+                        except:
+                            actual_token = str(token_val)
+                    elif isinstance(token_val, str):
+                        actual_token = token_val
                     else:
-                        # Non-string token, use as-is
-                        self.logger.debug("Updating Plex token with non-string value")
+                        actual_token = str(token_val)
+                    
+                    # Check if it's a masked/placeholder value
+                    masked = (actual_token.strip() == '' or 
+                            actual_token == '***MASKED***' or 
+                            actual_token.lower() == 'masked' or
+                            len(actual_token) < 10)  # Plex tokens are typically longer
+                    
+                    if masked:
+                        # Keep existing token, don't update
+                        incoming.pop('token', None)
+                        self.logger.debug("Preserving existing Plex token (masked/empty value received)")
+                    else:
+                        # Use the new token - it looks like a real token
+                        self.logger.debug(f"Updating Plex token with new value (length: {len(actual_token)})")
                 else:
                     # No token in incoming data, keep existing
                     incoming.pop('token', None)

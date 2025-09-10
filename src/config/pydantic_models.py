@@ -251,7 +251,7 @@ class PlexConfig(BaseModel):
 
         - Accepts None, empty values, or strings
         - Converts strings to SecretStr
-        - Handles masked tokens properly
+        - Preserves masked tokens for higher-level logic to handle
         """
         if v is None:
             return None
@@ -259,21 +259,16 @@ class PlexConfig(BaseModel):
         # Handle string input (from frontend)
         if isinstance(v, str):
             v = v.strip()
-            # Handle empty or masked tokens
-            if not v or v == '***MASKED***':
+            # Handle empty tokens
+            if not v:
                 return None
-            # Convert string to SecretStr
+            # Convert string to SecretStr (including masked tokens)
+            # Higher-level logic will handle preserving existing tokens
             return SecretStr(v)
             
         # Already a SecretStr
         if hasattr(v, 'get_secret_value'):
-            try:
-                token_str = v.get_secret_value()
-                if not token_str or token_str.strip() == '' or token_str == '***MASKED***':
-                    return None
-                return v
-            except Exception:
-                return None
+            return v
                 
         return None
 
@@ -285,7 +280,7 @@ class PlexConfig(BaseModel):
 
         - Accepts None, empty values, or strings
         - Converts strings to SecretStr
-        - Handles masked passwords properly
+        - Preserves masked passwords for higher-level logic to handle
         """
         if v is None:
             return None
@@ -293,21 +288,16 @@ class PlexConfig(BaseModel):
         # Handle string input (from frontend)
         if isinstance(v, str):
             v = v.strip()
-            # Handle empty or masked passwords
-            if not v or v == '***MASKED***':
+            # Handle empty passwords
+            if not v:
                 return None
-            # Convert string to SecretStr
+            # Convert string to SecretStr (including masked passwords)
+            # Higher-level logic will handle preserving existing passwords
             return SecretStr(v)
             
         # Already a SecretStr
         if hasattr(v, 'get_secret_value'):
-            try:
-                password_str = v.get_secret_value()
-                if not password_str or password_str.strip() == '' or password_str == '***MASKED***':
-                    return None
-                return v
-            except Exception:
-                return None
+            return v
                 
         return None
 
