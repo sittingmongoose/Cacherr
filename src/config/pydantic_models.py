@@ -115,9 +115,14 @@ class LoggingConfig(BaseModel):
         return upper_v
 
     @field_serializer('level')
-    def serialize_log_level(self, value: LogLevel) -> str:
+    def serialize_log_level(self, value) -> str:
         """Serialize log level to uppercase string."""
-        return value.value
+        if isinstance(value, LogLevel):
+            return value.value
+        elif isinstance(value, str):
+            return value.upper()
+        else:
+            return str(value).upper()
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary with metadata."""

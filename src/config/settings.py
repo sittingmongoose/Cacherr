@@ -347,7 +347,7 @@ class Config:
                     'version'
                 })
                 logging_data.update(overrides['logging'])
-                self.logging = LogLevel(**logging_data)
+                self.logging = LoggingConfig(**logging_data)
                 self.logger.debug("Applied logging configuration overrides")
             except ValidationError as e:
                 self.logger.warning(f"Invalid logging override: {e}")
@@ -453,6 +453,33 @@ class Config:
                 PerformanceConfig(**perf_data)  # Validate without assigning
             except ValidationError as e:
                 raise ValueError(f"Invalid performance configuration: {e}") from e
+        
+        # Validate plex updates
+        if 'plex' in updates:
+            try:
+                # Exclude computed fields when dumping model data
+                plex_data = self.plex.model_dump(exclude={
+                    'has_credentials',
+                    'config_type',
+                    'version'
+                })
+                plex_data.update(updates['plex'])
+                PlexConfig(**plex_data)  # Validate without assigning
+            except ValidationError as e:
+                raise ValueError(f"Invalid plex configuration: {e}") from e
+        
+        # Validate logging updates  
+        if 'logging' in updates:
+            try:
+                # Exclude computed fields when dumping model data
+                logging_data = self.logging.model_dump(exclude={
+                    'config_type',
+                    'version'
+                })
+                logging_data.update(updates['logging'])
+                LoggingConfig(**logging_data)  # Validate without assigning
+            except ValidationError as e:
+                raise ValueError(f"Invalid logging configuration: {e}") from e
         
         # Validate other configuration updates
         for section, section_updates in updates.items():

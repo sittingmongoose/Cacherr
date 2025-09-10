@@ -392,6 +392,10 @@ def api_update_config():
         # Debug logging
         logger.info(f"Received configuration update request: {list(updates.keys()) if updates else 'empty'}")
         logger.debug(f"Update data: {updates}")
+        
+        # Log individual sections for debugging
+        for section_name, section_data in updates.items():
+            logger.debug(f"Section '{section_name}': {section_data}")
 
         # Update configuration using the configuration system
         config.save_updates(updates)
@@ -410,6 +414,8 @@ def api_update_config():
         return jsonify(response.model_dump())
 
     except ValidationError as e:
+        logger.error(f"Pydantic validation error: {e}")
+        logger.error(f"Validation error details: {e.errors()}")
         response = APIResponse(
             success=False,
             error="Configuration validation failed",
@@ -419,6 +425,7 @@ def api_update_config():
 
     except ValueError as e:
         # Handle validation errors that were converted to ValueError
+        logger.error(f"Value validation error: {e}")
         response = APIResponse(
             success=False,
             error="Configuration validation failed",
