@@ -281,7 +281,16 @@ class Config:
                 
                 # Handle token properly - only update if a real token is provided
                 token_val = incoming.get('token', None)
-                self.logger.debug(f"Processing Plex token override: {type(token_val)} - {str(token_val)[:10] if token_val else 'None'}...")
+                current_token = None
+                if hasattr(self.plex, 'token') and self.plex.token:
+                    if hasattr(self.plex.token, 'get_secret_value'):
+                        current_token = self.plex.token.get_secret_value()
+                    else:
+                        current_token = str(self.plex.token)
+                
+                self.logger.info(f"=== TOKEN DEBUG ===")
+                self.logger.info(f"Current stored token: {current_token[:10] if current_token else 'None'}...")
+                self.logger.info(f"Incoming token: {type(token_val)} - {str(token_val)[:10] if token_val else 'None'}...")
                 
                 if token_val is not None:
                     # Extract the actual token value for checking
@@ -304,14 +313,14 @@ class Config:
                     if masked:
                         # Keep existing token, don't update
                         incoming.pop('token', None)
-                        self.logger.debug("Preserving existing Plex token (masked/empty value received)")
+                        self.logger.info(f"PRESERVING existing token - removed from incoming data")
                     else:
                         # Use the new token - it's a real token update
-                        self.logger.debug(f"Updating Plex token with new value (length: {len(actual_token)})")
+                        self.logger.info(f"UPDATING token with new value (length: {len(actual_token)})")
                 else:
                     # No token in incoming data, keep existing
                     incoming.pop('token', None)
-                    self.logger.debug("No token in update, preserving existing Plex token")
+                    self.logger.info(f"NO TOKEN in incoming data - preserving existing")
                 
                 # Avoid clobbering URL with blank
                 if 'url' in incoming and (incoming['url'] is None or str(incoming['url']).strip() == ''):
@@ -552,10 +561,20 @@ class Config:
             # For sections being updated, use current state; for others, preserve existing
             current_config = self.to_dict_internal()
             
+            # Debug the plex section specifically
+            current_plex = current_config.get('plex', {})
+            existing_plex = existing_config.get('plex', {})
+            self.logger.info(f"=== SAVE DEBUG ===")
+            self.logger.info(f"Current plex token: {current_plex.get('token', 'None')[:10] if current_plex.get('token') else 'None'}...")
+            self.logger.info(f"Existing plex token: {existing_plex.get('token', 'None')[:10] if existing_plex.get('token') else 'None'}...")
+            
             # Merge: use existing config as base, then overlay current state
             final_config = existing_config.copy()
             for section_name in current_config:
                 final_config[section_name] = current_config[section_name]
+            
+            final_plex = final_config.get('plex', {})
+            self.logger.info(f"Final plex token: {final_plex.get('token', 'None')[:10] if final_plex.get('token') else 'None'}...")
             
             # Debug logging
             self.logger.info(f"Saving configuration to: {self.config_file}")
