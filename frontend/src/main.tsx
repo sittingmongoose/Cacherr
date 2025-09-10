@@ -2,7 +2,6 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App'
 import './index.css'
-import { initializePWA } from './services/pwa'
 
 // Enable React strict mode in development
 const StrictModeWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -17,9 +16,6 @@ const rootElement = document.getElementById('root')
 if (!rootElement) {
   throw new Error('Root element not found')
 }
-
-// Initialize PWA service worker
-initializePWA().catch(console.error)
 
 // Create React root and render the app
 const root = ReactDOM.createRoot(rootElement)

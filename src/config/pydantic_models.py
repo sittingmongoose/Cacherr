@@ -173,12 +173,22 @@ class PlexConfig(BaseModel):
         description="Plex password (optional for token auth, stored securely)",
         examples=["********************"]
     )
+    verify_ssl: bool = Field(
+        default=True,
+        description="Whether to verify SSL certificates when connecting to Plex"
+    )
+    timeout: PositiveInt = Field(
+        default=30,
+        ge=5,
+        le=300,
+        description="Connection timeout in seconds"
+    )
 
     @field_validator('url')
     @classmethod
     def validate_plex_url(cls, v: Any, info: ValidationInfo) -> HttpUrl:
         """
-        Validate and normalize Plex URL.
+        Validate and normalize Plex URL with graceful handling.
 
         Args:
             v: The URL to validate (string or HttpUrl)
@@ -190,55 +200,111 @@ class PlexConfig(BaseModel):
         Raises:
             ValueError: If URL is invalid or not accessible
         """
-        # Convert to HttpUrl if it's a string
-        if isinstance(v, str):
-            try:
-                v = HttpUrl(v)
-            except Exception as e:
-                raise ValueError(f"Invalid URL format: {e}") from e
-        elif hasattr(v, 'scheme'):  # Already an HttpUrl-like object
-            pass  # Use as-is
+        if not v or (isinstance(v, str) and not v.strip()):
+            raise ValueError("Plex URL is required")
+            
+        # Convert to string first for normalization
+        if hasattr(v, 'scheme'):  # Already an HttpUrl-like object
+            url_str = str(v)
         else:
-            raise ValueError(f"URL must be a string or HttpUrl object, got {type(v).__name__}")
+            url_str = str(v).strip()
+        
+        # Add default port if missing
+        if '://' in url_str and ':' not in url_str.split('://', 1)[1].split('/')[0]:
+            # No port specified, add default
+            if url_str.startswith('https://'):
+                url_str = url_str.replace('https://', 'https://').rstrip('/') + ':32400'
+            elif url_str.startswith('http://'):
+                url_str = url_str.replace('http://', 'http://').rstrip('/') + ':32400'
+            else:
+                # No protocol, assume http and add port
+                url_str = f'http://{url_str.rstrip("/")}:32400'
+        elif '://' not in url_str:
+            # No protocol specified, assume http
+            if ':' not in url_str:
+                url_str = f'http://{url_str}:32400'
+            else:
+                url_str = f'http://{url_str}'
+        
+        # Convert to HttpUrl
+        try:
+            http_url = HttpUrl(url_str)
+        except Exception as e:
+            raise ValueError(f"Invalid URL format: {e}") from e
 
         # Validate scheme
-        if v.scheme not in ['http', 'https']:
+        if http_url.scheme not in ['http', 'https']:
             raise ValueError("Plex URL must use HTTP or HTTPS protocol")
 
-        # Validate port (Plex default is 32400)
-        if v.port is None:
-            raise ValueError("Plex URL must include port number (default: 32400)")
+        return http_url
 
-        if v.port < 1 or v.port > 65535:
-            raise ValueError("Port number must be between 1 and 65535")
-
-        return v
-
-    @field_validator('token')
+    @field_validator('token', mode='before')
     @classmethod
-    def validate_token(cls, v: Optional[SecretStr], info: ValidationInfo) -> Optional[SecretStr]:
+    def validate_token(cls, v: Any, info: ValidationInfo) -> Optional[SecretStr]:
         """
-        Validate Plex authentication token when provided.
+        Validate and convert Plex authentication token.
 
-        - Accepts None or empty values to allow the app to start
-          and let users configure credentials via the UI.
-        - If provided, perform a light sanity check without blocking startup.
+        - Accepts None, empty values, or strings
+        - Converts strings to SecretStr
+        - Handles masked tokens properly
         """
         if v is None:
             return None
-        try:
-            token_str = v.get_secret_value()
-        except Exception:
+            
+        # Handle string input (from frontend)
+        if isinstance(v, str):
+            v = v.strip()
+            # Handle empty or masked tokens
+            if not v or v == '***MASKED***':
+                return None
+            # Convert string to SecretStr
+            return SecretStr(v)
+            
+        # Already a SecretStr
+        if hasattr(v, 'get_secret_value'):
+            try:
+                token_str = v.get_secret_value()
+                if not token_str or token_str.strip() == '' or token_str == '***MASKED***':
+                    return None
+                return v
+            except Exception:
+                return None
+                
+        return None
+
+    @field_validator('password', mode='before')
+    @classmethod
+    def validate_password(cls, v: Any, info: ValidationInfo) -> Optional[SecretStr]:
+        """
+        Validate and convert Plex password.
+
+        - Accepts None, empty values, or strings
+        - Converts strings to SecretStr
+        - Handles masked passwords properly
+        """
+        if v is None:
             return None
-        # Treat empty/whitespace-only as not provided
-        if not isinstance(token_str, str) or not token_str.strip():
-            return None
-        # Keep basic character sanity without enforcing length at model level
-        cleaned = token_str.replace('-', '').replace('_', '')
-        if not cleaned.isalnum():
-            # Allow passing through; connection tests will surface issues
-            return v
-        return v
+            
+        # Handle string input (from frontend)
+        if isinstance(v, str):
+            v = v.strip()
+            # Handle empty or masked passwords
+            if not v or v == '***MASKED***':
+                return None
+            # Convert string to SecretStr
+            return SecretStr(v)
+            
+        # Already a SecretStr
+        if hasattr(v, 'get_secret_value'):
+            try:
+                password_str = v.get_secret_value()
+                if not password_str or password_str.strip() == '' or password_str == '***MASKED***':
+                    return None
+                return v
+            except Exception:
+                return None
+                
+        return None
 
     @field_serializer('url')
     def serialize_url(self, value: HttpUrl) -> str:
@@ -261,6 +327,8 @@ class PlexConfig(BaseModel):
             'token': "***MASKED***" if mask_secrets and self.token else (self.token.get_secret_value() if self.token else None),
             'username': self.username,
             'password': "***MASKED***" if mask_secrets and self.password else (self.password.get_secret_value() if self.password else None),
+            'verify_ssl': self.verify_ssl,
+            'timeout': self.timeout,
             'has_credentials': bool(self.token)
         }
 

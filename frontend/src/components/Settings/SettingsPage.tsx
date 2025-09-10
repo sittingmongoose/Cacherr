@@ -180,6 +180,13 @@ export const SettingsPage: React.FC = () => {
         saveStatus: 'saving' 
       }))
 
+      // Debug: Log what we're sending to the backend
+      console.log('Saving configuration data:', {
+        sections: configData,
+        validate_before_save: true,
+        create_backup: true
+      })
+
       const result = await SettingsAPIService.updateConfig({
         sections: configData,
         validate_before_save: true,
