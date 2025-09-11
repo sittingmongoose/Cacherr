@@ -147,7 +147,9 @@ export const SettingsPage: React.FC = () => {
       setState(prev => ({
         ...prev,
         isLoading: false,
-        validationErrors: {}
+        validationErrors: {},
+        // Clear unsaved badge on fresh load to avoid stale UI state
+        hasUnsavedChanges: false
       }))
     } catch (error) {
       console.error('Failed to load configuration:', error)

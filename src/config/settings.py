@@ -600,6 +600,38 @@ class Config:
                 else:
                     existing_config[section] = value
             
+            # Ensure Plex is always persisted from in-memory state even if not updated
+            if 'plex' not in updates and hasattr(self, 'plex'):
+                try:
+                    plex_dict = self.plex.to_dict(mask_secrets=False)
+                    token_preview = plex_dict.get('token', 'None')
+                    self.logger.info(
+                        f"Persisting Plex config from memory (no update provided) (token: {token_preview[:10] if token_preview else 'None'}...)"
+                    )
+                    existing_config['plex'] = plex_dict
+                except Exception as e:
+                    self.logger.error(f"Failed to persist Plex configuration (no update): {e}")
+
+            # Final guard: if persisted plex token looks masked/placeholder, replace with in-memory token
+            try:
+                if isinstance(existing_config.get('plex'), dict):
+                    persisted_token = existing_config['plex'].get('token')
+                    masked_like = (
+                        isinstance(persisted_token, str) and (
+                            persisted_token.strip() == '' or
+                            persisted_token == '***MASKED***' or
+                            '*' in persisted_token or
+                            persisted_token.lower() == 'masked'
+                        )
+                    )
+                    if masked_like:
+                        in_mem = self.plex.to_dict(mask_secrets=False).get('token') if hasattr(self, 'plex') else None
+                        if in_mem:
+                            self.logger.info("Replacing masked/placeholder Plex token in persisted config with in-memory value")
+                            existing_config['plex']['token'] = in_mem
+            except Exception as e:
+                self.logger.warning(f"Failed to enforce unmasked Plex token in persisted config: {e}")
+            
             # Debug logging
             self.logger.info(f"Saving configuration to: {self.config_file}")
             self.logger.debug(f"Config directory permissions: {oct(config_dir.stat().st_mode)[-3:] if config_dir.exists() else 'N/A'}")
