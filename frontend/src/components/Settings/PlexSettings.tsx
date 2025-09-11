@@ -132,6 +132,7 @@ export const PlexSettings: React.FC<PlexSettingsProps> = ({
   onValidate,
   onTestConnection,
   clearUnsavedSignal,
+  parentUnsaved,
   readonly = false,
   showAdvanced = false,
   autoSave = false,
@@ -143,6 +144,7 @@ export const PlexSettings: React.FC<PlexSettingsProps> = ({
   const [validationState, setValidationState] = useState<PlexValidationState>(DEFAULT_VALIDATION_STATE)
   const [connectionTest, setConnectionTest] = useState<ConnectionTestState>(DEFAULT_TEST_STATE)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+  const showUnsavedBadge = hasUnsavedChanges && (parentUnsaved ?? true)
 
   // Extract Plex configuration from data with safe defaults
   // Keep original values if they are masked, allowing user to see placeholder text
@@ -445,7 +447,7 @@ export const PlexSettings: React.FC<PlexSettingsProps> = ({
           </div>
         </div>
         
-        {hasUnsavedChanges && (
+        {showUnsavedBadge && (
           <div className="flex items-center space-x-2 text-amber-600 dark:text-amber-400">
             <AlertTriangle className="h-4 w-4" />
             <span className="text-sm font-medium">Unsaved changes</span>

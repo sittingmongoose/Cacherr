@@ -205,6 +205,12 @@ export interface SettingsFormProps {
    * clear their local unsaved-change state immediately on save.
    */
   clearUnsavedSignal?: number
+  /**
+   * Master unsaved-changes flag from the parent page. Sections should
+   * respect this to hide badges when the overall state is saved even if
+   * a local flag is temporarily out of sync.
+   */
+  parentUnsaved?: boolean
 }
 
 export interface SettingsSectionProps extends SettingsFormProps {

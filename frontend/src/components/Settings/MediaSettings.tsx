@@ -172,11 +172,13 @@ export const MediaSettings: React.FC<MediaSettingsProps> = ({
   showAdvanced = false,
   autoSave = false,
   autoSaveDelay = 1000,
-  clearUnsavedSignal
+  clearUnsavedSignal,
+  parentUnsaved
 }) => {
   // Component state management
   const [validationState, setValidationState] = useState<MediaValidationState>(DEFAULT_VALIDATION_STATE)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+  const showUnsavedBadge = hasUnsavedChanges && (parentUnsaved ?? true)
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['basic']))
 
   // Extract media and path configuration from data with safe defaults
@@ -557,12 +559,12 @@ export const MediaSettings: React.FC<MediaSettingsProps> = ({
           </div>
         </div>
         
-        {hasUnsavedChanges && (
-          <div className="flex items-center space-x-2 text-amber-600 dark:text-amber-400">
-            <AlertTriangle className="h-4 w-4" />
-            <span className="text-sm font-medium">Unsaved changes</span>
-          </div>
-        )}
+        {showUnsavedBadge && (
+            <div className="flex items-center space-x-2 text-amber-600 dark:text-amber-400">
+              <AlertTriangle className="h-4 w-4" />
+              <span className="text-sm font-medium">Unsaved changes</span>
+            </div>
+          )}
       </div>
 
       {/* Display validation errors from parent */}

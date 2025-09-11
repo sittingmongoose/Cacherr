@@ -224,7 +224,19 @@ class PlexOperations:
         
         try:
             # Get watchlist for main user
-            account = MyPlexAccount(token=self.config.plex.token)
+            # Convert SecretStr to string if needed
+            token_value = None
+            if getattr(self.config.plex, 'token', None) is not None:
+                try:
+                    token_value = self.config.plex.token.get_secret_value()  # type: ignore[attr-defined]
+                except Exception:
+                    token_value = str(self.config.plex.token)
+            
+            if not token_value or not str(token_value).strip():
+                self.logger.error("No valid Plex token available for watchlist access")
+                return []
+            
+            account = MyPlexAccount(token=token_value)
             watchlist = account.watchlist(filter='released')
             
             for item in watchlist:

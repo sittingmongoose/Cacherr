@@ -423,7 +423,9 @@ export const SettingsPage: React.FC = () => {
       errors: state.validationErrors,
       onChange: handleConfigChange,
       onValidate: handleValidateSection,
-      readonly: state.isSaving
+      readonly: state.isSaving,
+      clearUnsavedSignal: remountKey,
+      parentUnsaved: state.hasUnsavedChanges
     }
 
     switch (state.activeSection) {
