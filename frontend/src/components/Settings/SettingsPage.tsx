@@ -434,7 +434,16 @@ export const SettingsPage: React.FC = () => {
       default:
         return null
     }
-  }, [configData, state.activeSection, state.validationErrors, state.isSaving, state.showAdvanced, handleConfigChange, handleValidateSection])
+  }, [
+    configData,
+    state.activeSection,
+    state.validationErrors,
+    state.isSaving,
+    state.showAdvanced,
+    state.lastSavedAt,
+    handleConfigChange,
+    handleValidateSection
+  ])
 
   if (state.isLoading) {
     return <LoadingSpinner text="Loading configuration..." />
