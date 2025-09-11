@@ -382,11 +382,11 @@ export const SettingsPage: React.FC = () => {
     }
   }, [configData, state.hasUnsavedChanges])
 
-  // Load unsaved changes from localStorage on mount
+  // Load unsaved changes from localStorage on mount ONLY when no config is loaded yet
   useEffect(() => {
     try {
       const savedConfig = localStorage.getItem('cacherr-unsaved-config')
-      if (savedConfig && !state.isLoading) {
+      if (savedConfig && !state.isLoading && !configData) {
         const parsedConfig = JSON.parse(savedConfig)
         setConfigData(parsedConfig)
         setState(prev => ({ ...prev, hasUnsavedChanges: true }))
@@ -395,7 +395,7 @@ export const SettingsPage: React.FC = () => {
     } catch (error) {
       console.warn('Failed to load unsaved configuration:', error)
     }
-  }, [state.isLoading])
+  }, [state.isLoading, configData])
 
   // Clear unsaved changes from localStorage when saved
   useEffect(() => {
@@ -412,6 +412,8 @@ export const SettingsPage: React.FC = () => {
   const renderActiveSettingsComponent = useMemo(() => {
     if (!configData) return null
 
+    // Use a key to force remount after successful saves to clear any local component state
+    const remountKey = state.lastSavedAt ? state.lastSavedAt.getTime() : 0
     const commonProps = {
       data: configData,
       errors: state.validationErrors,
@@ -422,13 +424,13 @@ export const SettingsPage: React.FC = () => {
 
     switch (state.activeSection) {
       case 'plex':
-        return <PlexSettings {...commonProps} showAdvanced={state.showAdvanced} />
+        return <PlexSettings key={`plex-${remountKey}`} {...commonProps} showAdvanced={state.showAdvanced} />
       case 'media':
-        return <MediaSettings {...commonProps} showAdvanced={state.showAdvanced} />
+        return <MediaSettings key={`media-${remountKey}`} {...commonProps} showAdvanced={state.showAdvanced} />
       case 'performance':
-        return <PerformanceSettings {...commonProps} showAdvanced={state.showAdvanced} />
+        return <PerformanceSettings key={`performance-${remountKey}`} {...commonProps} showAdvanced={state.showAdvanced} />
       case 'advanced':
-        return <AdvancedSettings {...commonProps} showExperimental={state.showAdvanced} />
+        return <AdvancedSettings key={`advanced-${remountKey}`} {...commonProps} showExperimental={state.showAdvanced} />
       default:
         return null
     }

@@ -271,12 +271,12 @@ class Config:
         # Apply plex configuration overrides
         if 'plex' in overrides:
             try:
-                # Exclude computed fields when dumping model data to prevent serialization issues
-                plex_data = self.plex.model_dump(exclude={
-                    'has_credentials',
-                    'config_type',
-                    'version'
-                })
+                # Start from unmasked data to avoid propagating masked placeholders
+                plex_data = self.plex.to_dict(mask_secrets=False)
+                # Drop metadata keys not accepted by the model
+                plex_data.pop('has_credentials', None)
+                plex_data.pop('config_type', None)
+                plex_data.pop('version', None)
                 incoming = dict(overrides['plex'])
                 
                 # Handle token properly - only update if a real token is provided
@@ -488,13 +488,28 @@ class Config:
         # Validate plex updates
         if 'plex' in updates:
             try:
-                # Exclude computed fields when dumping model data
-                plex_data = self.plex.model_dump(exclude={
-                    'has_credentials',
-                    'config_type',
-                    'version'
-                })
-                plex_data.update(updates['plex'])
+                # Start from unmasked in-memory data to avoid validating masked placeholders
+                plex_data = self.plex.to_dict(mask_secrets=False)
+                plex_data.pop('has_credentials', None)
+                plex_data.pop('config_type', None)
+                plex_data.pop('version', None)
+
+                incoming = dict(updates['plex'])
+                # Drop masked/placeholder token/password from validation merge
+                for secret_field in ('token', 'password'):
+                    val = incoming.get(secret_field)
+                    sval = ''
+                    try:
+                        if hasattr(val, 'get_secret_value'):
+                            sval = val.get_secret_value()
+                        elif isinstance(val, str):
+                            sval = val
+                    except Exception:
+                        sval = str(val) if val is not None else ''
+                    if isinstance(sval, str) and (sval.strip() == '' or sval == '***MASKED***' or '*' in sval or sval.lower() == 'masked'):
+                        incoming.pop(secret_field, None)
+
+                plex_data.update(incoming)
                 PlexConfig(**plex_data)  # Validate without assigning
             except ValidationError as e:
                 raise ValueError(f"Invalid plex configuration: {e}") from e
