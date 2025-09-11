@@ -171,7 +171,8 @@ export const MediaSettings: React.FC<MediaSettingsProps> = ({
   readonly = false,
   showAdvanced = false,
   autoSave = false,
-  autoSaveDelay = 1000
+  autoSaveDelay = 1000,
+  clearUnsavedSignal
 }) => {
   // Component state management
   const [validationState, setValidationState] = useState<MediaValidationState>(DEFAULT_VALIDATION_STATE)
@@ -211,6 +212,13 @@ export const MediaSettings: React.FC<MediaSettingsProps> = ({
     }
     prevDataRef.current = data
   }, [data, hasUnsavedChanges])
+
+  // Clear immediately when parent broadcasts save signal
+  useEffect(() => {
+    if (clearUnsavedSignal) {
+      setHasUnsavedChanges(false)
+    }
+  }, [clearUnsavedSignal])
 
   /**
    * Validates path input ensuring they exist and are properly formatted

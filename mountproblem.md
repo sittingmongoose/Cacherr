@@ -146,6 +146,31 @@ volumes:
 **Result:**
 - ✅ **SINGLE SOLUTION**: Works with user's existing Plex setup (no Plex changes!)
 - ✅ **SHARED MOUNTS**: Both containers use identical media mount paths
+
+### Attempt 4: 2025-01-27 - Directory Creation Errors Fix
+**Problem:**
+- Docker startup warnings: "Directory creation failed: /workspace/cache" and "Directory creation failed: /mnt/cache"
+- Application trying to create non-existent directories that aren't mounted in the container
+
+**Root Cause:**
+- `src/application.py` had hardcoded directory creation attempts for `/workspace/cache` and `/mnt/cache`
+- These directories don't exist in the container and aren't mounted from the host
+- The actual cache directory is `/cache` which is created in Dockerfile and mounted from host
+
+**What was fixed:**
+- Updated `_create_required_directories()` method to only create `/cache` and `/tmp/cache`
+- Updated `_validate_cache_directories()` method to check the correct directories
+- Updated `get_cache_health()` method to check the correct directories
+- Removed `/workspace/cached_files.db` from database path fallback list
+- All directory creation now aligns with actual Docker volume mounts
+
+**Files Modified:**
+- `src/application.py` - Fixed directory creation logic in 3 methods
+
+**Result:**
+- ✅ **STARTUP WARNINGS ELIMINATED**: No more directory creation failures
+- ✅ **PROPER MOUNT ALIGNMENT**: Directory creation matches Docker volume mounts
+- ✅ **CLEAN STARTUP**: Application starts without errors
 - ✅ **HARDLINK COMPATIBLE**: Files moved to cache with hardlinks back to media paths
 - ✅ **ZERO PLEX DISRUPTION**: Plex never loses visibility of media files
 

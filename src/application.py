@@ -398,9 +398,8 @@ class ApplicationContext:
 
             # Check cache directories
             cache_dirs = [
-                Path("/workspace/cache"),
-                Path("/mnt/cache"),
-                Path("/tmp/cache")
+                Path("/cache"),            # Primary cache directory (mounted from host)
+                Path("/tmp/cache")         # Fallback cache directory
             ]
 
             for directory in cache_dirs:
@@ -566,10 +565,9 @@ class ApplicationContext:
             Path("/config/data")
         ]
 
-        # Cache-related directories
+        # Cache-related directories - only create directories that should exist
         cache_dirs = [
-            Path("/workspace/cache"),  # Default cache directory
-            Path("/mnt/cache"),        # Alternative cache mount
+            Path("/cache"),            # Primary cache directory (mounted from host)
             Path("/tmp/cache")         # Fallback cache directory
         ]
 
@@ -606,9 +604,8 @@ class ApplicationContext:
         """Validate the existence and writability of configured cache directories."""
         try:
             cache_dirs = [
-                Path("/workspace/cache"),
-                Path("/mnt/cache"),
-                Path("/tmp/cache")
+                Path("/cache"),            # Primary cache directory (mounted from host)
+                Path("/tmp/cache")         # Fallback cache directory
             ]
 
             writable_dirs = []
@@ -753,7 +750,6 @@ class ApplicationContext:
                 db_paths = [
                     "/config/data/cached_files.db",  # Preferred: in data subdirectory
                     "/config/cached_files.db",       # Secondary: in config root
-                    "/workspace/cached_files.db",    # Tertiary: workspace directory
                     "/tmp/cached_files.db"           # Fallback: temp directory
                 ]
 

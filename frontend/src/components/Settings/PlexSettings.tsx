@@ -131,6 +131,7 @@ export const PlexSettings: React.FC<PlexSettingsProps> = ({
   onChange,
   onValidate,
   onTestConnection,
+  clearUnsavedSignal,
   readonly = false,
   showAdvanced = false,
   autoSave = false,
@@ -176,6 +177,13 @@ export const PlexSettings: React.FC<PlexSettingsProps> = ({
     }
     prevDataRef.current = data
   }, [data, hasUnsavedChanges])
+
+  // Also clear local unsaved changes immediately when parent broadcasts a save signal
+  useEffect(() => {
+    if (clearUnsavedSignal) {
+      setHasUnsavedChanges(false)
+    }
+  }, [clearUnsavedSignal])
 
   /**
    * Validates a single form field based on field name and value

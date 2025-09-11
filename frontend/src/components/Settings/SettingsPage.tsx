@@ -198,6 +198,10 @@ export const SettingsPage: React.FC = () => {
       try {
         localStorage.removeItem('cacherr-unsaved-config')
       } catch {}
+      
+      // Immediately broadcast a clear signal so sections drop their local badges
+      const now = new Date()
+      setState(prev => ({ ...prev, hasUnsavedChanges: false, lastSavedAt: now }))
 
       // Refresh configuration from backend so children receive new data object.
       // This ensures local unsaved-change badges reset and masked secrets are re-applied.
@@ -208,7 +212,7 @@ export const SettingsPage: React.FC = () => {
         isSaving: false,
         hasUnsavedChanges: false,
         saveStatus: 'saved',
-        lastSavedAt: new Date(),
+        lastSavedAt: now,
         validationErrors: {}
       }))
 

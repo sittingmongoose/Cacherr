@@ -199,6 +199,12 @@ export interface SettingsFormProps {
   onChange: (section: keyof ConfigurationSettings, updates: any) => void
   onValidate?: (section: keyof ConfigurationSettings) => Promise<void>
   readonly?: boolean
+  /**
+   * A monotonically increasing signal (e.g., timestamp) that toggles
+   * whenever a successful save occurs. Sections can listen to this to
+   * clear their local unsaved-change state immediately on save.
+   */
+  clearUnsavedSignal?: number
 }
 
 export interface SettingsSectionProps extends SettingsFormProps {
