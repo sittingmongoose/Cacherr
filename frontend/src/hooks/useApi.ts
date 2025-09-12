@@ -24,7 +24,7 @@ import {
   CacheCleanupRequest,
   CacheCleanupResponse,
   RemoveCachedFileRequest,
-} from './types/api'
+} from '../types/api'
 
 // Generic API hook return type
 interface APIHookResult<T> {

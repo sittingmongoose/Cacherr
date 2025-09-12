@@ -17,7 +17,7 @@ import {
   Shield,
   Target
 } from 'lucide-react'
-import { CacheStatistics, CacheCleanupRequest, CachedFilesFilter } from './types/api'
+import { CacheStatistics, CacheCleanupRequest, CachedFilesFilter } from '../../types/api'
 import { LoadingSpinner } from '../common/LoadingSpinner'
 import { classNames } from '../../utils/format'
 

@@ -55,10 +55,10 @@ import type {
   SettingsValidationErrors,
   SETTINGS_SECTIONS,
   SettingsNavItem
-} from './types'
+} from '../../types'
 
 // Import API ValidationResult explicitly to avoid conflict with generic ValidationResult
-import type { ValidationResult } from './types/api'
+import type { ValidationResult } from '../../types/api'
 
 /**
  * Settings page state interface

@@ -1,6 +1,6 @@
 import React from 'react'
 import { Play, Pause, TestTube, Calendar, Activity, AlertTriangle } from 'lucide-react'
-import { SystemStatus } from './types/api'
+import { SystemStatus } from '../../types/api'
 import { StatusBadge, HealthIndicator } from '../common/StatusBadge'
 import { LoadingSpinner } from '../common/LoadingSpinner'
 import { formatRelativeTime, classNames } from '../../utils/format'

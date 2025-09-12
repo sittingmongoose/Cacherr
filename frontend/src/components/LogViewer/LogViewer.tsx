@@ -11,7 +11,7 @@ import {
   AlertTriangle,
   Bug
 } from 'lucide-react'
-import { LogEntry, LogFilter, LogsResponse } from './types/api'
+import { LogEntry, LogFilter, LogsResponse } from '../../types/api'
 import { LoadingSpinner, CardLoader } from '../common/LoadingSpinner'
 import { formatTimestamp, getLogLevelColor, classNames } from '../../utils/format'
 import { APIService, APIError } from '../../services/api'

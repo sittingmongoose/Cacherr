@@ -9,7 +9,7 @@ import {
   Zap,
   CheckCircle 
 } from 'lucide-react'
-import { SystemStatus, CacheStatistics } from './types/api'
+import { SystemStatus, CacheStatistics } from '../../types/api'
 import { LoadingSpinner } from '../common/LoadingSpinner'
 import { formatBytes, formatNumber, formatRelativeTime, classNames } from '../../utils/format'
 

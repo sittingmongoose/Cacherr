@@ -1,5 +1,5 @@
 import React from 'react'
-import { LoadingProps } from './types'
+import { LoadingProps } from '../../types'
 import { classNames } from '../../utils/format'
 
 /**

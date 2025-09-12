@@ -12,7 +12,7 @@ import type {
   ConfigurationSettings, 
   ValidationResult, 
   ConnectivityCheckResult 
-} from './types/api'
+} from '../../types/api'
 
 // Mock fetch globally
 global.fetch = vi.fn()

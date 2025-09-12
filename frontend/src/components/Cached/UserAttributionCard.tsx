@@ -11,7 +11,7 @@ import {
   Calendar,
   Eye
 } from 'lucide-react'
-import { UserCacheStatistics } from './types/api'
+import { UserCacheStatistics } from '../../types/api'
 import { useUserCacheStatistics } from '../../hooks/useApi'
 import { LoadingSpinner } from '../common/LoadingSpinner'
 import { classNames } from '../../utils/format'

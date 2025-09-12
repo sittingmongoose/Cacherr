@@ -49,7 +49,7 @@ import type {
   PerformanceSettings as PerformanceSettingsType,
   SettingsFormProps,
   PerformanceSettingsFormData
-} from './types'
+} from '../../types'
 
 /**
  * Props interface for the PerformanceSettings component

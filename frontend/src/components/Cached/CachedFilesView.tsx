@@ -18,7 +18,7 @@ import {
   Calendar,
   Search
 } from 'lucide-react'
-import { CachedFileInfo, CachedFilesFilter } from './types/api'
+import { CachedFileInfo, CachedFilesFilter } from '../../types/api'
 import { LoadingSpinner, CardLoader, SkeletonLoader } from '../common/LoadingSpinner'
 import StatusBadge from '../common/StatusBadge'
 import { classNames } from '../../utils/format'

@@ -46,7 +46,7 @@ import type {
   ConnectivityCheckResult,
   SettingsFormProps,
   PlexTestRequest 
-} from './types'
+} from '../../types'
 
 /**
  * Props interface for the PlexSettings component

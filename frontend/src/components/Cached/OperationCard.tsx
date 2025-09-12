@@ -22,7 +22,7 @@ import {
 } from 'lucide-react'
 import { StatusBadge } from '../common/StatusBadge'
 import { formatBytes, formatDuration, formatFilePath, classNames } from '../../utils/format'
-import { BatchOperation, OperationDetails } from './types/api'
+import { BatchOperation, OperationDetails } from '../../types/api'
 
 interface OperationCardProps {
   operation: BatchOperation

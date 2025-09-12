@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react'
 import { Settings, RefreshCw, Moon, Sun, Monitor, Wifi, WifiOff } from 'lucide-react'
-import { SystemStatus, HealthStatus, CacheStatistics } from './types/api'
+import { SystemStatus, HealthStatus, CacheStatistics } from '../../types/api'
 import StatusCard from '../StatusCard'
 import StatsGrid from '../StatsGrid'
 import { LoadingSpinner, FullPageLoader } from '../common/LoadingSpinner'

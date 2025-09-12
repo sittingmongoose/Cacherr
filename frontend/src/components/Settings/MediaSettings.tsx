@@ -56,7 +56,7 @@ import type {
   SettingsFormProps,
   MediaSettingsFormData,
   PathSettingsFormData
-} from './types'
+} from '../../types'
 
 /**
  * Props interface for the MediaSettings component

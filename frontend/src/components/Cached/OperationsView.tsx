@@ -33,7 +33,7 @@ import {
   FileOperation,
   OperationDetails,
   ResultsFilter
-} from './types/api'
+} from '../../types/api'
 
 import { LoadingSpinner, CardLoader } from '../common/LoadingSpinner'
 import StatusBadge from '../common/StatusBadge'

@@ -10,10 +10,11 @@ import {
   FileText,
   Clock,
   HardDrive,
-  Activity
+  Activity,
+  TestTube
 } from 'lucide-react'
-import { CachedFilesFilter, ResultsFilter } from './types/api'
-import { useCachedFilesRealTime, useCachedFilesOperations, useOperationResults, useOperationDetails } from '../../hooks/useApi'
+import { CachedFilesFilter, ResultsFilter } from '../../types/api'
+import { useCachedFilesRealTime, useCachedFilesOperations, useOperationResults, useOperationDetails, useTestResults } from '../../hooks/useApi'
 import { useAppContext } from '../../store/AppContext'
 import { LoadingSpinner, FullPageLoader } from '../common/LoadingSpinner'
 import { classNames } from '../../utils/format'
@@ -25,6 +26,7 @@ import CacheStatistics from './CacheStatistics'
 import CacheActionsPanel from './CacheActionsPanel'
 import FileDetailsModal from './FileDetailsModal'
 import OperationsView from './OperationsView'
+import { TestResults } from '../TestResults'
 
 /**
  * Main Cached Tab Component
@@ -52,7 +54,7 @@ export const CachedTab: React.FC<CachedTabProps> = ({ className }) => {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null)
   const [showFilters, setShowFilters] = useState(false)
-  const [activeView, setActiveView] = useState<'files' | 'stats' | 'operations'>('files')
+  const [activeView, setActiveView] = useState<'files' | 'stats' | 'operations' | 'test-results'>('files')
   
   // Operations state
   const [operationsFilter, setOperationsFilter] = useState<ResultsFilter>({})
@@ -82,6 +84,11 @@ export const CachedTab: React.FC<CachedTabProps> = ({ className }) => {
   })
 
   const { data: operationDetails, isLoading: detailsLoading, error: detailsError, refetch: fetchOperationDetails } = useOperationDetails(selectedOperation)
+
+  // Test Results API hook
+  const { data: testResults, isLoading: testResultsLoading, error: testResultsError, refetch: fetchTestResults } = useTestResults({
+    autoRefresh: false // Only refresh on demand for test results
+  })
 
   // Initialize WebSocket connection for real-time updates
   useEffect(() => {
@@ -267,6 +274,18 @@ export const CachedTab: React.FC<CachedTabProps> = ({ className }) => {
                     </span>
                   )}
                 </button>
+                <button
+                  onClick={() => setActiveView('test-results')}
+                  className={classNames(
+                    'px-3 py-1 text-sm font-medium rounded-md transition-colors',
+                    activeView === 'test-results'
+                      ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 shadow'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                  )}
+                >
+                  <TestTube className="w-4 h-4 mr-1 inline" />
+                  Test Results
+                </button>
               </div>
             </div>
 
@@ -309,15 +328,17 @@ export const CachedTab: React.FC<CachedTabProps> = ({ className }) => {
                 onClick={() => {
                   if (activeView === 'operations') {
                     fetchOperations()
+                  } else if (activeView === 'test-results') {
+                    fetchTestResults()
                   } else {
                     refreshAll()
                   }
                 }}
-                disabled={isLoading || operationsLoading}
+                disabled={isLoading || operationsLoading || testResultsLoading}
                 className="btn btn-ghost btn-sm"
                 aria-label="Refresh data"
               >
-                <RefreshCw className={classNames('w-4 h-4', (isLoading || operationsLoading) && 'animate-spin')} />
+                <RefreshCw className={classNames('w-4 h-4', (isLoading || operationsLoading || testResultsLoading) && 'animate-spin')} />
               </button>
             </div>
           </div>
@@ -381,6 +402,18 @@ export const CachedTab: React.FC<CachedTabProps> = ({ className }) => {
             onOperationToggle={handleOperationToggle}
             onExport={handleOperationExport}
           />
+        )}
+
+        {activeView === 'test-results' && (
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <TestResults
+              testResults={testResults}
+              isLoading={testResultsLoading}
+              error={testResultsError}
+              onRefresh={fetchTestResults}
+              className="w-full"
+            />
+          </div>
         )}
       </main>
 

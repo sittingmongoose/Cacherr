@@ -65,7 +65,7 @@ import type {
   TraktSettingsFormData,
   LoggingSettingsFormData,
   NotificationSettingsFormData
-} from './types'
+} from '../../types'
 
 /**
  * Props interface for the AdvancedSettings component
