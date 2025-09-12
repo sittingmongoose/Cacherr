@@ -178,7 +178,9 @@ export const MediaSettings: React.FC<MediaSettingsProps> = ({
   // Component state management
   const [validationState, setValidationState] = useState<MediaValidationState>(DEFAULT_VALIDATION_STATE)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
-  const showUnsavedBadge = hasUnsavedChanges && !!parentUnsaved
+  // Show badge only when parent indicates unsaved state
+  // This ensures badge disappears immediately when parent saves
+  const showUnsavedBadge = !!parentUnsaved
   
   // Debug logging for badge state
   useEffect(() => {

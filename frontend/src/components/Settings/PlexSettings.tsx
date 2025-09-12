@@ -144,9 +144,9 @@ export const PlexSettings: React.FC<PlexSettingsProps> = ({
   const [validationState, setValidationState] = useState<PlexValidationState>(DEFAULT_VALIDATION_STATE)
   const [connectionTest, setConnectionTest] = useState<ConnectionTestState>(DEFAULT_TEST_STATE)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
-  // Only show badge if we have local changes AND parent indicates unsaved state
-  // This ensures badge disappears immediately when parent saves, even if local state hasn't updated yet
-  const showUnsavedBadge = hasUnsavedChanges && !!parentUnsaved
+  // Show badge only when parent indicates unsaved state
+  // This ensures badge disappears immediately when parent saves
+  const showUnsavedBadge = !!parentUnsaved
   
   // Debug logging for badge state
   useEffect(() => {

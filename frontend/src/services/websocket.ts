@@ -72,15 +72,16 @@ export class WebSocketService {
    * Build WebSocket URL from current location
    */
   private buildWebSocketURL(): string {
-    // Use the same host as the current page, but with Socket.IO protocol
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
     const host = window.location.hostname
-    const port = window.location.port || (protocol === 'wss:' ? '443' : '80')
     
-    // For development, use the backend port directly
+    // For development, use the backend port directly with HTTP protocol
     if (process.env.NODE_ENV === 'development') {
       return `http://${host}:5445`
     }
+    
+    // For production, use the same protocol and host as the current page
+    const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:'
+    const port = window.location.port || (protocol === 'https:' ? '443' : '80')
     
     return `${protocol}//${host}:${port}`
   }
