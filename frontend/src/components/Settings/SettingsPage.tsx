@@ -151,7 +151,8 @@ export const SettingsPage: React.FC = () => {
         isLoading: false,
         validationErrors: {},
         // Clear unsaved badge on fresh load to avoid stale UI state
-        hasUnsavedChanges: false
+        hasUnsavedChanges: false,
+        lastChangedAt: null
       }))
     } catch (error) {
       console.error('Failed to load configuration:', error)
@@ -203,7 +204,7 @@ export const SettingsPage: React.FC = () => {
       
       // Immediately broadcast a clear signal so sections drop their local badges
       const now = new Date()
-      setState(prev => ({ ...prev, hasUnsavedChanges: false, lastSavedAt: now }))
+      setState(prev => ({ ...prev, hasUnsavedChanges: false, lastSavedAt: now, lastChangedAt: null }))
 
       // Refresh configuration from backend so children receive new data object.
       // This ensures local unsaved-change badges reset and masked secrets are re-applied.
@@ -215,6 +216,7 @@ export const SettingsPage: React.FC = () => {
         hasUnsavedChanges: false,
         saveStatus: 'saved',
         lastSavedAt: now,
+        lastChangedAt: null,
         validationErrors: {}
       }))
 
