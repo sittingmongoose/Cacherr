@@ -90,6 +90,13 @@ export const CachedTab: React.FC<CachedTabProps> = ({ className }) => {
     autoRefresh: false // Only refresh on demand for test results
   })
 
+  // Fetch test results when switching to test-results tab
+  useEffect(() => {
+    if (activeView === 'test-results' && !testResults && !testResultsLoading) {
+      fetchTestResults()
+    }
+  }, [activeView, testResults, testResultsLoading, fetchTestResults])
+
   // WebSocket connection is now managed at AppProvider level
   // Listen for cache-related WebSocket events
   useEffect(() => {
