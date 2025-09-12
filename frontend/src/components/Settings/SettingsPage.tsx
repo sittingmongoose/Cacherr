@@ -74,6 +74,7 @@ interface SettingsPageLocalState {
   validationErrors: Partial<SettingsValidationErrors>
   showAdvanced: boolean
   lastSavedAt: Date | null
+  lastChangedAt?: Date | null
   saveStatus: 'idle' | 'saving' | 'saved' | 'error'
 }
 
@@ -120,6 +121,7 @@ const DEFAULT_SETTINGS_STATE: SettingsPageLocalState = {
   validationErrors: {},
   showAdvanced: false,
   lastSavedAt: null,
+  lastChangedAt: null,
   saveStatus: 'idle'
 }
 
@@ -280,8 +282,8 @@ export const SettingsPage: React.FC = () => {
         [section]: updates
       } as ConfigurationSettings
 
-      // Flip unsaved flag only on real change
-      setState(s => ({ ...s, hasUnsavedChanges: true, saveStatus: 'idle' }))
+      // Flip unsaved flag only on real change, but avoid during active save cycle
+      setState(s => (s.isSaving ? s : { ...s, hasUnsavedChanges: true, lastChangedAt: new Date(), saveStatus: 'idle' }))
       return next
     })
   }, [])
@@ -418,6 +420,7 @@ export const SettingsPage: React.FC = () => {
 
     // Use a key to force remount after successful saves to clear any local component state
     const remountKey = state.lastSavedAt ? state.lastSavedAt.getTime() : 0
+    const parentUnsaved = state.lastChangedAt && (!state.lastSavedAt || (state.lastChangedAt.getTime() > state.lastSavedAt.getTime()))
     const commonProps = {
       data: configData,
       errors: state.validationErrors,
@@ -425,7 +428,7 @@ export const SettingsPage: React.FC = () => {
       onValidate: handleValidateSection,
       readonly: state.isSaving,
       clearUnsavedSignal: remountKey,
-      parentUnsaved: state.hasUnsavedChanges
+      parentUnsaved: !!parentUnsaved
     }
 
     switch (state.activeSection) {
@@ -543,12 +546,12 @@ export const SettingsPage: React.FC = () => {
               {/* Save Button */}
               <button
                 onClick={saveConfiguration}
-                disabled={!state.hasUnsavedChanges || state.isSaving}
+                disabled={!(state.lastChangedAt && (!state.lastSavedAt || (state.lastChangedAt.getTime() > state.lastSavedAt.getTime()))) || state.isSaving}
                 className={classNames(
                   'inline-flex items-center px-6 py-2 border border-transparent',
                   'rounded-lg shadow-sm text-sm font-medium transition-colors',
                   'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
-                  state.hasUnsavedChanges && !state.isSaving
+                  (state.lastChangedAt && (!state.lastSavedAt || (state.lastChangedAt.getTime() > state.lastSavedAt.getTime()))) && !state.isSaving
                     ? 'bg-primary-600 hover:bg-primary-700 text-white'
                     : 'bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
                 )}
@@ -561,7 +564,7 @@ export const SettingsPage: React.FC = () => {
                 ) : (
                   <>
                     <Save className="h-4 w-4 mr-2" />
-                    {state.hasUnsavedChanges ? 'Save Changes' : 'No Changes'}
+                    {(state.lastChangedAt && (!state.lastSavedAt || (state.lastChangedAt.getTime() > state.lastSavedAt.getTime()))) ? 'Save Changes' : 'No Changes'}
                   </>
                 )}
               </button>
@@ -569,7 +572,10 @@ export const SettingsPage: React.FC = () => {
           </div>
 
           {/* Unsaved Changes Warning */}
-          {state.hasUnsavedChanges && (
+          {(() => {
+            const unsaved = state.lastChangedAt && (!state.lastSavedAt || (state.lastChangedAt.getTime() > state.lastSavedAt.getTime()))
+            return !!unsaved
+          })() && (
             <div className="mt-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
               <div className="flex items-center">
                 <AlertTriangle className="h-5 w-5 text-amber-500 dark:text-amber-400 mr-3" />
