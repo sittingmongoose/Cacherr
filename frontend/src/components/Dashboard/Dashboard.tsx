@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import { Settings, RefreshCw, Moon, Sun, Monitor, Wifi, WifiOff } from 'lucide-react'
+import { RefreshCw, Moon, Sun, Monitor, Wifi, WifiOff } from 'lucide-react'
 import { SystemStatus, HealthStatus, CacheStatistics } from '../../types/api'
 import StatusCard from '../StatusCard'
 import StatsGrid from '../StatsGrid'
@@ -178,13 +178,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ className }) => {
                 {getThemeIcon()}
               </button>
 
-              {/* Settings */}
-              <button
-                className="btn btn-ghost p-2"
-                aria-label="Settings"
-              >
-                <Settings className="w-4 h-4" />
-              </button>
             </div>
           </div>
         </div>
