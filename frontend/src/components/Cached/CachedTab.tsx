@@ -18,7 +18,6 @@ import { useCachedFilesRealTime, useCachedFilesOperations, useOperationResults, 
 import { useAppContext } from '../../store/AppContext'
 import { LoadingSpinner, FullPageLoader } from '../common/LoadingSpinner'
 import { classNames } from '../../utils/format'
-import webSocketService from '../../services/websocket'
 
 // Import child components (will be created)
 import CachedFilesView from './CachedFilesView'
@@ -90,11 +89,9 @@ export const CachedTab: React.FC<CachedTabProps> = ({ className }) => {
     autoRefresh: false // Only refresh on demand for test results
   })
 
-  // Initialize WebSocket connection for real-time updates
+  // WebSocket connection is now managed at AppProvider level
+  // Listen for cache-related WebSocket events
   useEffect(() => {
-    webSocketService.connect()
-    
-    // Listen for cache-related WebSocket events
     const handleCacheUpdate = () => {
       refreshAll()
     }

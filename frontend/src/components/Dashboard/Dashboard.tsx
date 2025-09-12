@@ -7,7 +7,6 @@ import { LoadingSpinner, FullPageLoader } from '../common/LoadingSpinner'
 import { classNames } from '../../utils/format'
 import { useAppContext, useSystemStatus, useUIState, useWebSocketStatus } from '../../store'
 import { useRealTimeData, useOperations } from '../../hooks/useApi'
-import webSocketService from '../../services/websocket'
 
 /**
  * Main Dashboard component
@@ -40,23 +39,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ className }) => {
   const currentHealthStatus = healthStatus.data || state.healthStatus
   const error = state.errors.systemStatus || state.errors.healthStatus || state.errors.operations
 
-  // Initialize WebSocket connection
-  useEffect(() => {
-    try {
-      webSocketService.connect()
-    } catch (error) {
-      console.warn('WebSocket connection failed:', error)
-      // Don't let WebSocket errors crash the component
-    }
-    
-    return () => {
-      try {
-        webSocketService.disconnect()
-      } catch (error) {
-        console.warn('WebSocket disconnect failed:', error)
-      }
-    }
-  }, [])
+  // WebSocket connection is now managed at AppProvider level
+  // Individual components no longer need to connect/disconnect
 
   // Event handlers
   const handleRunCache = async () => {

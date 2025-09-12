@@ -402,14 +402,20 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }
     }
 
-
-
     // Register event handlers
     webSocketService.addConnectionListener(handleConnectionStatus)
+
+    // Connect to WebSocket once at app level
+    if (!webSocketService.isConnected()) {
+      console.log('AppProvider: Initializing WebSocket connection...')
+      webSocketService.connect()
+    }
 
     // Cleanup
     return () => {
       webSocketService.removeConnectionListener(handleConnectionStatus)
+      console.log('AppProvider: Cleaning up WebSocket connection...')
+      webSocketService.disconnect()
     }
   }, [dispatch])
 

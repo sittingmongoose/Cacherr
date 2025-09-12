@@ -15,7 +15,6 @@ import { LogEntry, LogFilter, LogsResponse } from '../../types/api'
 import { LoadingSpinner, CardLoader } from '../common/LoadingSpinner'
 import { formatTimestamp, getLogLevelColor, classNames } from '../../utils/format'
 import { APIService, APIError } from '../../services/api'
-import webSocketService from '../../services/websocket'
 
 /**
  * LogViewer component for displaying and filtering application logs
@@ -72,12 +71,9 @@ export const LogViewer: React.FC<LogViewerProps> = ({
     return () => clearInterval(interval)
   }, [autoRefresh, refreshInterval])
 
-  // WebSocket connection and real-time log updates
+  // WebSocket connection is now managed at AppProvider level
+  // Setup real-time log updates
   useEffect(() => {
-    // Connect to WebSocket if not already connected
-    if (!webSocketService.isConnected()) {
-      webSocketService.connect()
-    }
 
     // Handle real-time log entries
     const handleLogEntry = (logData: LogEntry) => {
