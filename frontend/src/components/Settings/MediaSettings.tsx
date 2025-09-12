@@ -182,7 +182,7 @@ export const MediaSettings: React.FC<MediaSettingsProps> = ({
   
   // Debug logging for badge state
   useEffect(() => {
-    console.log('MediaSettings badge state:', {
+    console.log('🟡 MediaSettings badge state:', {
       hasUnsavedChanges,
       parentUnsaved,
       showUnsavedBadge,

@@ -179,6 +179,7 @@ export const SettingsPage: React.FC = () => {
     if (!configData) return
     
     // Prevent multiple simultaneous saves
+    console.log('SaveConfiguration called, isSaving:', state.isSaving)
     if (state.isSaving) {
       console.log('Save already in progress, ignoring duplicate save request')
       return
@@ -423,6 +424,12 @@ export const SettingsPage: React.FC = () => {
     // Use a key to force remount after successful saves to clear any local component state
     const remountKey = state.lastSavedAt ? state.lastSavedAt.getTime() : 0
     const parentUnsaved = state.lastChangedAt && (!state.lastSavedAt || (state.lastChangedAt.getTime() > state.lastSavedAt.getTime()))
+    console.log('🔵 Parent state:', {
+      lastChangedAt: state.lastChangedAt,
+      lastSavedAt: state.lastSavedAt,
+      parentUnsaved,
+      hasUnsavedChanges: state.hasUnsavedChanges
+    })
     const commonProps = {
       data: configData,
       errors: state.validationErrors,
@@ -547,7 +554,10 @@ export const SettingsPage: React.FC = () => {
 
               {/* Save Button */}
               <button
-                onClick={saveConfiguration}
+                onClick={() => {
+                  console.log('🟢 Save button clicked, isSaving:', state.isSaving)
+                  saveConfiguration()
+                }}
                 disabled={!(state.lastChangedAt && (!state.lastSavedAt || (state.lastChangedAt.getTime() > state.lastSavedAt.getTime()))) || state.isSaving}
                 className={classNames(
                   'inline-flex items-center px-6 py-2 border border-transparent',

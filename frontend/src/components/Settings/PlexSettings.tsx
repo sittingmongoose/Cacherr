@@ -150,7 +150,7 @@ export const PlexSettings: React.FC<PlexSettingsProps> = ({
   
   // Debug logging for badge state
   useEffect(() => {
-    console.log('PlexSettings badge state:', {
+    console.log('🔴 PlexSettings badge state:', {
       hasUnsavedChanges,
       parentUnsaved,
       showUnsavedBadge,
