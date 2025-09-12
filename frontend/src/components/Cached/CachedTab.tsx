@@ -97,7 +97,7 @@ export const CachedTab: React.FC<CachedTabProps> = ({ className }) => {
       console.log('Fetching test results...')
       fetchTestResults()
     }
-  }, [activeView, testResults, testResultsLoading]) // Removed fetchTestResults from dependencies
+  }, [activeView, testResults, testResultsLoading, fetchTestResults])
 
   // WebSocket connection is now managed at AppProvider level
   // Listen for cache-related WebSocket events

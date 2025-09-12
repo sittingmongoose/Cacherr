@@ -67,6 +67,9 @@ function useAPI<T>(
   const intervalRef = useRef<NodeJS.Timeout>()
   const mountedRef = useRef(true)
 
+  // Memoize the apiCall to prevent unnecessary re-renders
+  const memoizedApiCall = useCallback(apiCall, [apiCall])
+
   const fetchData = useCallback(async () => {
     if (!mountedRef.current) return
 
@@ -74,7 +77,7 @@ function useAPI<T>(
     setError(null)
 
     try {
-      const result = await apiCall()
+      const result = await memoizedApiCall()
       
       if (!mountedRef.current) return
 
@@ -103,7 +106,7 @@ function useAPI<T>(
         setIsLoading(false)
       }
     }
-  }, [apiCall]) // Remove onSuccess and onError from dependencies to stabilize
+  }, [memoizedApiCall]) // Use memoized API call
 
   // Initial fetch
   useEffect(() => {
@@ -228,6 +231,8 @@ export function useLogs(options: Omit<UseAPIOptions, 'onSuccess'> = {}) {
 export function useTestResults(options: UseAPIOptions = {}) {
   const { dispatch } = useAppContext()
 
+  const apiCall = useCallback(() => APIService.getTestResults(), [])
+
   const onSuccess = useCallback((data: unknown) => {
     dispatch({ type: 'SET_TEST_RESULTS', payload: data as TestResults })
   }, [dispatch])
@@ -239,15 +244,12 @@ export function useTestResults(options: UseAPIOptions = {}) {
     })
   }, [dispatch])
 
-  return useAPI(
-    () => APIService.getTestResults(),
-    {
-      ...options,
-      immediate: false, // Don't fetch immediately, only when requested
-      onSuccess,
-      onError,
-    }
-  )
+  return useAPI(apiCall, {
+    ...options,
+    immediate: false, // Don't fetch immediately, only when requested
+    onSuccess,
+    onError,
+  })
 }
 
 /**

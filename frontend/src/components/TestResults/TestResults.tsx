@@ -217,6 +217,7 @@ export const TestResults: React.FC<TestResultsProps> = ({
   onRefresh,
   className
 }) => {
+  console.log('TestResults component render:', { testResults, isLoading, error })
   // State
   const [searchTerm, setSearchTerm] = useState('')
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set())
@@ -226,13 +227,16 @@ export const TestResults: React.FC<TestResultsProps> = ({
   const totals = useMemo(() => {
     if (!testResults) return { files: 0, size: 0 }
 
-    return Object.values(testResults).reduce(
+    const result = Object.values(testResults).reduce(
       (acc, operation) => ({
         files: acc.files + (operation.file_count > 0 ? operation.file_count : (operation.files?.length || 0)),
         size: acc.size + operation.total_size,
       }),
       { files: 0, size: 0 }
     )
+    
+    console.log('TestResults totals calculation:', { testResults, result })
+    return result
   }, [testResults])
 
   // Get operations with data
