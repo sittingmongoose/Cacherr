@@ -18,6 +18,7 @@ import { useCachedFilesRealTime, useCachedFilesOperations, useOperationResults, 
 import { useAppContext } from '../../store/AppContext'
 import { LoadingSpinner, FullPageLoader } from '../common/LoadingSpinner'
 import { classNames } from '../../utils/format'
+import webSocketService from '../../services/websocket'
 
 // Import child components (will be created)
 import CachedFilesView from './CachedFilesView'
