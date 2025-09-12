@@ -61,6 +61,32 @@ class FileOperations:
         self.logger = logging.getLogger(__name__)
         # Keep extension list aligned with tests and common Unraid setups
         self.subtitle_extensions = [".srt", ".vtt", ".sbv", ".sub", ".idx"]
+        
+        # Detect if we're in a development environment
+        self.is_development_mode = self._detect_development_mode()
+    
+    def _detect_development_mode(self) -> bool:
+        """Detect if we're running in a development environment."""
+        # Check if the configured media paths exist
+        media_paths = [
+            self.config.paths.real_source,
+            self.config.paths.cache_destination,
+        ]
+        
+        if self.config.paths.additional_sources:
+            media_paths.extend(self.config.paths.additional_sources)
+        
+        # If none of the configured media paths exist, we're likely in development
+        existing_paths = 0
+        for path in media_paths:
+            if path and Path(path).exists():
+                existing_paths += 1
+        
+        is_dev = existing_paths == 0
+        if is_dev:
+            self.logger.info("Development mode detected - media paths not accessible")
+        
+        return is_dev
     
     def process_file_paths(self, files: List[str]) -> List[str]:
         """Process file paths to convert from Plex paths to actual system paths"""
@@ -277,13 +303,34 @@ class FileOperations:
         
         file_details = []
         total_size = 0
+        files_analyzed = 0
+        files_skipped = 0
         
         for file_path_str in files:
             if not file_path_str:
                 continue
 
             file_path = Path(file_path_str)
+            
+            # Check if file exists
             if not file_path.exists():
+                # In development environments, files might not exist at converted paths
+                # Create a mock file detail for test mode
+                if self.is_development_mode:
+                    self.logger.debug(f"File does not exist (development mode): {file_path_str}")
+                    file_detail = MediaFileInfo(
+                        path=file_path_str,
+                        size_bytes=0,  # Unknown size in development
+                        filename=file_path.name,
+                        directory=str(file_path.parent),
+                        size_readable="Unknown (dev mode)",
+                        last_modified=datetime.now()
+                    )
+                    file_details.append(file_detail)
+                    files_skipped += 1
+                else:
+                    # In production, skip files that don't exist
+                    self.logger.warning(f"File does not exist: {file_path_str}")
                 continue
             
             try:
@@ -308,9 +355,30 @@ class FileOperations:
                 
                 file_details.append(file_detail)
                 total_size += file_size
+                files_analyzed += 1
                 
             except (OSError, PermissionError) as e:
                 self.logger.warning(f"Cannot analyze file {file_path_str}: {e}")
+                # Still include the file in the list but with unknown size
+                file_detail = MediaFileInfo(
+                    path=file_path_str,
+                    size_bytes=0,
+                    filename=file_path.name,
+                    directory=str(file_path.parent),
+                    size_readable="Unknown (permission denied)",
+                    last_modified=datetime.now()
+                )
+                file_details.append(file_detail)
+                files_skipped += 1
+        
+        # Log summary
+        if files_skipped > 0:
+            if self.is_development_mode:
+                self.logger.info(f"Test mode analysis: {files_analyzed} files with sizes, {files_skipped} files in development mode (paths not accessible)")
+            else:
+                self.logger.info(f"Test mode analysis: {files_analyzed} files with sizes, {files_skipped} files skipped (permission issues)")
+        else:
+            self.logger.info(f"Test mode analysis: {files_analyzed} files analyzed successfully")
         
         return TestModeAnalysis(
             files=files,
