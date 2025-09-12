@@ -443,6 +443,7 @@ export const SettingsPage: React.FC = () => {
   }, [
     configData,
     state.activeSection,
+    state.hasUnsavedChanges,
     state.validationErrors,
     state.isSaving,
     state.showAdvanced,

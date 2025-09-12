@@ -207,7 +207,7 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
   // Component state management
   const [validationState, setValidationState] = useState<AdvancedValidationState>(DEFAULT_VALIDATION_STATE)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
-  const showUnsavedBadge = hasUnsavedChanges && (parentUnsaved ?? true)
+  const showUnsavedBadge = hasUnsavedChanges && !!parentUnsaved
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['realTimeWatch']))
 
   // Reset unsaved changes when data updates (indicating a successful save/refresh)

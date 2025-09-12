@@ -144,7 +144,7 @@ export const PlexSettings: React.FC<PlexSettingsProps> = ({
   const [validationState, setValidationState] = useState<PlexValidationState>(DEFAULT_VALIDATION_STATE)
   const [connectionTest, setConnectionTest] = useState<ConnectionTestState>(DEFAULT_TEST_STATE)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
-  const showUnsavedBadge = hasUnsavedChanges && (parentUnsaved ?? true)
+  const showUnsavedBadge = hasUnsavedChanges && !!parentUnsaved
 
   // Extract Plex configuration from data with safe defaults
   // Keep original values if they are masked, allowing user to see placeholder text

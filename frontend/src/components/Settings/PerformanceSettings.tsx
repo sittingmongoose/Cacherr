@@ -160,7 +160,7 @@ export const PerformanceSettings: React.FC<PerformanceSettingsProps> = ({
   // Component state management
   const [validationState, setValidationState] = useState<PerformanceValidationState>(DEFAULT_VALIDATION_STATE)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
-  const showUnsavedBadge = hasUnsavedChanges && (parentUnsaved ?? true)
+  const showUnsavedBadge = hasUnsavedChanges && !!parentUnsaved
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['concurrency']))
 
   // Extract performance configuration from data with safe defaults
