@@ -92,7 +92,9 @@ export const CachedTab: React.FC<CachedTabProps> = ({ className }) => {
 
   // Fetch test results when switching to test-results tab
   useEffect(() => {
+    console.log('CachedTab useEffect triggered:', { activeView, hasTestResults: !!testResults, testResultsLoading })
     if (activeView === 'test-results' && !testResults && !testResultsLoading) {
+      console.log('Fetching test results...')
       fetchTestResults()
     }
   }, [activeView, testResults, testResultsLoading]) // Removed fetchTestResults from dependencies

@@ -91,7 +91,7 @@ const OperationSection: React.FC<OperationSectionProps> = ({
     return 'text-purple-600'
   }
 
-  if (operationData.file_count === 0) {
+  if (operationData.file_count === 0 && (!operationData.files || operationData.files.length === 0)) {
     return null
   }
 
@@ -113,7 +113,7 @@ const OperationSection: React.FC<OperationSectionProps> = ({
               {formatOperationType(operationType)}
             </h3>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              {operationData.file_count} files • {operationData.total_size_readable}
+              {operationData.file_count > 0 ? operationData.file_count : (operationData.files?.length || 0)} files • {operationData.total_size_readable}
             </p>
           </div>
         </div>
@@ -139,7 +139,7 @@ const OperationSection: React.FC<OperationSectionProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
               <div className="text-center p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
                 <div className="text-2xl font-bold text-primary-600 dark:text-primary-400">
-                  {operationData.file_count}
+                  {operationData.file_count > 0 ? operationData.file_count : (operationData.files?.length || 0)}
                 </div>
                 <div className="text-gray-600 dark:text-gray-400">Files</div>
               </div>
@@ -228,7 +228,7 @@ export const TestResults: React.FC<TestResultsProps> = ({
 
     return Object.values(testResults).reduce(
       (acc, operation) => ({
-        files: acc.files + operation.file_count,
+        files: acc.files + (operation.file_count > 0 ? operation.file_count : (operation.files?.length || 0)),
         size: acc.size + operation.total_size,
       }),
       { files: 0, size: 0 }
@@ -240,7 +240,7 @@ export const TestResults: React.FC<TestResultsProps> = ({
     if (!testResults) return []
 
     return Object.entries(testResults).filter(([_, data]) => 
-      showEmptyOperations || data.file_count > 0
+      showEmptyOperations || data.file_count > 0 || (data.files && data.files.length > 0)
     )
   }, [testResults, showEmptyOperations])
 

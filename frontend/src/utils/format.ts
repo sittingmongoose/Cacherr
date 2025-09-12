@@ -46,6 +46,12 @@ export function formatDuration(seconds: number): string {
 export function formatRelativeTime(date: string | Date): string {
   const now = new Date()
   const target = typeof date === 'string' ? new Date(date) : date
+  
+  // Check if the date is valid
+  if (isNaN(target.getTime())) {
+    return 'Invalid date'
+  }
+  
   const diffMs = now.getTime() - target.getTime()
   const diffSeconds = Math.floor(diffMs / 1000)
 

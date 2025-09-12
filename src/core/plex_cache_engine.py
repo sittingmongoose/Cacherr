@@ -361,6 +361,9 @@ class CacherrEngine:
         """Fetch media that should be moved to cache"""
         self.logger.info("Fetching media for caching...")
         
+        # Clear previous results
+        self.media_to_cache.clear()
+        
         # Fetch onDeck media
         ondeck_media = self.plex_operations.fetch_ondeck_media()
         self.media_to_cache.extend(ondeck_media)
@@ -388,6 +391,9 @@ class CacherrEngine:
     def _fetch_watched_media(self):
         """Fetch watched media that should be moved to array"""
         self.logger.info("Fetching watched media...")
+        
+        # Clear previous results
+        self.media_to_array.clear()
         
         watched_media = self.plex_operations.fetch_watched_media()
         self.media_to_array = self.file_operations.process_file_paths(watched_media)
@@ -584,7 +590,8 @@ class CacherrEngine:
                 'last_execution': {
                     'start_time': self.stats.start_time.isoformat() if self.stats.start_time else None,
                     'end_time': self.stats.end_time.isoformat() if self.stats.end_time else None,
-                    'execution_time': self.stats.execution_time,
+                    'execution_time': self.stats.end_time.isoformat() if self.stats.end_time else None,  # Use end_time as execution_time for frontend
+                    'duration_seconds': (self.stats.end_time - self.stats.start_time).total_seconds() if self.stats.start_time and self.stats.end_time else None,
                     'files_moved_to_cache': self.stats.files_moved_to_cache,
                     'files_moved_to_array': self.stats.files_moved_to_array,
                     'total_size_moved': self.stats.total_size_moved
