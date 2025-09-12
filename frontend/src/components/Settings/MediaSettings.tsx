@@ -179,6 +179,16 @@ export const MediaSettings: React.FC<MediaSettingsProps> = ({
   const [validationState, setValidationState] = useState<MediaValidationState>(DEFAULT_VALIDATION_STATE)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const showUnsavedBadge = hasUnsavedChanges && !!parentUnsaved
+  
+  // Debug logging for badge state
+  useEffect(() => {
+    console.log('MediaSettings badge state:', {
+      hasUnsavedChanges,
+      parentUnsaved,
+      showUnsavedBadge,
+      clearUnsavedSignal
+    })
+  }, [hasUnsavedChanges, parentUnsaved, showUnsavedBadge, clearUnsavedSignal])
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['basic']))
 
   // Extract media and path configuration from data with safe defaults

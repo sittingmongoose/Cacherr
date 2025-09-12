@@ -177,6 +177,12 @@ export const SettingsPage: React.FC = () => {
    */
   const saveConfiguration = useCallback(async () => {
     if (!configData) return
+    
+    // Prevent multiple simultaneous saves
+    if (state.isSaving) {
+      console.log('Save already in progress, ignoring duplicate save request')
+      return
+    }
 
     try {
       setState(prev => ({ 
@@ -204,12 +210,6 @@ export const SettingsPage: React.FC = () => {
       
       // Immediately broadcast a clear signal so sections drop their local badges
       const now = new Date()
-      setState(prev => ({ ...prev, hasUnsavedChanges: false, lastSavedAt: now, lastChangedAt: null }))
-
-      // Refresh configuration from backend so children receive new data object.
-      // This ensures local unsaved-change badges reset and masked secrets are re-applied.
-      await loadConfiguration()
-
       setState(prev => ({
         ...prev,
         isSaving: false,
@@ -255,7 +255,7 @@ export const SettingsPage: React.FC = () => {
           : { general: [errorMessage] }
       }))
     }
-  }, [configData])
+  }, [configData, state.isSaving])
 
   /**
    * Handles configuration changes from child components

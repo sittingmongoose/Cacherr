@@ -147,6 +147,16 @@ export const PlexSettings: React.FC<PlexSettingsProps> = ({
   // Only show badge if we have local changes AND parent indicates unsaved state
   // This ensures badge disappears immediately when parent saves, even if local state hasn't updated yet
   const showUnsavedBadge = hasUnsavedChanges && !!parentUnsaved
+  
+  // Debug logging for badge state
+  useEffect(() => {
+    console.log('PlexSettings badge state:', {
+      hasUnsavedChanges,
+      parentUnsaved,
+      showUnsavedBadge,
+      clearUnsavedSignal
+    })
+  }, [hasUnsavedChanges, parentUnsaved, showUnsavedBadge, clearUnsavedSignal])
 
   // Extract Plex configuration from data with safe defaults
   // Keep original values if they are masked, allowing user to see placeholder text
