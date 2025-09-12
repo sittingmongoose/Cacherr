@@ -228,20 +228,24 @@ export function useLogs(options: Omit<UseAPIOptions, 'onSuccess'> = {}) {
 export function useTestResults(options: UseAPIOptions = {}) {
   const { dispatch } = useAppContext()
 
+  const onSuccess = useCallback((data: unknown) => {
+    dispatch({ type: 'SET_TEST_RESULTS', payload: data as TestResults })
+  }, [dispatch])
+
+  const onError = useCallback((error: APIError) => {
+    dispatch({
+      type: 'SET_ERROR',
+      payload: { key: 'testResults', value: error.message }
+    })
+  }, [dispatch])
+
   return useAPI(
     () => APIService.getTestResults(),
     {
       ...options,
       immediate: false, // Don't fetch immediately, only when requested
-      onSuccess: (data) => {
-        dispatch({ type: 'SET_TEST_RESULTS', payload: data as TestResults })
-      },
-      onError: (error) => {
-        dispatch({
-          type: 'SET_ERROR',
-          payload: { key: 'testResults', value: error.message }
-        })
-      },
+      onSuccess,
+      onError,
     }
   )
 }

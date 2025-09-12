@@ -2,6 +2,7 @@ import os
 import shutil
 import tempfile
 import logging
+from datetime import datetime
 from pathlib import Path
 from typing import List, Set, Tuple, Dict, Optional
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -286,7 +287,8 @@ class FileOperations:
                 continue
             
             try:
-                file_size = file_path.stat().st_size
+                file_stat = file_path.stat()
+                file_size = file_stat.st_size
                 file_size_readable = self.get_file_size_readable(file_size)
                 
                 # Determine destination path
@@ -300,7 +302,8 @@ class FileOperations:
                     size_bytes=file_size,
                     filename=file_path.name,
                     directory=str(file_path.parent),
-                    size_readable=file_size_readable
+                    size_readable=file_size_readable,
+                    last_modified=datetime.fromtimestamp(file_stat.st_mtime)
                 )
                 
                 file_details.append(file_detail)

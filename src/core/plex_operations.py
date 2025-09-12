@@ -22,7 +22,7 @@ Example:
 
 import logging
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Generator, Optional
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -308,8 +308,20 @@ class PlexOperations:
         if not hasattr(item, 'lastViewedAt') or not item.lastViewedAt:
             return False
         
-        days_ago = datetime.now() - item.lastViewedAt
-        return days_ago.days <= self.config.media.days_to_monitor
+        try:
+            # Handle timezone-aware datetimes from Plex
+            now = datetime.now(timezone.utc)
+            last_viewed = item.lastViewedAt
+            
+            # If lastViewedAt is timezone-naive, assume it's UTC
+            if last_viewed.tzinfo is None:
+                last_viewed = last_viewed.replace(tzinfo=timezone.utc)
+            
+            days_ago = now - last_viewed
+            return days_ago.days <= self.config.media.days_to_monitor
+        except (TypeError, ValueError) as e:
+            self.logger.warning(f"Error comparing dates for item {getattr(item, 'title', 'unknown')}: {e}")
+            return False
     
     def _process_episode_ondeck(self, episode: Episode) -> List[str]:
         """Process an onDeck episode and get file paths"""

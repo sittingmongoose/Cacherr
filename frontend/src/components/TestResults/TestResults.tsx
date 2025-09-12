@@ -50,14 +50,34 @@ const OperationSection: React.FC<OperationSectionProps> = ({
   searchTerm = '',
 }) => {
   const filteredFiles = useMemo(() => {
-    if (!searchTerm.trim()) return operationData.file_details
+    // Use file_details if available, otherwise convert files array to FileDetail format
+    let filesToFilter: FileDetail[] = []
+    
+    if (operationData.file_details && operationData.file_details.length > 0) {
+      filesToFilter = operationData.file_details
+    } else if (operationData.files && operationData.files.length > 0) {
+      // Convert files array to FileDetail format
+      filesToFilter = operationData.files.map(filePath => {
+        const filename = filePath.split('/').pop() || filePath
+        const directory = filePath.replace(filename, '').replace(/\/$/, '')
+        return {
+          filename,
+          directory,
+          size_bytes: 0, // We don't have size info from files array
+          size_readable: 'Unknown',
+          operation_type: operationData.operation_type as 'cache' | 'array' | 'cleanup'
+        }
+      })
+    }
+
+    if (!searchTerm.trim()) return filesToFilter
 
     const term = searchTerm.toLowerCase()
-    return operationData.file_details.filter(file =>
+    return filesToFilter.filter(file =>
       file.filename.toLowerCase().includes(term) ||
       file.directory.toLowerCase().includes(term)
     )
-  }, [operationData.file_details, searchTerm])
+  }, [operationData.file_details, operationData.files, operationData.operation_type, searchTerm])
 
   const getOperationIcon = (type: string) => {
     if (type.includes('cache')) return <HardDrive className="w-5 h-5" />
@@ -125,13 +145,13 @@ const OperationSection: React.FC<OperationSectionProps> = ({
               </div>
               <div className="text-center p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
                 <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                  {formatBytes(operationData.total_size_bytes)}
+                  {formatBytes(operationData.total_size)}
                 </div>
                 <div className="text-gray-600 dark:text-gray-400">Total Size</div>
               </div>
               <div className="text-center p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
                 <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
-                  {Math.round(operationData.total_size_bytes / operationData.file_count / 1024 / 1024)}MB
+                  {operationData.file_count > 0 ? Math.round(operationData.total_size / operationData.file_count / 1024 / 1024) : 0}MB
                 </div>
                 <div className="text-gray-600 dark:text-gray-400">Avg Size</div>
               </div>
@@ -209,7 +229,7 @@ export const TestResults: React.FC<TestResultsProps> = ({
     return Object.values(testResults).reduce(
       (acc, operation) => ({
         files: acc.files + operation.file_count,
-        size: acc.size + operation.total_size_bytes,
+        size: acc.size + operation.total_size,
       }),
       { files: 0, size: 0 }
     )
@@ -262,10 +282,20 @@ export const TestResults: React.FC<TestResultsProps> = ({
       exportData += `- Size: ${data.total_size_readable}\n`
       exportData += `Files:\n`
       
-      data.file_details.forEach(file => {
-        exportData += `  - ${file.filename} (${file.size_readable})\n`
-        exportData += `    Path: ${file.directory}\n`
-      })
+      // Use file_details if available, otherwise use files array
+      if (data.file_details && data.file_details.length > 0) {
+        data.file_details.forEach(file => {
+          exportData += `  - ${file.filename} (${file.size_readable})\n`
+          exportData += `    Path: ${file.directory}\n`
+        })
+      } else if (data.files && data.files.length > 0) {
+        data.files.forEach(filePath => {
+          const filename = filePath.split('/').pop() || filePath
+          const directory = filePath.replace(filename, '').replace(/\/$/, '')
+          exportData += `  - ${filename}\n`
+          exportData += `    Path: ${directory}\n`
+        })
+      }
     })
 
     const blob = new Blob([exportData], { type: 'text/plain' })

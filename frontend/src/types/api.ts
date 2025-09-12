@@ -57,9 +57,11 @@ export interface TestResults {
 
 export interface TestOperationResult {
   file_count: number
-  total_size_bytes: number
+  total_size: number  // Backend uses 'total_size' not 'total_size_bytes'
   total_size_readable: string
   file_details: FileDetail[]
+  files: string[]  // Backend also provides raw file paths
+  operation_type: string
 }
 
 export interface FileDetail {

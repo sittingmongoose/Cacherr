@@ -27,6 +27,7 @@ class MediaFileInfo(BaseModel):
     filename: str
     directory: str
     size_readable: str
+    last_modified: Optional[datetime] = None
 
 
 class CacheOperationResult(BaseModel):
