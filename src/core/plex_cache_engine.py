@@ -73,6 +73,9 @@ class CacheStats(BaseModel):
     total_size_moved: int = Field(0, ge=0, description="Total size of moved files in bytes")
     start_time: Optional[datetime] = Field(None, description="When the operation started")
     end_time: Optional[datetime] = Field(None, description="When the operation completed")
+    test_mode_start_time: Optional[datetime] = Field(None, description="When the test mode operation started")
+    test_mode_end_time: Optional[datetime] = Field(None, description="When the test mode operation completed")
+    current_operation_type: Optional[str] = Field(None, description="Current operation type: 'cache', 'test', or None")
 
     @property
     def execution_time(self) -> str:
@@ -303,11 +306,13 @@ class CacherrEngine:
     
     def run(self, test_mode: bool = False) -> bool:
         """Main execution method"""
-        self.stats.start_time = datetime.now()
-        
         if test_mode:
+            self.stats.test_mode_start_time = datetime.now()
+            self.stats.current_operation_type = 'test'
             self.logger.info("Starting Cacherr execution in TEST MODE")
         else:
+            self.stats.start_time = datetime.now()
+            self.stats.current_operation_type = 'cache'
             self.logger.info("Starting Cacherr execution")
         
         try:
@@ -339,8 +344,14 @@ class CacherrEngine:
             self.notification_manager.send_error_notification(f"Cacherr execution failed: {e}")
             return False
         finally:
-            self.stats.end_time = datetime.now()
-            self.logger.info(f"Execution completed in {self.stats.execution_time}")
+            if test_mode:
+                self.stats.test_mode_end_time = datetime.now()
+                self.stats.current_operation_type = None
+                self.logger.info(f"Test mode execution completed in {self.stats.execution_time}")
+            else:
+                self.stats.end_time = datetime.now()
+                self.stats.current_operation_type = None
+                self.logger.info(f"Execution completed in {self.stats.execution_time}")
     
     def _should_exit_due_to_active_sessions(self) -> bool:
         """Check if we should exit due to active Plex sessions"""
@@ -585,17 +596,46 @@ class CacherrEngine:
         try:
             self.logger.debug("Starting get_status")
             
-            status_data = {
-                'status': 'running' if self.stats.start_time and not self.stats.end_time else 'idle',
-                'last_execution': {
+            # Determine current status based on operation type
+            current_status = 'idle'
+            if self.stats.current_operation_type == 'test' and self.stats.test_mode_start_time and not self.stats.test_mode_end_time:
+                current_status = 'running_test'
+            elif self.stats.current_operation_type == 'cache' and self.stats.start_time and not self.stats.end_time:
+                current_status = 'running'
+            
+            # Determine last execution info
+            last_execution = None
+            if self.stats.current_operation_type == 'test' and self.stats.test_mode_end_time:
+                # Test mode was the last operation
+                last_execution = {
+                    'start_time': self.stats.test_mode_start_time.isoformat() if self.stats.test_mode_start_time else None,
+                    'end_time': self.stats.test_mode_end_time.isoformat() if self.stats.test_mode_end_time else None,
+                    'execution_time': self.stats.test_mode_end_time.isoformat() if self.stats.test_mode_end_time else None,
+                    'duration_seconds': (self.stats.test_mode_end_time - self.stats.test_mode_start_time).total_seconds() if self.stats.test_mode_start_time and self.stats.test_mode_end_time else None,
+                    'operation_type': 'test',
+                    'success': True,  # Test mode operations are considered successful if they complete
+                    'files_moved_to_cache': 0,  # Test mode doesn't move files
+                    'files_moved_to_array': 0,
+                    'total_size_moved': 0
+                }
+            elif self.stats.end_time:
+                # Regular cache operation was the last operation
+                last_execution = {
                     'start_time': self.stats.start_time.isoformat() if self.stats.start_time else None,
                     'end_time': self.stats.end_time.isoformat() if self.stats.end_time else None,
-                    'execution_time': self.stats.end_time.isoformat() if self.stats.end_time else None,  # Use end_time as execution_time for frontend
+                    'execution_time': self.stats.end_time.isoformat() if self.stats.end_time else None,
                     'duration_seconds': (self.stats.end_time - self.stats.start_time).total_seconds() if self.stats.start_time and self.stats.end_time else None,
+                    'operation_type': 'cache',
+                    'success': True,  # Assume success if operation completed
                     'files_moved_to_cache': self.stats.files_moved_to_cache,
                     'files_moved_to_array': self.stats.files_moved_to_array,
                     'total_size_moved': self.stats.total_size_moved
-                },
+                }
+            
+            status_data = {
+                'status': current_status,
+                'last_execution': last_execution,
+                'current_operation_type': self.stats.current_operation_type,
                 'pending_operations': {
                     'files_to_cache': len(self.media_to_cache),
                     'files_to_array': len(self.media_to_array)

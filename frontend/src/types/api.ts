@@ -16,12 +16,13 @@ export interface APIResponse<T = unknown> {
 
 // System Status Types
 export interface SystemStatus {
-  status: 'running' | 'idle' | 'error'
+  status: 'running' | 'running_test' | 'idle' | 'error'
   pending_operations: PendingOperations
   last_execution: LastExecution | null
   scheduler_running: boolean
   cache_statistics?: CacheStatistics
   test_results?: TestResults
+  current_operation_type?: 'cache' | 'test' | null
 }
 
 export interface PendingOperations {

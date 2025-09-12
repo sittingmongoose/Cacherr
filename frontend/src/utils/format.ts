@@ -160,6 +160,7 @@ export function getLogLevelColor(level: string): string {
 export function getStatusVariant(status: string): 'default' | 'success' | 'warning' | 'error' {
   switch (status.toLowerCase()) {
     case 'running':
+    case 'running_test':
     case 'active':
     case 'healthy':
     case 'success':

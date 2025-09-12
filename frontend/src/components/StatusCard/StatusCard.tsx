@@ -40,15 +40,17 @@ export const StatusCard: React.FC<StatusCardProps> = ({
   className
 }) => {
   const isSystemRunning = status?.status === 'running'
+  const isTestModeRunning = status?.status === 'running_test'
+  const isAnyOperationRunning = isSystemRunning || isTestModeRunning
   const isSchedulerRunning = status?.scheduler_running ?? false
 
   const handleRunCache = async () => {
-    if (operationInProgress) return
+    if (operationInProgress || isAnyOperationRunning) return
     await onRunCache()
   }
 
   const handleRunTest = async () => {
-    if (operationInProgress) return
+    if (operationInProgress || isAnyOperationRunning) return
     await onRunTest()
   }
 
@@ -102,7 +104,7 @@ export const StatusCard: React.FC<StatusCardProps> = ({
             <Activity className="w-5 h-5 text-gray-400" aria-hidden="true" />
             <StatusBadge
               status={status.status}
-              pulse={isSystemRunning}
+              pulse={isAnyOperationRunning}
             />
           </div>
         </div>
@@ -117,7 +119,9 @@ export const StatusCard: React.FC<StatusCardProps> = ({
               Current Status
             </p>
             <p className="text-lg text-gray-900 dark:text-gray-100">
-              {isSystemRunning ? 'Running cache operation' : 'System is idle'}
+              {isSystemRunning ? 'Running cache operation' : 
+               isTestModeRunning ? 'Running test mode analysis' : 
+               'System is idle'}
             </p>
           </div>
           <div className="text-right">
@@ -190,11 +194,11 @@ export const StatusCard: React.FC<StatusCardProps> = ({
             <div className="flex flex-wrap gap-3">
               <button
                 onClick={handleRunCache}
-                disabled={operationInProgress}
+                disabled={operationInProgress || isAnyOperationRunning}
                 className="btn btn-primary flex items-center"
                 aria-label="Run cache operation"
               >
-                {operationInProgress ? (
+                {(operationInProgress || isSystemRunning) ? (
                   <LoadingSpinner size="sm" inline />
                 ) : (
                   <Play className="w-4 h-4 mr-2" aria-hidden="true" />
@@ -204,11 +208,11 @@ export const StatusCard: React.FC<StatusCardProps> = ({
               
               <button
                 onClick={handleRunTest}
-                disabled={operationInProgress}
+                disabled={operationInProgress || isAnyOperationRunning}
                 className="btn btn-secondary flex items-center"
                 aria-label="Run test mode analysis"
               >
-                {operationInProgress ? (
+                {(operationInProgress || isTestModeRunning) ? (
                   <LoadingSpinner size="sm" inline />
                 ) : (
                   <TestTube className="w-4 h-4 mr-2" aria-hidden="true" />

@@ -245,20 +245,45 @@ def api_run():
         
         logger.info(f"Starting cache operation (test_mode={test_mode})")
         
-        # Execute operation
-        success = engine.run(test_mode=test_mode)
-        
-        operation_type = "Test mode analysis" if test_mode else "Cache operation"
-        message = f"{operation_type} completed {'successfully' if success else 'with errors'}"
-        
-        response = APIResponse(
-            success=bool(success),
-            message=message,
-            data={
-                "test_mode": test_mode,
-                "operation_completed": True
-            }
-        )
+        if test_mode:
+            # For test mode, start the operation and return immediately
+            # The operation will run in the background and status will be updated
+            import threading
+            
+            def run_test_mode():
+                try:
+                    success = engine.run(test_mode=True)
+                    logger.info(f"Test mode operation completed: {success}")
+                except Exception as e:
+                    logger.error(f"Test mode operation failed: {e}")
+            
+            # Start test mode in background thread
+            thread = threading.Thread(target=run_test_mode, daemon=True)
+            thread.start()
+            
+            response = APIResponse(
+                success=True,
+                message="Test mode analysis started",
+                data={
+                    "test_mode": True,
+                    "operation_started": True
+                }
+            )
+        else:
+            # For regular cache operations, run synchronously
+            success = engine.run(test_mode=False)
+            
+            operation_type = "Cache operation"
+            message = f"{operation_type} completed {'successfully' if success else 'with errors'}"
+            
+            response = APIResponse(
+                success=bool(success),
+                message=message,
+                data={
+                    "test_mode": False,
+                    "operation_completed": True
+                }
+            )
         
         return jsonify(response.model_dump())
         

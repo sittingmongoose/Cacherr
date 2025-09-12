@@ -223,10 +223,13 @@ export class APIService {
     success: boolean
     message: string
     test_mode: boolean
+    operation_started?: boolean
+    operation_completed?: boolean
   }> {
     const response = await client.post<APIResponse<{
       test_mode: boolean
-      operation_completed: boolean
+      operation_completed?: boolean
+      operation_started?: boolean
     }>>('/api/run', request)
     
     if (!response.success) {
@@ -237,6 +240,8 @@ export class APIService {
       success: response.success,
       message: response.message || 'Operation completed',
       test_mode: response.data?.test_mode || false,
+      operation_started: response.data?.operation_started || false,
+      operation_completed: response.data?.operation_completed || false,
     }
   }
 

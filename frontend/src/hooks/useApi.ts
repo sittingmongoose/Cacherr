@@ -291,15 +291,28 @@ export function useOperations() {
     try {
       const result = await APIService.runCacheOperation(request)
       
-      // Show success toast
-      dispatch({
-        type: 'ADD_TOAST',
-        payload: {
-          type: 'success',
-          message: result.message,
-          duration: 5000,
-        }
-      })
+      // Show appropriate toast based on operation type
+      if (result.test_mode && result.operation_started) {
+        // Test mode started - show info toast
+        dispatch({
+          type: 'ADD_TOAST',
+          payload: {
+            type: 'info',
+            message: 'Test mode analysis started - check status for progress',
+            duration: 3000,
+          }
+        })
+      } else {
+        // Regular operation completed - show success toast
+        dispatch({
+          type: 'ADD_TOAST',
+          payload: {
+            type: 'success',
+            message: result.message,
+            duration: 5000,
+          }
+        })
+      }
 
       return result
 
@@ -408,20 +421,30 @@ export function useOperations() {
 export function useRealTimeData() {
   const { state } = useAppContext()
   
+  // Determine refresh interval based on current operation status
+  const getRefreshInterval = (baseInterval: number) => {
+    const systemStatus = state.systemStatus
+    if (systemStatus?.status === 'running_test') {
+      // Use shorter interval when test mode is running
+      return Math.min(baseInterval, 2000) // Max 2 seconds for test mode
+    }
+    return baseInterval
+  }
+  
   // Auto-refresh based on UI settings
   const systemStatusApi = useSystemStatus({
     autoRefresh: state.ui.autoRefresh,
-    refreshInterval: state.ui.refreshInterval,
+    refreshInterval: getRefreshInterval(state.ui.refreshInterval),
   })
 
   const healthStatusApi = useHealthStatus({
     autoRefresh: state.ui.autoRefresh,
-    refreshInterval: state.ui.refreshInterval * 2, // Less frequent for health checks
+    refreshInterval: getRefreshInterval(state.ui.refreshInterval) * 2, // Less frequent for health checks
   })
 
   const logsApi = useLogs({
     autoRefresh: state.ui.autoRefresh,
-    refreshInterval: state.ui.refreshInterval * 3, // Even less frequent for logs
+    refreshInterval: getRefreshInterval(state.ui.refreshInterval) * 3, // Even less frequent for logs
   })
 
   const refreshAll = useCallback(async () => {
