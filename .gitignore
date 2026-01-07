@@ -97,3 +97,4 @@ htmlcov/
 cache_timestamps.json
 watchlist_tracker.json
 ondeck_tracker.json
+.claude/_state/
