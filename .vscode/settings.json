@@ -1,0 +1,18 @@
+{
+    // Make sure key extensions are always installed on the SSH host.
+    // Replace these with the real extension IDs you use.
+    "remote.SSH.defaultExtensions": [
+      "openai.codex",          // TODO: confirm actual ID in Cursor
+      "anthropic.claude-code"  // TODO: confirm actual ID in Cursor
+    ],
+  
+    // Quality-of-life defaults (safe, project-scoped).
+    "files.exclude": {
+      "**/.git": true,
+      "**/.DS_Store": true
+    },
+    "search.exclude": {
+      "**/.git": true
+    }
+  }
+  

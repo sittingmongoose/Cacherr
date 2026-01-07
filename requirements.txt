@@ -1,0 +1,16 @@
+# Cacherr Dependencies
+
+# Plex API
+plexapi>=4.15.0
+
+# Configuration
+pydantic>=2.5.0
+
+# Web Framework
+flask>=3.0.0
+
+# Optional: For production deployment
+gunicorn>=21.0.0
+
+# Optional: For Trakt integration
+# requests>=2.31.0

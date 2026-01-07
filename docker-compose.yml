@@ -1,0 +1,130 @@
+version: '3.8'
+
+# =============================================================================
+# CACHERR - Intelligent Plex Media Caching for Unraid
+# =============================================================================
+# 
+# MINIMAL DOCKER CONFIG - Everything else configured in WebGUI
+#
+# Required mounts:
+#   - /config: Cacherr configuration and database
+#   - /cache: Your SSD cache drive destination
+#   - /media*: Your media source(s) - add as many as needed
+#
+# =============================================================================
+
+services:
+  cacherr:
+    build: .
+    image: cacherr:latest
+    container_name: cacherr
+    restart: unless-stopped
+    
+    # ==========================================================================
+    # NETWORK
+    # ==========================================================================
+    ports:
+      - "5445:5445"    # WebGUI port
+    
+    # Alternative: Use host network for easier Plex discovery
+    # network_mode: host
+    
+    # ==========================================================================
+    # VOLUMES - These MUST be configured here (can't be done in WebGUI)
+    # ==========================================================================
+    volumes:
+      # Configuration directory (required)
+      - /mnt/user/appdata/cacherr:/config
+      
+      # Cache destination - your SSD cache drive (required)
+      - /mnt/cache/cacherr_media:/cache
+      
+      # --------------------------------------------------------------------------
+      # MEDIA SOURCES - Add all locations where your media lives
+      # --------------------------------------------------------------------------
+      # These paths inside the container should match how Plex sees them
+      # for seamless symlink creation
+      
+      # Primary media location
+      - /mnt/user/media:/media:rw
+      
+      # Additional media locations (uncomment and modify as needed)
+      # - /mnt/user/media2:/media2:rw
+      # - /mnt/remotes/server2/media:/remote_media:rw
+      # - /mnt/disks/disk1/media:/disk1_media:rw
+      
+      # --------------------------------------------------------------------------
+      # OPTIONAL: Direct disk access for Unraid (for mover integration)
+      # --------------------------------------------------------------------------
+      # - /mnt/cache:/mnt/cache:rw
+      # - /mnt/user:/mnt/user:rw
+    
+    # ==========================================================================
+    # ENVIRONMENT - Minimal required settings (rest configured in WebGUI)
+    # ==========================================================================
+    environment:
+      # Timezone
+      - TZ=America/New_York
+      
+      # User/Group IDs (match your Plex container for permissions)
+      - PUID=99
+      - PGID=100
+      
+      # --------------------------------------------------------------------------
+      # INITIAL SETUP ONLY - Can be changed in WebGUI after first run
+      # --------------------------------------------------------------------------
+      # Plex connection (required for initial setup)
+      - PLEX_URL=http://192.168.1.100:32400
+      - PLEX_TOKEN=your-plex-token-here
+      
+      # Cache destination path (inside container)
+      - CACHE_DESTINATION=/cache
+      
+      # --------------------------------------------------------------------------
+      # OPTIONAL: Override WebGUI settings via environment
+      # --------------------------------------------------------------------------
+      # These override WebGUI settings when set (useful for automation)
+      # 
+      # - DEBUG=false
+      # - DRY_RUN=false
+      # - LOG_LEVEL=INFO
+    
+    # ==========================================================================
+    # HEALTH CHECK
+    # ==========================================================================
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5445/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    
+    # ==========================================================================
+    # RESOURCE LIMITS (optional)
+    # ==========================================================================
+    # deploy:
+    #   resources:
+    #     limits:
+    #       memory: 1G
+    #     reservations:
+    #       memory: 256M
+
+# =============================================================================
+# EXAMPLE: Multiple Media Servers
+# =============================================================================
+# 
+# If you have media on multiple servers, mount them all:
+#
+# volumes:
+#   - /mnt/user/appdata/cacherr:/config
+#   - /mnt/cache/cacherr_media:/cache
+#   - /mnt/user/media:/media:rw                    # Local server
+#   - /mnt/remotes/nas2/media:/nas2_media:rw      # Remote NAS via NFS/SMB
+#   - /mnt/remotes/nas3/movies:/nas3_movies:rw    # Another remote location
+#
+# Then configure path mappings in the WebGUI to tell Cacherr:
+#   - How Plex sees these paths (Plex container paths)
+#   - Where they actually are (Cacherr container paths)
+#   - Where to cache them
+#
+# =============================================================================

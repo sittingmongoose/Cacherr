@@ -1,0 +1,6 @@
+{
+  "_comment": "Copy to .claude/settings.local.json for machine/user-specific overrides. Keep secrets out of git.",
+  "permissions": {
+    "deny": []
+  }
+}

@@ -1,0 +1,16 @@
+# Project Codex config (keep secrets out of git).
+
+model = "gpt-5.2-codex"
+model_provider = "openai"
+
+# Safer default: ask when needed.
+approval_policy = "on-request"
+
+# Safer default: don't allow writes outside explicit flows.
+sandbox_mode = "read-only"
+
+[history]
+persistence = "save-all"
+
+# If you want clickable file links inside Cursor, you can try:
+# file_opener = "cursor"

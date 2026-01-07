@@ -1,0 +1,252 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <!-- =======================================================================
+       CACHERR - Intelligent Plex Media Caching for Unraid
+       =======================================================================
+       
+       This template creates a Docker container for Cacherr, which automatically
+       caches Plex media to fast SSD storage based on what users are watching.
+       
+       Features:
+       - OnDeck episode caching
+       - Watchlist caching
+       - Import Lists (Trakt, IMDb, etc.)
+       - Smart eviction with priority scoring
+       - Real-time WebGUI
+       
+       ======================================================================= -->
+  
+  <Name>Cacherr</Name>
+  <Repository>cacherr/cacherr:latest</Repository>
+  <Registry>https://hub.docker.com/r/cacherr/cacherr</Registry>
+  <Branch>
+    <Tag>latest</Tag>
+    <TagDescription>Latest stable release</TagDescription>
+  </Branch>
+  <Branch>
+    <Tag>develop</Tag>
+    <TagDescription>Development build (may be unstable)</TagDescription>
+  </Branch>
+  <Network>bridge</Network>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/cacherr/cacherr/issues</Support>
+  <Project>https://github.com/cacherr/cacherr</Project>
+  <Overview>
+    Cacherr automatically caches frequently accessed Plex media files to fast SSD storage.
+    
+    Features:
+    - Cache OnDeck episodes ahead of what you're watching
+    - Cache Watchlist items
+    - Import Lists from Trakt, IMDb, TMDb
+    - Smart eviction based on priority scoring
+    - Real-time WebGUI dashboard
+    - Multi-user support with per-user settings
+    - Cache size limits with automatic cleanup
+    
+    All operations are invisible to Plex - files are cached without interruption.
+  </Overview>
+  <Category>MediaServer:Video Tools:Utilities</Category>
+  <WebUI>http://[IP]:[PORT:5445]</WebUI>
+  <TemplateURL>https://raw.githubusercontent.com/cacherr/cacherr/main/docker/cacherr.xml</TemplateURL>
+  <Icon>https://raw.githubusercontent.com/cacherr/cacherr/main/docs/icon.png</Icon>
+  <ExtraParams/>
+  <DateInstalled></DateInstalled>
+  <Description>
+    Intelligent Plex media caching for Unraid. Automatically moves frequently accessed media to fast SSD cache and moves watched content back to array storage.
+  </Description>
+  <Networking>
+    <Mode>bridge</Mode>
+    <Publish>
+      <Port>
+        <HostPort>5445</HostPort>
+        <ContainerPort>5445</ContainerPort>
+        <Protocol>tcp</Protocol>
+      </Port>
+    </Publish>
+  </Networking>
+  
+  <!-- =======================================================================
+       CONFIGURATION
+       ======================================================================= -->
+  
+  <!-- WebGUI Port -->
+  <Config 
+    Name="WebGUI Port" 
+    Target="5445" 
+    Default="5445" 
+    Mode="tcp" 
+    Description="Port for the Cacherr WebGUI" 
+    Type="Port" 
+    Display="always" 
+    Required="true" 
+    Mask="false">5445</Config>
+  
+  <!-- Config Directory -->
+  <Config 
+    Name="Config Directory" 
+    Target="/config" 
+    Default="/mnt/user/appdata/cacherr" 
+    Mode="rw" 
+    Description="Where Cacherr stores its configuration and database" 
+    Type="Path" 
+    Display="always" 
+    Required="true" 
+    Mask="false">/mnt/user/appdata/cacherr</Config>
+  
+  <!-- Cache Destination -->
+  <Config 
+    Name="Cache Destination" 
+    Target="/cache" 
+    Default="/mnt/cache/cacherr_media" 
+    Mode="rw" 
+    Description="SSD cache drive location where media will be cached. This should be on your fastest storage." 
+    Type="Path" 
+    Display="always" 
+    Required="true" 
+    Mask="false">/mnt/cache/cacherr_media</Config>
+  
+  <!-- Primary Media Location -->
+  <Config 
+    Name="Media Location" 
+    Target="/media" 
+    Default="/mnt/user/media" 
+    Mode="rw" 
+    Description="Your primary Plex media library location. Use the same path that Plex uses if possible." 
+    Type="Path" 
+    Display="always" 
+    Required="true" 
+    Mask="false">/mnt/user/media</Config>
+  
+  <!-- Additional Media Location 2 -->
+  <Config 
+    Name="Media Location 2 (Optional)" 
+    Target="/media2" 
+    Default="" 
+    Mode="rw" 
+    Description="Additional media location if you have media in multiple places. Leave empty if not needed." 
+    Type="Path" 
+    Display="always" 
+    Required="false" 
+    Mask="false"></Config>
+  
+  <!-- Additional Media Location 3 -->
+  <Config 
+    Name="Media Location 3 (Optional)" 
+    Target="/media3" 
+    Default="" 
+    Mode="rw" 
+    Description="Additional media location if you have media in multiple places. Leave empty if not needed." 
+    Type="Path" 
+    Display="always" 
+    Required="false" 
+    Mask="false"></Config>
+  
+  <!-- =======================================================================
+       PLEX CONNECTION (Initial Setup)
+       ======================================================================= -->
+  
+  <!-- Plex URL -->
+  <Config 
+    Name="Plex URL" 
+    Target="PLEX_URL" 
+    Default="http://192.168.1.100:32400" 
+    Mode="" 
+    Description="Your Plex server URL (e.g., http://192.168.1.100:32400). Can be changed in WebGUI after setup." 
+    Type="Variable" 
+    Display="always" 
+    Required="true" 
+    Mask="false">http://192.168.1.100:32400</Config>
+  
+  <!-- Plex Token -->
+  <Config 
+    Name="Plex Token" 
+    Target="PLEX_TOKEN" 
+    Default="" 
+    Mode="" 
+    Description="Your Plex authentication token. Find it at: https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/" 
+    Type="Variable" 
+    Display="always" 
+    Required="true" 
+    Mask="true"></Config>
+  
+  <!-- =======================================================================
+       SYSTEM SETTINGS
+       ======================================================================= -->
+  
+  <!-- Timezone -->
+  <Config 
+    Name="Timezone" 
+    Target="TZ" 
+    Default="America/New_York" 
+    Mode="" 
+    Description="Your timezone for correct scheduling and logging" 
+    Type="Variable" 
+    Display="always" 
+    Required="false" 
+    Mask="false">America/New_York</Config>
+  
+  <!-- PUID -->
+  <Config 
+    Name="PUID" 
+    Target="PUID" 
+    Default="99" 
+    Mode="" 
+    Description="User ID for file permissions (99 is 'nobody' on Unraid)" 
+    Type="Variable" 
+    Display="advanced" 
+    Required="false" 
+    Mask="false">99</Config>
+  
+  <!-- PGID -->
+  <Config 
+    Name="PGID" 
+    Target="PGID" 
+    Default="100" 
+    Mode="" 
+    Description="Group ID for file permissions (100 is 'users' on Unraid)" 
+    Type="Variable" 
+    Display="advanced" 
+    Required="false" 
+    Mask="false">100</Config>
+  
+  <!-- Cache Destination (env var) -->
+  <Config 
+    Name="Cache Path (Internal)" 
+    Target="CACHE_DESTINATION" 
+    Default="/cache" 
+    Mode="" 
+    Description="Internal path to cache directory (matches volume mount)" 
+    Type="Variable" 
+    Display="advanced" 
+    Required="false" 
+    Mask="false">/cache</Config>
+  
+  <!-- =======================================================================
+       OPTIONAL OVERRIDES
+       ======================================================================= -->
+  
+  <!-- Debug Mode -->
+  <Config 
+    Name="Debug Mode" 
+    Target="DEBUG" 
+    Default="false" 
+    Mode="" 
+    Description="Enable debug logging (can also be set in WebGUI)" 
+    Type="Variable" 
+    Display="advanced" 
+    Required="false" 
+    Mask="false">false</Config>
+  
+  <!-- Dry Run -->
+  <Config 
+    Name="Dry Run Mode" 
+    Target="DRY_RUN" 
+    Default="false" 
+    Mode="" 
+    Description="Simulate operations without actually moving files (for testing)" 
+    Type="Variable" 
+    Display="advanced" 
+    Required="false" 
+    Mask="false">false</Config>
+
+</Container>

@@ -1,0 +1,9 @@
+#!/usr/bin/env sh
+set -eu
+
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+
+# Optional: keep Codex "home" inside the repo (state/logs), but .codex/.gitignore prevents commits.
+export CODEX_HOME="$REPO_ROOT/.codex"
+
+exec codex --config "$REPO_ROOT/.codex/config.toml" "$@"
