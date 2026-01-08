@@ -8,6 +8,7 @@ approval_policy = "on-request"
 
 # Safer default: don't allow writes outside explicit flows.
 sandbox_mode = "read-only"
+model_reasoning_effort = "xhigh"
 
 [history]
 persistence = "save-all"

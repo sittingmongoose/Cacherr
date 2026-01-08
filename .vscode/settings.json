@@ -13,6 +13,7 @@
     },
     "search.exclude": {
       "**/.git": true
-    }
+    },
+    "chatgpt.cliExecutable": "/usr/local/bin/codex-cacherr"
   }
   

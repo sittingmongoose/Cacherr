@@ -53,8 +53,7 @@ cacherr.json
 !.env.example
 
 # Cursor MCP config often contains API keys/tokens. Keep it local.
-.cursor/mcp-config.json
-.cursor/mcp-config.*.local.json
+.cursor/mcp.json
 
 # Claude Code local overrides (personal prefs, experiments, secrets)
 .claude/settings.local.json
