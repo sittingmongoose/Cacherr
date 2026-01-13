@@ -32,10 +32,22 @@ env/
 *.swo
 *~
 
-# VS Code / Cursor project settings (tracked)
-# Keep shared project settings in git; ignore only local overrides.
-.vscode/settings.local.json
-.vscode/*.local.json
+# VS Code / Cursor - ignore entire directories
+.vscode/
+.cursor/
+
+# Cursor rules (project-specific, but user may have local overrides)
+.cursorrules
+
+# Claude AI / Codex - ignore entire directories and config files
+.claude/
+.claude.json
+.claude.json.backup
+.codex/
+
+# Cache directories
+.cache/
+.npm/
 
 # Logs
 *.log
@@ -52,11 +64,8 @@ cacherr.json
 # Allow checked-in templates
 !.env.example
 
-# Cursor MCP config often contains API keys/tokens. Keep it local.
-.cursor/mcp.json
-
-# Claude Code local overrides (personal prefs, experiments, secrets)
-.claude/settings.local.json
+# User-specific scripts and binaries
+bin/
 
 # Docker
 .docker/
@@ -96,4 +105,3 @@ htmlcov/
 cache_timestamps.json
 watchlist_tracker.json
 ondeck_tracker.json
-.claude/_state/
