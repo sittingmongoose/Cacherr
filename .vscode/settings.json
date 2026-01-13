@@ -14,6 +14,11 @@
     "search.exclude": {
       "**/.git": true
     },
-    "chatgpt.cliExecutable": "/usr/local/bin/codex-cacherr"
+    "chatgpt.cliExecutable": "/usr/local/bin/codex-cacherr",
+    "claudeCode.claudeProcessWrapper": "/usr/local/bin/claude-cacherr",
+    
+    // Disable PowerShell on Linux (PowerShell scripts in bin/ are for Windows only)
+    "powershell.enabled": false,
+    "terminal.integrated.defaultProfile.linux": "bash"
   }
   

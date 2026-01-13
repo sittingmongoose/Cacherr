@@ -14,5 +14,6 @@ Work only inside this repository and keep changes small and reviewable.
 - Lint:
 
 ## Conventions
-- Don’t add secrets or tokens to the repo.
+- Don't add secrets or tokens to the repo.
 - Keep edits focused; avoid drive-by refactors.
+- Always use the Context7 MCP server when I need library/API documentation, code generation, setup or configuration steps without me having to explicitly ask.
