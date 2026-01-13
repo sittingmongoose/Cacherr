@@ -44,6 +44,8 @@ env/
 .claude.json
 .claude.json.backup
 .codex/
+*agents.md
+*AGENTS.md
 
 # Cache directories
 .cache/
