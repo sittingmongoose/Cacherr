@@ -1,0 +1,24 @@
+{
+    // Make sure key extensions are always installed on the SSH host.
+    // Replace these with the real extension IDs you use.
+    "remote.SSH.defaultExtensions": [
+      "openai.codex",          // TODO: confirm actual ID in Cursor
+      "anthropic.claude-code"  // TODO: confirm actual ID in Cursor
+    ],
+  
+    // Quality-of-life defaults (safe, project-scoped).
+    "files.exclude": {
+      "**/.git": true,
+      "**/.DS_Store": true
+    },
+    "search.exclude": {
+      "**/.git": true
+    },
+    "chatgpt.cliExecutable": "/usr/local/bin/codex-cacherr",
+    "claudeCode.claudeProcessWrapper": "/usr/local/bin/claude-cacherr",
+    
+    // Disable PowerShell on Linux (PowerShell scripts in bin/ are for Windows only)
+    "powershell.enabled": false,
+    "terminal.integrated.defaultProfile.linux": "bash"
+  }
+  
