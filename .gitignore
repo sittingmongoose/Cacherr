@@ -55,6 +55,7 @@ logs/
 
 # Config files (may contain secrets)
 cacherr.json
+mcp.json
 .env
 .env.*
 *.env
